@@ -19,16 +19,22 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\Memory\s_memory.cpp" />
+    <ClCompile Include="Core\Process\BProcess.cpp" />
     <ClCompile Include="Core\Render_Core\directx_render.cpp" />
     <ClCompile Include="Core\Render_Core\render.cpp" />
+    <ClCompile Include="Core\Render_Core\render_system.cpp" />
     <ClCompile Include="Core\Window\s_window.cpp" />
     <ClCompile Include="dllmain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Exception\exception.h" />
+    <ClInclude Include="Core\Memory\s_memory.h" />
+    <ClInclude Include="Core\Process\BProcess.h" />
     <ClInclude Include="Core\Render_Core\d3dx12.h" />
     <ClInclude Include="Core\Render_Core\directx_render.h" />
     <ClInclude Include="Core\Render_Core\render.h" />
+    <ClInclude Include="Core\Render_Core\render_system.h" />
     <ClInclude Include="Core\Window\s_window.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="stre_render.h" />

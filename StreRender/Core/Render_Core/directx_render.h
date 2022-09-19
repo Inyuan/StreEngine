@@ -21,10 +21,12 @@
 #include <cassert>
 #include "d3dx12.h"
 #include "stre_render.h"
+#include "render.h"
+#include "Core/Window/s_window.h"
 
 #define SWAP_CHAIN_BUFFER_COUNT 2
 
-class directx_render
+class directx_render : public render 
 {
 protected:
     Microsoft::WRL::ComPtr<IDXGIFactory4> dxgi_factory;
@@ -42,10 +44,10 @@ private:
 
 public:
 
-    void init(HWND in_main_wnd);
+    virtual void init(HWND in_main_wnd) override;
 
     void msaa_configuration();//???
 
-    void over();
+    virtual void over() override;
 
 };

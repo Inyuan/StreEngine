@@ -5,26 +5,26 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	// Forward hwnd on because we can get messages (e.g., WM_CREATE)
 	// before CreateWindow returns, and thus before mhMainWnd is valid.
-	return s_window::GetInstance()->massage_proc(hwnd, msg, wParam, lParam);
+	return s_window::get_instance()->massage_proc(hwnd, msg, wParam, lParam);
 }
 
-s_window* s_window::Windowinstance = new s_window();
-s_window* s_window::GetInstance()
+s_window* s_window::window_instance = new s_window();
+s_window* s_window::get_instance()
 {
-	return Windowinstance;
+	return window_instance;
 }
 
-bool s_window::init(HINSTANCE IHINSTANCE, UINT IWidth, UINT IHeight)
+bool s_window::init(HINSTANCE in_instance, UINT in_width, UINT in_height)
 {
-	Instancehandle = IHINSTANCE;
-	Clientwidth = IWidth;
-	Clientheight = IHeight;
+	instance_handle = in_instance;
+	client_width = in_width;
+	client_height = in_height;
 	WNDCLASS wc;
 	wc.style = CS_HREDRAW | CS_VREDRAW;
 	wc.lpfnWndProc = MainWndProc;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
-	wc.hInstance = Instancehandle;
+	wc.hInstance = instance_handle;
 	wc.hIcon = LoadIcon(0, IDI_APPLICATION);
 	wc.hCursor = LoadCursor(0, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
@@ -38,21 +38,21 @@ bool s_window::init(HINSTANCE IHINSTANCE, UINT IWidth, UINT IHeight)
 	}
 
 	// Compute window rectangle dimensions based on requested client area dimensions.
-	RECT R = { 0, 0, Clientwidth, Clientheight };
+	RECT R = { 0, 0, client_width, client_height };
 	AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
 	int width = R.right - R.left;
 	int height = R.bottom - R.top;
 
-	Mainwindowhandle = CreateWindow(L"MainWnd", Mainwindowcaption.c_str(),
-		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, Instancehandle, 0);
-	if (!Mainwindowhandle)
+	mian_window_handle = CreateWindow(L"MainWnd", main_window_caption.c_str(),
+		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, instance_handle, 0);
+	if (!mian_window_handle)
 	{
 		MessageBox(0, L"CreateWindow Failed.", 0, 0);
 		return false;
 	}
 
-	ShowWindow(Mainwindowhandle, SW_SHOW);
-	UpdateWindow(Mainwindowhandle);
+	ShowWindow(mian_window_handle, SW_SHOW);
+	UpdateWindow(mian_window_handle);
 
 	return true;
 }
@@ -67,12 +67,12 @@ LRESULT s_window::massage_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 	case WM_ACTIVATE:
 		if (LOWORD(wParam) == WA_INACTIVE)
 		{
-			mAppPaused = true;
+			app_paused = true;
 			//Timer.Stop();
 		}
 		else
 		{
-			mAppPaused = false;
+			app_paused = false;
 			//Timer.Start();
 		}
 		return 0;
@@ -85,18 +85,18 @@ LRESULT s_window::massage_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 		// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
 	case WM_ENTERSIZEMOVE:
-		mAppPaused = true;
-		mResizing = true;
+		app_paused = true;
+		resizing = true;
 		//Timer.Stop();
 		return 0;
 
 		// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
 		// Here we reset everything based on the new window dimensions.
 	case WM_EXITSIZEMOVE:
-		mAppPaused = false;
-		mResizing = false;
+		app_paused = false;
+		resizing = false;
 		//Timer.Start();
-		//OnResize(mClientWidth, mClientHeight);
+		//OnResize(mclient_width, mclient_height);
 		return 0;
 
 		// WM_DESTROY is sent when the window is being destroyed.

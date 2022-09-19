@@ -17,10 +17,15 @@ public:
 	static bool msaax4_state;
 	static unsigned int msaax4_quality;
 };
+
 unsigned int render_configuration::client_width = 800;
 unsigned int render_configuration::client_height = 600;
 bool render_configuration::msaax4_state = false;
 unsigned int render_configuration::msaax4_quality = 0;
 
+enum REDNER_API
+{
+	DIRECTX_RENDER
+};
 
 ///

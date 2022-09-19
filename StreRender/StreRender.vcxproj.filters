@@ -22,6 +22,12 @@
     <Filter Include="Core\Window">
       <UniqueIdentifier>{bceac423-4cdc-4244-b36a-7f21ac1473fe}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core\Memory">
+      <UniqueIdentifier>{1d41f65f-461e-4544-8d46-887c02888e63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Process">
+      <UniqueIdentifier>{851cb229-7688-477f-9c76-ddbfd03e245f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -35,6 +41,15 @@
     </ClCompile>
     <ClCompile Include="Core\Window\s_window.cpp">
       <Filter>Core\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Render_Core\render_system.cpp">
+      <Filter>Core\Render_Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Memory\s_memory.cpp">
+      <Filter>Core\Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Process\BProcess.cpp">
+      <Filter>Core\Process</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -56,6 +71,15 @@
     </ClInclude>
     <ClInclude Include="Core\Window\s_window.h">
       <Filter>Core\Window</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Render_Core\render_system.h">
+      <Filter>Core\Render_Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Memory\s_memory.h">
+      <Filter>Core\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Process\BProcess.h">
+      <Filter>Core\Process</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

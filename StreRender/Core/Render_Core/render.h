@@ -1,16 +1,13 @@
 #pragma once
 #include "directx_render.h"
+#include "Core/Window/s_window.h"
+
 
 
 class render
 {
-
 public:
-	enum REDNER_API
-	{
-		DIRECTX_RENDER
-	};
-public:
-	void init();
-	void over();
+	virtual void init(HWND in_main_wnd) = 0;
+	virtual void over() = 0;
 };
+
