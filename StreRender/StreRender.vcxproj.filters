@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Logic">
+      <UniqueIdentifier>{b244cfda-2dbb-4ed2-860a-60ae7f557c3c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{dc974c9a-805f-48fd-8556-2efa35c130aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Function">
+      <UniqueIdentifier>{33ab7fe4-88a6-41fa-8828-95478c8d3096}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Function\Render_Function">
+      <UniqueIdentifier>{fa54d296-3bd1-4256-95b0-484c0f9c390c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Render_Core">
+      <UniqueIdentifier>{35e0ecf3-f91c-44c8-8819-85201aa04615}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Exception">
+      <UniqueIdentifier>{b5e74143-e6b8-4073-8c07-3a8196265c45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Window">
+      <UniqueIdentifier>{bceac423-4cdc-4244-b36a-7f21ac1473fe}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Logic</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Render_Core\render.cpp">
+      <Filter>Core\Render_Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Render_Core\directx_render.cpp">
+      <Filter>Core\Render_Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Window\s_window.cpp">
+      <Filter>Core\Window</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>Logic</Filter>
+    </ClInclude>
+    <ClInclude Include="stre_render.h" />
+    <ClInclude Include="Core\Render_Core\render.h">
+      <Filter>Core\Render_Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Render_Core\directx_render.h">
+      <Filter>Core\Render_Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Render_Core\d3dx12.h">
+      <Filter>Core\Render_Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Exception\exception.h">
+      <Filter>Core\Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Window\s_window.h">
+      <Filter>Core\Window</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
