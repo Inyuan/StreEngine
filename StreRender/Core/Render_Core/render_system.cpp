@@ -15,7 +15,7 @@ void render_system::init(HINSTANCE in_instance, REDNER_API in_render_api)
 		renderer = memory_allocater->allocate<directx_render>();
 		renderer->init(render_window->get_hwnd());
 		break;
-	default:
+	default://DirectX
 		renderer = memory_allocater->allocate<directx_render>();
 		renderer->init(render_window->get_hwnd());
 		break;

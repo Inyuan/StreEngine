@@ -4,6 +4,133 @@
 
 
 
+//
+// 所有资源都已经装好在GPU后在这里被使用
+//
+// input: GPU_object
+// input: GPU_camera
+// input: GPU_light
+// input: GPU_mat
+// input: GPU_texture
+// input: GPU_gpu_map
+// input: GPU_matrix
+// output: GPU_gpu_map
+//
+void directx_render::draw_call()
+{
+	
+}
+
+//
+void directx_render::create_descriptor_heap(
+	D3D12_DESCRIPTOR_HEAP_DESC & in_dx_descheap_desc, 
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> in_out_descheap)
+{
+	ThrowIfFailed(d3d_device->CreateDescriptorHeap(
+		&in_dx_descheap_desc,
+		IID_PPV_ARGS(in_out_descheap.GetAddressOf())));
+}
+
+void directx_render::create_gpu_memory()
+{
+
+}
+
+//CSV UAV undo!!!
+void directx_render::create_gpu_memory_view(
+	DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
+	gpu_resource* in_gpu_resource,
+	D3D12_CPU_DESCRIPTOR_HANDLE in_out_dest_descriptor
+	)
+{
+	switch (in_texture_desc_type)
+	{
+	case DIRECTX_RESOURCE_DESC_TYPE::DX_CBV:
+		//???
+		break;
+	case DIRECTX_RESOURCE_DESC_TYPE::DX_DSV:
+		d3d_device->CreateDepthStencilView(
+			in_gpu_resource->dx_resource.Get(),
+			&in_gpu_resource->dx_dsv,
+			in_out_dest_descriptor);
+		break;
+	case DIRECTX_RESOURCE_DESC_TYPE::DX_RTV:
+		d3d_device->CreateRenderTargetView(
+			in_gpu_resource->dx_resource.Get(),
+			&in_gpu_resource->dx_rtv, 
+			in_out_dest_descriptor);
+		break;
+	case DIRECTX_RESOURCE_DESC_TYPE::DX_SRV:
+		d3d_device->CreateShaderResourceView(
+			in_gpu_resource->dx_resource.Get(),
+			&in_gpu_resource->dx_srv,
+			in_out_dest_descriptor);
+		break;
+	case DIRECTX_RESOURCE_DESC_TYPE::DX_UAV:
+		//???
+		break;
+	}
+}
+
+void directx_render::create_rootsignature(
+	CD3DX12_ROOT_PARAMETER & in_slot_root_parameter,
+	CD3DX12_ROOT_SIGNATURE_DESC & in_rootsig_desc,
+	ComPtr<ID3D12RootSignature> in_out_rootsignature)
+{
+	ComPtr<ID3DBlob> serializedRootSig = nullptr;
+	ComPtr<ID3DBlob> errorBlob = nullptr;
+	HRESULT hr = D3D12SerializeRootSignature(&in_rootsig_desc, D3D_ROOT_SIGNATURE_VERSION_1,
+		serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
+
+	if (errorBlob != nullptr)
+	{
+		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+	}
+	ThrowIfFailed(hr);
+
+	ThrowIfFailed(d3d_device->CreateRootSignature(
+		0,
+		serializedRootSig->GetBufferPointer(),
+		serializedRootSig->GetBufferSize(),
+		IID_PPV_ARGS(in_out_rootsignature.GetAddressOf())));
+}
+
+ID3DBlob* directx_render::complie_shader(
+	const std::wstring& file_name,
+	const D3D_SHADER_MACRO* defines,
+	const std::string& entry_point,
+	const std::string& target)
+{
+	UINT compileFlags = 0;
+
+	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+
+
+	HRESULT hr = S_OK;
+
+	ID3DBlob* byteCode = nullptr;
+	ID3DBlob* errors;
+	hr = D3DCompileFromFile(file_name.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		entry_point.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
+
+	if (errors != nullptr)
+		OutputDebugStringA((char*)errors->GetBufferPointer());
+	ThrowIfFailed(hr);
+
+	return byteCode;
+}
+
+void directx_render::create_pso(
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC &in_pso_desc,
+	ComPtr<ID3D12PipelineState> in_pso)
+{
+	ThrowIfFailed(d3d_device->CreateGraphicsPipelineState(
+		&in_pso_desc,
+		IID_PPV_ARGS(&in_pso)));
+
+}
+
+
 void directx_render::init(HWND in_main_wnd)
 {
 	ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&dxgi_factory)));

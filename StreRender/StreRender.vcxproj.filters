@@ -28,6 +28,12 @@
     <Filter Include="Core\Process">
       <UniqueIdentifier>{851cb229-7688-477f-9c76-ddbfd03e245f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{3eff622d-92db-4c51-aab6-8cf5a5c35387}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\GPU_Resource">
+      <UniqueIdentifier>{b4b395b8-fc5e-4bb5-ace9-bc6aafd54f5a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -50,6 +56,15 @@
     </ClCompile>
     <ClCompile Include="Core\Process\BProcess.cpp">
       <Filter>Core\Process</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\GPU_Resource\constant_pass.cpp">
+      <Filter>Resource\GPU_Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\GPU_Resource\constant_pass_factory.cpp">
+      <Filter>Resource\GPU_Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\GPU_Resource\gpu_resource.cpp">
+      <Filter>Resource\GPU_Resource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -80,6 +95,15 @@
     </ClInclude>
     <ClInclude Include="Core\Process\BProcess.h">
       <Filter>Core\Process</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\GPU_Resource\constant_pass.h">
+      <Filter>Resource\GPU_Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\GPU_Resource\constant_pass_factory.h">
+      <Filter>Resource\GPU_Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\GPU_Resource\gpu_resource.h">
+      <Filter>Resource\GPU_Resource</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
