@@ -11,19 +11,11 @@
 #include <DirectXCollision.h>
 #include <string>
 #include <memory>
-#include <algorithm>
-#include <vector>
-#include <array>
-#include <unordered_map>
-#include <cstdint>
-#include <fstream>
-#include <sstream>
-#include <cassert>
-#include "d3dx12.h"
+#include "Render_API/d3dx12.h"
 #include "stre_render.h"
 #include "render.h"
 #include "Core/Window/s_window.h"
-#include "Resource/GPU_Resource/gpu_resource.h"
+#include "Resource/gpu_resource.h"
 #define SWAP_CHAIN_BUFFER_COUNT 2
 
 using Microsoft::WRL::ComPtr;
@@ -67,11 +59,21 @@ public:
     void create_descriptor_heap(
         D3D12_DESCRIPTOR_HEAP_DESC& in_dx_descheap_desc,
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> in_out_descheap);
-    void create_gpu_memory();
+    
+    void create_gpu_memory(
+        ComPtr<ID3D12Resource> in_out_resource,
+        CD3DX12_HEAP_PROPERTIES in_heap_properties,
+        CD3DX12_RESOURCE_DESC in_rescource_desc,
+        D3D12_RESOURCE_STATES in_resource_states = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON);
+
+    void switch_gpu_memory_state(
+        ComPtr<ID3D12Resource> in_out_resource,
+        D3D12_RESOURCE_STATES in_old_resource_states,
+        D3D12_RESOURCE_STATES in_new_resource_states);
 
     void create_gpu_memory_view(
         DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
-        gpu_resource* in_gpu_resource,
+        directx_gpu_resource* in_gpu_resource,
         D3D12_CPU_DESCRIPTOR_HANDLE in_out_dest_descriptor);
 
     void create_rootsignature(
@@ -94,11 +96,9 @@ public:
 
     virtual void draw_call() override;
 
-
+    virtual void allocate_pass() override;
 
     virtual void init(HWND in_main_wnd) override;
-
-    
 
     virtual void over() override;
 

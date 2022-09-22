@@ -34,6 +34,12 @@
     <Filter Include="Resource\GPU_Resource">
       <UniqueIdentifier>{b4b395b8-fc5e-4bb5-ace9-bc6aafd54f5a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core\Render_Core\Resource">
+      <UniqueIdentifier>{90b2409e-67d1-489a-8d24-6a43a5fcb9ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Render_Core\Render_API">
+      <UniqueIdentifier>{12ea21b8-7eb6-4b13-8ee3-9c6355fb6ec7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -48,23 +54,26 @@
     <ClCompile Include="Core\Window\s_window.cpp">
       <Filter>Core\Window</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Render_Core\render_system.cpp">
-      <Filter>Core\Render_Core</Filter>
-    </ClCompile>
     <ClCompile Include="Core\Memory\s_memory.cpp">
       <Filter>Core\Memory</Filter>
     </ClCompile>
     <ClCompile Include="Core\Process\BProcess.cpp">
       <Filter>Core\Process</Filter>
     </ClCompile>
-    <ClCompile Include="Resource\GPU_Resource\constant_pass.cpp">
-      <Filter>Resource\GPU_Resource</Filter>
+    <ClCompile Include="Function\Render_Function\deferred_rendering.cpp">
+      <Filter>Function\Render_Function</Filter>
     </ClCompile>
-    <ClCompile Include="Resource\GPU_Resource\constant_pass_factory.cpp">
-      <Filter>Resource\GPU_Resource</Filter>
+    <ClCompile Include="Core\Render_Core\Resource\constant_pass.cpp">
+      <Filter>Core\Render_Core\Resource</Filter>
     </ClCompile>
-    <ClCompile Include="Resource\GPU_Resource\gpu_resource.cpp">
-      <Filter>Resource\GPU_Resource</Filter>
+    <ClCompile Include="Core\Render_Core\Resource\gpu_resource.cpp">
+      <Filter>Core\Render_Core\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Render_Core\Resource\gpu_resource_factory.cpp">
+      <Filter>Core\Render_Core\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Function\Render_Function\render_system.cpp">
+      <Filter>Function\Render_Function</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -78,17 +87,11 @@
     <ClInclude Include="Core\Render_Core\directx_render.h">
       <Filter>Core\Render_Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Render_Core\d3dx12.h">
-      <Filter>Core\Render_Core</Filter>
-    </ClInclude>
     <ClInclude Include="Core\Exception\exception.h">
       <Filter>Core\Exception</Filter>
     </ClInclude>
     <ClInclude Include="Core\Window\s_window.h">
       <Filter>Core\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Render_Core\render_system.h">
-      <Filter>Core\Render_Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\Memory\s_memory.h">
       <Filter>Core\Memory</Filter>
@@ -96,14 +99,23 @@
     <ClInclude Include="Core\Process\BProcess.h">
       <Filter>Core\Process</Filter>
     </ClInclude>
-    <ClInclude Include="Resource\GPU_Resource\constant_pass.h">
-      <Filter>Resource\GPU_Resource</Filter>
+    <ClInclude Include="Function\Render_Function\deferred_rendering.h">
+      <Filter>Function\Render_Function</Filter>
     </ClInclude>
-    <ClInclude Include="Resource\GPU_Resource\constant_pass_factory.h">
-      <Filter>Resource\GPU_Resource</Filter>
+    <ClInclude Include="Core\Render_Core\Resource\constant_pass.h">
+      <Filter>Core\Render_Core\Resource</Filter>
     </ClInclude>
-    <ClInclude Include="Resource\GPU_Resource\gpu_resource.h">
-      <Filter>Resource\GPU_Resource</Filter>
+    <ClInclude Include="Core\Render_Core\Resource\gpu_resource.h">
+      <Filter>Core\Render_Core\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Render_Core\Resource\gpu_resource_factory.h">
+      <Filter>Core\Render_Core\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Render_Core\Render_API\d3dx12.h">
+      <Filter>Core\Render_Core\Render_API</Filter>
+    </ClInclude>
+    <ClInclude Include="Function\Render_Function\render_system.h">
+      <Filter>Function\Render_Function</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

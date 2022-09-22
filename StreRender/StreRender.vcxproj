@@ -23,26 +23,28 @@
     <ClCompile Include="Core\Process\BProcess.cpp" />
     <ClCompile Include="Core\Render_Core\directx_render.cpp" />
     <ClCompile Include="Core\Render_Core\render.cpp" />
-    <ClCompile Include="Core\Render_Core\render_system.cpp" />
+    <ClCompile Include="Core\Render_Core\Resource\constant_pass.cpp" />
+    <ClCompile Include="Core\Render_Core\Resource\gpu_resource.cpp" />
+    <ClCompile Include="Core\Render_Core\Resource\gpu_resource_factory.cpp" />
     <ClCompile Include="Core\Window\s_window.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="Resource\GPU_Resource\constant_pass.cpp" />
-    <ClCompile Include="Resource\GPU_Resource\constant_pass_factory.cpp" />
-    <ClCompile Include="Resource\GPU_Resource\gpu_resource.cpp" />
+    <ClCompile Include="Function\Render_Function\deferred_rendering.cpp" />
+    <ClCompile Include="Function\Render_Function\render_system.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Exception\exception.h" />
     <ClInclude Include="Core\Memory\s_memory.h" />
     <ClInclude Include="Core\Process\BProcess.h" />
-    <ClInclude Include="Core\Render_Core\d3dx12.h" />
     <ClInclude Include="Core\Render_Core\directx_render.h" />
     <ClInclude Include="Core\Render_Core\render.h" />
-    <ClInclude Include="Core\Render_Core\render_system.h" />
+    <ClInclude Include="Core\Render_Core\Render_API\d3dx12.h" />
+    <ClInclude Include="Core\Render_Core\Resource\constant_pass.h" />
+    <ClInclude Include="Core\Render_Core\Resource\gpu_resource.h" />
+    <ClInclude Include="Core\Render_Core\Resource\gpu_resource_factory.h" />
     <ClInclude Include="Core\Window\s_window.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="Resource\GPU_Resource\constant_pass.h" />
-    <ClInclude Include="Resource\GPU_Resource\constant_pass_factory.h" />
-    <ClInclude Include="Resource\GPU_Resource\gpu_resource.h" />
+    <ClInclude Include="Function\Render_Function\deferred_rendering.h" />
+    <ClInclude Include="Function\Render_Function\render_system.h" />
     <ClInclude Include="stre_render.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

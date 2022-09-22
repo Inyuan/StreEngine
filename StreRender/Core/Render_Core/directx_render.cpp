@@ -5,7 +5,7 @@
 
 
 //
-// 所有资源都已经装好在GPU后在这里被使用
+// 所有资源都已经装好在GPU后在这使用?
 //
 // input: GPU_object
 // input: GPU_camera
@@ -21,6 +21,11 @@ void directx_render::draw_call()
 	
 }
 
+void directx_render::allocate_pass()
+{
+
+}
+
 //
 void directx_render::create_descriptor_heap(
 	D3D12_DESCRIPTOR_HEAP_DESC & in_dx_descheap_desc, 
@@ -31,15 +36,43 @@ void directx_render::create_descriptor_heap(
 		IID_PPV_ARGS(in_out_descheap.GetAddressOf())));
 }
 
-void directx_render::create_gpu_memory()
+//vertex 
+//index 
+//texture
+//默认构建 common的缓冲区
+void directx_render::create_gpu_memory(
+	ComPtr<ID3D12Resource> in_out_resource,
+	CD3DX12_HEAP_PROPERTIES in_heap_properties,
+	CD3DX12_RESOURCE_DESC in_rescource_desc,
+	D3D12_RESOURCE_STATES in_resource_states
+	)
 {
+	ThrowIfFailed(d3d_device->CreateCommittedResource(
+		&in_heap_properties,
+		D3D12_HEAP_FLAG_NONE,
+		&in_rescource_desc,
+		in_resource_states,
+		nullptr,
+		IID_PPV_ARGS(&in_out_resource)));
+}
 
+void directx_render::switch_gpu_memory_state(
+	ComPtr<ID3D12Resource> in_out_resource,
+	D3D12_RESOURCE_STATES in_old_resource_states,
+	D3D12_RESOURCE_STATES in_new_resource_states)
+{
+	command_list->ResourceBarrier(
+		1, 
+		&CD3DX12_RESOURCE_BARRIER::Transition(
+			in_out_resource.Get(),
+			in_old_resource_states,
+			in_new_resource_states));
 }
 
 //CSV UAV undo!!!
 void directx_render::create_gpu_memory_view(
 	DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
-	gpu_resource* in_gpu_resource,
+	directx_gpu_resource* in_gpu_resource,
 	D3D12_CPU_DESCRIPTOR_HANDLE in_out_dest_descriptor
 	)
 {
@@ -221,5 +254,5 @@ void directx_render::msaa_configuration()
 		sizeof(msQualityLevels)));
 
 	MSAAX4_QUALITY = msQualityLevels.NumQualityLevels;
-	assert(render_configuration::msaax4_quality > 0 && "Unexpected MSAA quality level.");
+	assert(MSAAX4_QUALITY > 0 && "Unexpected MSAA quality level.");
 }
