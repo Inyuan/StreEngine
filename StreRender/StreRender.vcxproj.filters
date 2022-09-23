@@ -31,14 +31,14 @@
     <Filter Include="Resource">
       <UniqueIdentifier>{3eff622d-92db-4c51-aab6-8cf5a5c35387}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource\GPU_Resource">
-      <UniqueIdentifier>{b4b395b8-fc5e-4bb5-ace9-bc6aafd54f5a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Core\Render_Core\Resource">
       <UniqueIdentifier>{90b2409e-67d1-489a-8d24-6a43a5fcb9ad}</UniqueIdentifier>
     </Filter>
     <Filter Include="Core\Render_Core\Render_API">
       <UniqueIdentifier>{12ea21b8-7eb6-4b13-8ee3-9c6355fb6ec7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\File_Manager">
+      <UniqueIdentifier>{dda91376-e6f9-4a82-b2a7-a17b4e97cd83}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -74,6 +74,18 @@
     </ClCompile>
     <ClCompile Include="Function\Render_Function\render_system.cpp">
       <Filter>Function\Render_Function</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\s_resource_manager.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\cg_object.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\File_Manager\s_fbx.cpp">
+      <Filter>Core\File_Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\cg_resource_factory.cpp">
+      <Filter>Resource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -116,6 +128,15 @@
     </ClInclude>
     <ClInclude Include="Function\Render_Function\render_system.h">
       <Filter>Function\Render_Function</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\cg_object.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\File_Manager\s_fbx.h">
+      <Filter>Core\File_Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\cg_resource_factory.h">
+      <Filter>Resource</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -3,8 +3,11 @@
 #include "Core/Memory/s_memory.h"
 #include "Core/Process/BProcess.h"
 #include "Core/Render_Core/Resource/constant_pass.h"
+//#include "Core/Render_Core/Resource/gpu_resource_factory.h"
+#include "stre_render.h"
 
-#include <vector>
+
+#include <map>
 
 class render_system
 {
@@ -14,11 +17,21 @@ protected:
 	s_memory* memory_allocater = nullptr;
 	//BProcess* render_window_process;
 
+	//gpu_resource_factory* gpu_res_factory;
+	std::map<std::string, gpu_resource*> gpu_resource_group;
+
 public:
 
 	constant_pass* allocate_pass(constant_pass::pass_layout in_constant_pass_layout);
 
-	void allocate_gpu_memory();
+	gpu_resource* allocate_gpu_memory(s_mesh_object* in_mesh_object);
+
+	gpu_resource* allocate_gpu_memory(s_camera* in_camera);
+
+	gpu_resource* allocate_gpu_memory(s_light* in_light);
+
+	gpu_resource* create_gpu_texture(std::string in_gpu_texture_name);
+
 
 	void init(HINSTANCE in_instance,REDNER_API in_render_api);
 	void over();
