@@ -45,9 +45,6 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Logic</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Render_Core\render.cpp">
-      <Filter>Core\Render_Core</Filter>
-    </ClCompile>
     <ClCompile Include="Core\Render_Core\directx_render.cpp">
       <Filter>Core\Render_Core</Filter>
     </ClCompile>

@@ -14,8 +14,6 @@
 #include "Render_API/d3dx12.h"
 #include "stre_render.h"
 #include "render.h"
-#include "Core/Window/s_window.h"
-#include "Resource/gpu_resource.h"
 #define SWAP_CHAIN_BUFFER_COUNT 2
 
 using Microsoft::WRL::ComPtr;
@@ -27,11 +25,6 @@ enum DIRECTX_RESOURCE_DESC_TYPE
     DX_DSV,
     DX_CBV,
     DX_UAV
-};
-
-enum DIRECTX_RESOURCE_TYPE
-{
-
 };
 
 class directx_render : public render 
@@ -55,7 +48,7 @@ private:
     void msaa_configuration();//???
 
 public:
-
+    //??? 有必要暴露在外面吗
     void create_descriptor_heap(
         D3D12_DESCRIPTOR_HEAP_DESC& in_dx_descheap_desc,
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> in_out_descheap);
@@ -73,7 +66,7 @@ public:
 
     void create_gpu_memory_view(
         DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
-        directx_gpu_resource* in_gpu_resource,
+        directx_gpu_resource_element* in_gpu_resource,
         D3D12_CPU_DESCRIPTOR_HANDLE in_out_dest_descriptor);
 
     void create_rootsignature(
@@ -92,6 +85,16 @@ public:
         ComPtr<ID3D12PipelineState> in_pso);
     
 
+
+
+public:
+
+    virtual gpu_resource_element* allocate_gpu_memory(GPU_RESOURCE_LAYOUT in_resource_layout) override;
+
+    //virtual gpu_resource* update_gpu_memory(cg_resource* in_resource) override;
+
+    virtual gpu_resource* create_gpu_texture(std::string in_gpu_texture_name) override;
+
 public:
 
     virtual void draw_call() override;
@@ -103,3 +106,42 @@ public:
     virtual void over() override;
 
 };
+
+class directx_gpu_resource_element : public gpu_resource_element
+{
+public:
+    ComPtr<ID3D12Resource> dx_resource;
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC dx_srv;
+    D3D12_RENDER_TARGET_VIEW_DESC dx_rtv;
+    D3D12_DEPTH_STENCIL_VIEW_DESC dx_dsv;
+    D3D12_CONSTANT_BUFFER_VIEW_DESC dx_csv;
+    D3D12_UNORDERED_ACCESS_VIEW_DESC dx_uav;
+
+    DXGI_FORMAT dx_format;
+};
+
+
+template<typename T>
+gpu_resource* allocate_upload_resource(directx_render* in_render, cg_resource* in_resource)
+{
+    UINT Elementbytesize = sizeof(T);
+    UINT Memorysize = Elementbytesize * IelementCount;
+
+    if (IsConstantbuffer)
+        Elementbytesize = MathHelper::CalcConstantBufferByteSize(sizeof(T));
+
+    CD3DX12_HEAP_PROPERTIES Heapproperties(D3D12_HEAP_TYPE_UPLOAD);
+    CD3DX12_RESOURCE_DESC Resourcebuffer = CD3DX12_RESOURCE_DESC::Buffer(Elementbytesize * IelementCount);
+
+    ThrowIfFailed(Idevice->CreateCommittedResource(
+        &Heapproperties,
+        D3D12_HEAP_FLAG_NONE,
+        &Resourcebuffer,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&Uploadresource)));
+
+    ThrowIfFailed(Uploadresource->Map(0, nullptr, reinterpret_cast<void**>(&Mappeddata)));
+
+}

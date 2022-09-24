@@ -3,9 +3,8 @@
 #include "Core/Memory/s_memory.h"
 #include "Core/Process/BProcess.h"
 #include "Core/Render_Core/Resource/constant_pass.h"
-//#include "Core/Render_Core/Resource/gpu_resource_factory.h"
 #include "stre_render.h"
-
+#include "Resource/cg_object.h"
 
 #include <map>
 
@@ -18,17 +17,16 @@ protected:
 	//BProcess* render_window_process;
 
 	//gpu_resource_factory* gpu_res_factory;
+
+	REDNER_API render_api;
+
 	std::map<std::string, gpu_resource*> gpu_resource_group;
 
 public:
 
 	constant_pass* allocate_pass(constant_pass::pass_layout in_constant_pass_layout);
 
-	gpu_resource* allocate_gpu_memory(s_mesh_object* in_mesh_object);
-
-	gpu_resource* allocate_gpu_memory(s_camera* in_camera);
-
-	gpu_resource* allocate_gpu_memory(s_light* in_light);
+	gpu_resource* allocate_gpu_memory(cg_resource* in_resource);
 
 	gpu_resource* create_gpu_texture(std::string in_gpu_texture_name);
 

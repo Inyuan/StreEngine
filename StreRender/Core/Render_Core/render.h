@@ -1,7 +1,7 @@
 #pragma once
-#include "directx_render.h"
 #include "Core/Window/s_window.h"
-
+#include "Resource/cg_object.h"
+#include "Resource/gpu_resource.h"
 
 
 class render
@@ -10,6 +10,12 @@ public:
 	virtual void draw_call() = 0;
 
 	virtual void allocate_pass() = 0;
+
+	virtual gpu_resource_element* allocate_gpu_memory(GPU_RESOURCE_LAYOUT in_resource_layout) = 0;
+	
+	virtual gpu_resource* update_gpu_memory(cg_resource* in_resource) = 0;
+
+	virtual gpu_resource* create_gpu_texture(std::string in_gpu_texture_name) = 0;
 
 	virtual void init(HWND in_main_wnd) = 0;
 

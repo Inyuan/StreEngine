@@ -1,5 +1,6 @@
 #include "render_system.h"
-
+#include "Core/Render_Core/directx_render.h"
+#include "Resource/cg_resource_factory.h"
 s_memory_allocater_register render_memory_allocater("render_memory_allocater");
 
 void render_system::init(HINSTANCE in_instance, REDNER_API in_render_api)
@@ -31,20 +32,45 @@ constant_pass* render_system::allocate_pass(constant_pass::pass_layout in_consta
 }
 
 
+s_memory_allocater_register gpu_resource_ptr_allocater("gpu_resource_ptr_allocater");
 
-gpu_resource* render_system::allocate_gpu_memory(s_mesh_object* in_mesh_object)
+//将物体的CPU资源复制到GPU上
+gpu_resource* render_system::allocate_gpu_memory(cg_resource* in_resource)
 {
+	auto allocater = memory_allocater_group["gpu_resource_ptr_allocater"];
 
-}
+	gpu_resource* gpu_resource_ptr = (gpu_resource*)allocater->allocate<gpu_resource>();
 
-gpu_resource* render_system::allocate_gpu_memory(s_camera* in_camera)
-{
+	auto it = in_resource->resource_gpu_layout.begin();
+	for (; it != in_resource->resource_gpu_layout.end(); it++)
+	{
+		gpu_resource_ptr->gpu_resource_group[it->first]
+			= renderer->allocate_gpu_memory(it->second);
+	}
 
-}
+	switch (in_resource->get_type())
+	{
+	case s_resource::RESOURCE_TYPE::RES_EMPTY_OBJECT:
+		//包围盒线条
+		break;
+	case s_resource::RESOURCE_TYPE::RES_CAMERA:
+		//构建cameraCB
+		break;
+	case s_resource::RESOURCE_TYPE::RES_LIGHT:
+		break;
+	case s_resource::RESOURCE_TYPE::RES_MATERIAL:
+		break;
+	case s_resource::RESOURCE_TYPE::RES_TEXTURE:
+		break;
+	case s_resource::RESOURCE_TYPE::RES_SENCE:
+		break;
+	case s_resource::RESOURCE_TYPE::RES_STATIC_OBJECT:
+		break;
+	case s_resource::RESOURCE_TYPE::RES_DYNAMIC_OBJECT:
+		break;
+	}
 
-gpu_resource* render_system::allocate_gpu_memory(s_light* in_light)
-{
-
+	return gpu_resource_ptr;
 }
 
 gpu_resource* render_system::create_gpu_texture(std::string in_gpu_texture_name)

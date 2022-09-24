@@ -23,7 +23,6 @@
     <ClCompile Include="Core\Memory\s_memory.cpp" />
     <ClCompile Include="Core\Process\BProcess.cpp" />
     <ClCompile Include="Core\Render_Core\directx_render.cpp" />
-    <ClCompile Include="Core\Render_Core\render.cpp" />
     <ClCompile Include="Core\Render_Core\Resource\constant_pass.cpp" />
     <ClCompile Include="Core\Render_Core\Resource\gpu_resource.cpp" />
     <ClCompile Include="Core\Render_Core\Resource\gpu_resource_factory.cpp" />

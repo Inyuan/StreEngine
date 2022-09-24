@@ -26,6 +26,43 @@ void directx_render::allocate_pass()
 
 }
 
+s_memory_allocater_register gpu_resource_element_ptr_allocater("gpu_resource_element_ptr_allocater");
+
+
+gpu_resource_element* directx_render::allocate_gpu_memory(GPU_RESOURCE_LAYOUT in_resource_layout)
+{
+	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE GPU_RES_TYPE;
+	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE GPU_RES_STATE;
+	auto allocater = memory_allocater_group["gpu_resource_element_ptr_allocater"];
+
+	directx_gpu_resource_element* dx_gpu_res_elem = (directx_gpu_resource_element*)allocater->allocate<directx_gpu_resource_element>();
+
+	dx_gpu_res_elem->gpu_resource_layout = in_resource_layout;
+
+	auto gpu_res_type = dx_gpu_res_elem->gpu_resource_layout.gpu_resource_type;
+	auto gpu_res_state = dx_gpu_res_elem->gpu_resource_layout.gpu_resource_state;
+	
+	switch (gpu_res_type)
+	{
+	case GPU_RES_TYPE::GPU_RES_BUFFER:
+		break;
+	case GPU_RES_TYPE::GPU_RES_TEXTURE:
+		break;
+	case GPU_RES_TYPE::GPU_RES_VERTEX:
+		break;
+	case GPU_RES_TYPE::GPU_RES_INDEX:
+		break;
+	}
+}
+
+
+
+
+gpu_resource* directx_render::create_gpu_texture(std::string in_gpu_texture_name)
+{
+
+}
+
 //
 void directx_render::create_descriptor_heap(
 	D3D12_DESCRIPTOR_HEAP_DESC & in_dx_descheap_desc, 
@@ -72,7 +109,7 @@ void directx_render::switch_gpu_memory_state(
 //CSV UAV undo!!!
 void directx_render::create_gpu_memory_view(
 	DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
-	directx_gpu_resource* in_gpu_resource,
+	directx_gpu_resource_element* in_gpu_resource,
 	D3D12_CPU_DESCRIPTOR_HANDLE in_out_dest_descriptor
 	)
 {

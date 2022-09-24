@@ -1,11 +1,53 @@
 #include "stre_render.h"
+#include "Core/Memory/s_memory.h"
 #include<map>
 #include<string>
+
+struct GPU_RESOURCE_LAYOUT
+{
+	enum GPU_RESOURCE_TYPE
+	{
+		GPU_RES_VERTEX,
+		GPU_RES_INDEX,
+		GPU_RES_TEXTURE,
+		GPU_RES_BUFFER
+	};
+
+	enum GPU_RESOURCE_STATE
+	{
+		GPU_RES_UPLOAD,
+		GPU_RES_CONSTANT
+	};
+
+	std::string gpu_resource_name;
+
+	GPU_RESOURCE_TYPE gpu_resource_type = GPU_RESOURCE_TYPE::GPU_RES_BUFFER;
+	GPU_RESOURCE_STATE gpu_resource_state = GPU_RESOURCE_STATE::GPU_RES_CONSTANT;
+
+	GPU_RESOURCE_LAYOUT() = default;
+
+	GPU_RESOURCE_LAYOUT(
+		std::string in_name, 
+		GPU_RESOURCE_TYPE in_type = GPU_RESOURCE_TYPE::GPU_RES_BUFFER,
+		GPU_RESOURCE_STATE in_state = GPU_RESOURCE_STATE::GPU_RES_CONSTANT)
+		: gpu_resource_name(in_name),
+		gpu_resource_type(in_type),
+		gpu_resource_state(in_state)
+	{};
+
+	//??? =
+};
+
+
 //资源
 class cg_resource : public s_resource
 {
 public:
-	RESOURCE_TYPE resource_type = RESOURCE_TYPE::RES_EMPTY_OBJECT;
+
+	std::map<std::string, GPU_RESOURCE_LAYOUT> resource_gpu_layout;
+
+public:
+	RESOURCE_TYPE resource_type = RESOURCE_TYPE::RES_BUFFER;
 	//是否在本地存在
 	bool is_local = false;
 
@@ -21,6 +63,11 @@ public:
 	virtual char* get_name() override { return name; };
 	virtual RESOURCE_TYPE get_type() override { return resource_type; };
 };
+
+
+
+//////////////////////////////////////////////
+////////具体化/////////////////////////////////
 
 //物体
 class cg_object : public s_object
@@ -86,6 +133,12 @@ public:
 	{
 		object_type = SENCE_OBJECT_TYPE::OBJ_STATIC_OBJECT;
 		resource->resource_type = s_resource::RESOURCE_TYPE::RES_STATIC_OBJECT;
+
+		resource->resource_gpu_layout["vertex"] 
+			= GPU_RESOURCE_LAYOUT(
+				"vertex", 
+				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_VERTEX,
+				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_CONSTANT);
 	}
 
 	virtual s_resource* get_resource() override { return resource; };
@@ -95,6 +148,12 @@ public:
 //动态物体
 class cg_dynamic_object : public s_dynamic_object, cg_mesh_object
 {
+public:
+	struct cpu_dynamic_mesh_data
+	{
+		cpu_mesh_data mesh_data;
+		//animation data
+	};
 public:
 	cg_dynamic_object()
 	{
@@ -115,6 +174,25 @@ public:
 
 	cg_resource* resource;
 
+	struct cpu_camera_data
+	{
+		s_float4x4 View = s_float4x4::identity4x4();
+		s_float4x4 InvView = s_float4x4::identity4x4();
+		s_float4x4 Proj = s_float4x4::identity4x4();
+		s_float4x4 InvProj = s_float4x4::identity4x4();
+		s_float4x4 ViewProj = s_float4x4::identity4x4();
+		s_float4x4 InvViewProj = s_float4x4::identity4x4();
+		s_float4x4 ShadowTransform = s_float4x4::identity4x4();
+		s_float3 EyePosW = { 0.0f, 0.0f, 0.0f };
+		s_float2 RenderTargetSize = { 0.0f, 0.0f };
+		s_float2 InvRenderTargetSize = { 0.0f, 0.0f };
+		s_float NearZ = 0.0f;
+		s_float FarZ = 0.0f;
+
+		s_float4 AmbientLight = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	};
+
 public:
 	cg_camera()
 	{
@@ -134,6 +212,16 @@ public:
 
 	cg_resource* resource;
 
+	struct cpu_light_data
+	{
+		s_float3 strength = { 10.0f, 10.0f, 10.0f };
+		s_float fall_off_start = 1.0f;
+		s_float3 Direction = { 0.0f, -1.0f, 0.0f };// directional/spot light only
+		s_float fall_off_end = 10.0f;                           // point/spot light only
+		s_float3 position = { 0.0f, 0.0f, 0.0f };  // point/spot light only
+		s_float spot_power = 64.0f;
+	};
+
 public:
 	cg_light()
 	{
@@ -146,7 +234,7 @@ public:
 };
 
 //材质
-class cg_material : public s_material, cg_resource
+class cg_material : public s_material
 {
 public:
 
@@ -171,7 +259,7 @@ public:
 };
 
 //贴图
-class cg_texture : public s_texture, cg_resource
+class cg_texture : public s_texture
 {
 public:
 
@@ -189,7 +277,7 @@ public:
 };
 
 //场景
-class cg_sence : public s_sence, cg_resource
+class cg_sence : public s_sence
 {
 private://???
 	std::map<std::string, cg_object*> empty_object_group;
@@ -201,6 +289,12 @@ private://???
 public:
 
 	cg_resource* resource;
+
+	struct cpu_sence_data
+	{
+		s_float TotalTime = 0.0f;
+		s_float DeltaTime = 0.0f;
+	};
 
 public:
 

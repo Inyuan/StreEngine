@@ -8,6 +8,7 @@
 #define MSAAX4_STATE s_render_configuration::msaax4_state
 #define MSAAX4_QUALITY s_render_configuration::msaax4_quality
 
+#define CLIENT_RENDER_API REDNER_API::DIRECTX_RENDER
 
 static class s_render_configuration
 {
@@ -28,6 +29,8 @@ enum REDNER_API
 {
 	DIRECTX_RENDER
 };
+
+
 
 ///rendering type
 
@@ -62,6 +65,7 @@ class s_resource
 public:
 	enum class RESOURCE_TYPE
 	{
+		RES_BUFFER,
 		RES_EMPTY_OBJECT,
 		RES_STATIC_OBJECT,
 		RES_DYNAMIC_OBJECT,
