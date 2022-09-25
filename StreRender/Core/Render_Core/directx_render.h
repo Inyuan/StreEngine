@@ -79,7 +79,6 @@ public:
         D3D12_CPU_DESCRIPTOR_HANDLE in_out_dest_descriptor);
 
     void create_rootsignature(
-        CD3DX12_ROOT_PARAMETER& in_slot_root_parameter,
         CD3DX12_ROOT_SIGNATURE_DESC& in_rootsig_desc,
         ComPtr<ID3D12RootSignature> in_out_rootsignature);
 
@@ -126,7 +125,7 @@ public:
 
     virtual void draw_call() override;
 
-    virtual void allocate_pass() override;
+    virtual constant_pass* allocate_pass(constant_pass::pass_layout in_constant_pass_layout) override;
 
     virtual void init(HWND in_main_wnd) override;
 
@@ -148,4 +147,21 @@ public:
     DXGI_FORMAT dx_format;
 };
 
+
+class directx_constant_pass : public constant_pass
+{
+public:
+    ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
+    ComPtr<ID3D12DescriptorHeap> rtv_heap = nullptr;
+    ComPtr<ID3D12DescriptorHeap> dsv_heap = nullptr;
+    ComPtr<ID3D12DescriptorHeap> cbv_heap = nullptr;
+    ComPtr<ID3D12DescriptorHeap> uav_heap = nullptr;
+    ComPtr<ID3D12RootSignature> rootsignature = nullptr;
+
+    std::unordered_map<std::string, ComPtr<ID3DBlob>> shader_group;
+    ComPtr<ID3D12PipelineState> pso;
+
+    std::vector<D3D12_INPUT_ELEMENT_DESC> input_layout;
+
+};
 

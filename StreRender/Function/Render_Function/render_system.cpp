@@ -26,9 +26,11 @@ void render_system::init(HINSTANCE in_instance, REDNER_API in_render_api)
 	}
 }
 
+
+
 constant_pass* render_system::allocate_pass(constant_pass::pass_layout in_constant_pass_layout)
 {
-
+	return renderer->allocate_pass(in_constant_pass_layout);
 }
 
 

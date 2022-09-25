@@ -2,17 +2,19 @@
 #include "Core/Window/s_window.h"
 #include "Resource/cg_object.h"
 #include "Resource/gpu_resource.h"
-
+#include "Resource/constant_pass.h"
 
 class render
 {
 public:
 	virtual void draw_call() = 0;
 
-	virtual void allocate_pass() = 0;
+
+
+
+	virtual constant_pass* allocate_pass(constant_pass::pass_layout in_constant_pass_layout) = 0;
 
 	virtual gpu_resource_element* allocate_gpu_memory(GPU_RESOURCE_LAYOUT in_resource_layout) = 0;
-	
 	//???
 	virtual gpu_resource* update_gpu_memory(cg_resource* in_resource) = 0;
 

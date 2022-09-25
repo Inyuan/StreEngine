@@ -1,7 +1,7 @@
 #include "directx_render.h"
 #include <WindowsX.h>
 #include "Core/Exception/exception.h"
-
+#include <array>
 
 
 //
@@ -21,8 +21,287 @@ void directx_render::draw_call()
 	
 }
 
-void directx_render::allocate_pass()
+std::array<const CD3DX12_STATIC_SAMPLER_DESC, 7Ui64> GetStaticSamplers()
 {
+	// Applications usually only need a handful of samplers.  So just define them all up front
+	// and keep them available as part of the root signature.  
+
+	const CD3DX12_STATIC_SAMPLER_DESC pointWrap(
+		0, // shaderRegister
+		D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW*/
+
+	const CD3DX12_STATIC_SAMPLER_DESC pointClamp(
+		1, // shaderRegister
+		D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+
+	const CD3DX12_STATIC_SAMPLER_DESC linearWrap(
+		2, // shaderRegister
+		D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
+
+	const CD3DX12_STATIC_SAMPLER_DESC linearClamp(
+		3, // shaderRegister
+		D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+
+	const CD3DX12_STATIC_SAMPLER_DESC anisotropicWrap(
+		4, // shaderRegister
+		D3D12_FILTER_ANISOTROPIC, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressW
+		0.0f,                             // mipLODBias
+		8);                               // maxAnisotropy
+
+	const CD3DX12_STATIC_SAMPLER_DESC anisotropicClamp(
+		5, // shaderRegister
+		D3D12_FILTER_ANISOTROPIC, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressW
+		0.0f,                              // mipLODBias
+		8);                                // maxAnisotropy
+
+	const CD3DX12_STATIC_SAMPLER_DESC shadow(
+		6, // shaderRegister
+		D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressW
+		0.0f,                               // mipLODBias
+		16,                                 // maxAnisotropy
+		D3D12_COMPARISON_FUNC_LESS_EQUAL,
+		D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
+
+	return {
+		pointWrap, pointClamp,
+		linearWrap, linearClamp,
+		anisotropicWrap, anisotropicClamp,
+		shadow
+	};
+}
+
+//BuildDescriptorHeaps ???
+//CreateDescriptors ???
+
+//pass creation
+//BuildRootSignature
+//BuildShadersAndInputLayout
+//BuildPSO
+s_memory_allocater_register pass_allocater("pass_allocater");
+
+constant_pass* directx_render::allocate_pass(constant_pass::pass_layout in_constant_pass_layout)
+{
+	typedef constant_pass::PASS_RESOURCE_TYPE PASS_RES_TYPE;
+
+	auto pass_allocater = memory_allocater_group["pass_allocater"];
+
+	directx_constant_pass* pass = (directx_constant_pass*)pass_allocater->allocate<directx_constant_pass>();
+	
+	//RootSignature
+	{
+		auto input_resource = in_constant_pass_layout.input_gpu_resource_layout;
+		UINT input_res_number = in_constant_pass_layout.input_gpu_resource_layout.size();
+		std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameter(input_res_number);
+
+		for (UINT i = 0; i < input_res_number; i++)
+		{
+			switch (input_resource[i].input_resource_type)
+			{
+			case PASS_RES_TYPE::PASS_RES_CBV:
+				slotRootParameter[i].InitAsConstantBufferView(i);
+				break;
+			case PASS_RES_TYPE::PASS_RES_SRV:
+				slotRootParameter[i].InitAsShaderResourceView(i);
+				break;
+			case PASS_RES_TYPE::PASS_RES_DESCRIPTOR_TBALE:
+				CD3DX12_DESCRIPTOR_RANGE texTable;
+				texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, input_resource[i].input_resource_number, i);
+
+				slotRootParameter[i].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+				break;
+			}
+		}
+
+		auto staticSamplers = GetStaticSamplers();
+
+		// A root signature is an array of root parameters.
+		CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(input_res_number, slotRootParameter.data(),
+			(UINT)staticSamplers.size(), staticSamplers.data(),
+			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+		create_rootsignature(
+			rootSigDesc,
+			pass->rootsignature);
+	}
+
+	//Shader Input layout
+	{
+		typedef constant_pass::shader_layout::SHADER_TYPE SHADER_TYPE;
+		typedef constant_pass::shader_layout::shader_input::INPUT_ELEMENT_SIZE INPUT_ELEMENT_SIZE;
+		auto shader_layout = in_constant_pass_layout.pass_shader_layout;
+		if (shader_layout.shader_vaild[SHADER_TYPE::VS])
+		{
+			pass->shader_group[pass->pass_name + "VS"]
+				= complie_shader(
+					shader_layout.shader_path[SHADER_TYPE::VS],
+					nullptr, "VS", "vs_5_1");
+		}
+		if (shader_layout.shader_vaild[SHADER_TYPE::DS])
+		{
+			pass->shader_group[pass->pass_name + "DS"]
+				= complie_shader(
+					shader_layout.shader_path[SHADER_TYPE::DS],
+					nullptr, "DS", "ds_5_1");
+		}
+		if (shader_layout.shader_vaild[SHADER_TYPE::HS])
+		{
+			pass->shader_group[pass->pass_name + "HS"]
+				= complie_shader(
+					shader_layout.shader_path[SHADER_TYPE::HS],
+					nullptr, "HS", "hs_5_1");
+		}
+		if (shader_layout.shader_vaild[SHADER_TYPE::GS])
+		{
+			pass->shader_group[pass->pass_name + "GS"]
+				= complie_shader(
+					shader_layout.shader_path[SHADER_TYPE::GS],
+					nullptr, "GS", "gs_5_1");
+		}
+		if (shader_layout.shader_vaild[SHADER_TYPE::PS])
+		{
+			pass->shader_group[pass->pass_name + "PS"]
+				= complie_shader(
+					shader_layout.shader_path[SHADER_TYPE::PS],
+					nullptr, "PS", "ps_5_1");
+		}
+
+		UINT elem_size_offset = 0;
+		for (auto it : shader_layout.shader_input_group)
+		{
+			D3D12_INPUT_ELEMENT_DESC input_elem_desc;
+
+			DXGI_FORMAT input_elem_format;
+			UINT offset = 0;
+			switch (it.size)
+			{
+			case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32:
+				input_elem_format = DXGI_FORMAT_R32_FLOAT;
+				offset = 4;
+				break;
+			case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32:
+				input_elem_format = DXGI_FORMAT_R32G32_FLOAT;
+				offset = 8;
+				break;
+			case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32B32:
+				input_elem_format = DXGI_FORMAT_R32G32B32_FLOAT;
+				offset = 12;
+				break;
+			case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32B32A32:
+				input_elem_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+				offset = 16;
+				break;
+			}
+			input_elem_desc = { it.name.c_str(), 0, input_elem_format, 0, elem_size_offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+
+			pass->input_layout.push_back(input_elem_desc);
+
+			elem_size_offset += offset;
+		}
+	}
+
+	//??? 透明功能，很多功能都忽视了
+	//PSO
+	{
+		
+		typedef constant_pass::shader_layout::SHADER_TYPE SHADER_TYPE;
+		auto shader_layout = in_constant_pass_layout.pass_shader_layout;
+
+		auto rt_number = in_constant_pass_layout.output_gpu_resource.size();
+
+
+		CD3DX12_RASTERIZER_DESC RastDesc(D3D12_DEFAULT);
+		RastDesc.CullMode = D3D12_CULL_MODE_NONE;
+
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC PsoDesc;
+		ZeroMemory(&PsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+		PsoDesc.InputLayout = { pass->input_layout.data(), (UINT)pass->input_layout.size() };
+		PsoDesc.pRootSignature = pass->rootsignature.Get();
+		PsoDesc.RasterizerState = RastDesc;
+		PsoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+		PsoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+		PsoDesc.SampleMask = UINT_MAX;
+		PsoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		PsoDesc.SampleDesc.Count = MSAAX4_STATE ? 4 : 1;
+		PsoDesc.SampleDesc.Quality = MSAAX4_STATE ? (MSAAX4_QUALITY - 1) : 0;
+		PsoDesc.DSVFormat = depth_stencil_format;
+		PsoDesc.NumRenderTargets = rt_number;
+		for (int i = 0; i < rt_number; i++)
+			PsoDesc.RTVFormats[i] = back_buffer_format;
+
+
+		
+
+		if (shader_layout.shader_vaild[SHADER_TYPE::VS])
+		{
+			PsoDesc.VS =
+			{
+				reinterpret_cast<BYTE*>(
+					pass->shader_group[pass->pass_name + "VS"]->GetBufferPointer()),
+				pass->shader_group[pass->pass_name + "VS"]->GetBufferSize()
+			};
+		}
+		if (shader_layout.shader_vaild[SHADER_TYPE::DS])
+		{
+			PsoDesc.DS =
+			{
+				reinterpret_cast<BYTE*>(
+					pass->shader_group[pass->pass_name + "DS"]->GetBufferPointer()),
+				pass->shader_group[pass->pass_name + "DS"]->GetBufferSize()
+			};
+		}
+		if (shader_layout.shader_vaild[SHADER_TYPE::HS])
+		{
+			PsoDesc.HS =
+			{
+				reinterpret_cast<BYTE*>(
+					pass->shader_group[pass->pass_name + "HS"]->GetBufferPointer()),
+				pass->shader_group[pass->pass_name + "HS"]->GetBufferSize()
+			};
+		}
+		if (shader_layout.shader_vaild[SHADER_TYPE::GS])
+		{
+			PsoDesc.GS =
+			{
+				reinterpret_cast<BYTE*>(
+					pass->shader_group[pass->pass_name + "GS"]->GetBufferPointer()),
+				pass->shader_group[pass->pass_name + "GS"]->GetBufferSize()
+			};
+		}
+		if (shader_layout.shader_vaild[SHADER_TYPE::PS])
+		{
+			PsoDesc.PS =
+			{
+				reinterpret_cast<BYTE*>(
+					pass->shader_group[pass->pass_name + "PS"]->GetBufferPointer()),
+				pass->shader_group[pass->pass_name + "PS"]->GetBufferSize()
+			};
+		}
+
+		create_pso(
+			PsoDesc,
+			pass->pso);
+	}
 
 }
 
@@ -353,7 +632,6 @@ void directx_render::create_gpu_memory_view(
 }
 
 void directx_render::create_rootsignature(
-	CD3DX12_ROOT_PARAMETER & in_slot_root_parameter,
 	CD3DX12_ROOT_SIGNATURE_DESC & in_rootsig_desc,
 	ComPtr<ID3D12RootSignature> in_out_rootsignature)
 {
