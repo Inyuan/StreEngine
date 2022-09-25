@@ -152,26 +152,44 @@ class s_resource_manager
 {
 public:
 
-	s_object* create_object();
+	
 
-	s_static_object* create_static_object();
+	//物体需要资源来构建
+	s_object* create_object(s_resource* in_resource);
 
-	s_dynamic_object* create_dynamic_object();
+	s_static_object* create_static_object(s_resource* in_resource);
 
-	s_camera* create_camera();
+	s_dynamic_object* create_dynamic_object(s_resource* in_resource);
 
-	s_light* create_light();
+	s_camera* create_camera(s_resource* in_resource);
 
-	s_sence* create_sence();
+	s_light* create_light(s_resource* in_resource);
 
-	s_material* create_material();
+	s_sence* create_sence(s_resource* in_resource);
 
-	s_texture* create_texture();
+	s_material* create_material(s_resource* in_resource);
 
+	s_texture* create_texture(s_resource* in_resource);
 
-	bool load_local_resource(s_resource* in_out_resource, wchar_t* in_path);
+	//??? 缺默认的物体构建
+	s_resource* create_object_resource();
 
-	bool load_local_fbx(s_resource* in_out_resource, wchar_t* in_path);
+	s_resource* create_camera_resource();
+
+	s_resource* create_light_resource();
+
+	s_resource* create_sence_resource();
+
+	s_resource* create_material_resource();
+
+	s_resource* create_texture_resource();
+
+	//??? 缺读取资源
+
+	s_resource* load_local_resource(wchar_t* in_path);
+
+	//fbx导入物体 ??? 缺动画
+	s_resource* load_local_fbx( wchar_t* in_path);
 };
 
 ///base type

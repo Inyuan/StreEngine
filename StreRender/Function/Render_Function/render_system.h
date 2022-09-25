@@ -3,6 +3,7 @@
 #include "Core/Memory/s_memory.h"
 #include "Core/Process/BProcess.h"
 #include "Core/Render_Core/Resource/constant_pass.h"
+#include "Core/Render_Core/Resource/gpu_resource.h"
 #include "stre_render.h"
 #include "Resource/cg_object.h"
 
@@ -28,7 +29,9 @@ public:
 
 	gpu_resource* allocate_gpu_memory(cg_resource* in_resource);
 
-	gpu_resource* create_gpu_texture(std::string in_gpu_texture_name);
+	gpu_resource* create_gpu_texture(
+		std::string in_gpu_texture_name,
+		GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE in_resoure_type);
 
 
 	void init(HINSTANCE in_instance,REDNER_API in_render_api);

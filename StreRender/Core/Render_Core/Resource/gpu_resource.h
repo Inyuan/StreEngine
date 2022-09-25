@@ -3,13 +3,15 @@
 #include "Core/Render_Core/Render_API/d3dx12.h"
 #include "stre_render.h"
 #include "Resource/cg_object.h"
+#include <vector>
 using Microsoft::WRL::ComPtr;
 
 
 class gpu_resource
 {
 public:
-	std::map<std::string, gpu_resource_element*> gpu_resource_group;
+	std::string name;
+	std::vector<gpu_resource_element*> gpu_resource_group[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TYPE_NUMBER];
 };
 
 /// <summary>
@@ -17,8 +19,14 @@ public:
 /// </summary>
 class gpu_resource_element
 {
-
-public:
 	
-    GPU_RESOURCE_LAYOUT gpu_resource_layout;
+public:
+	std::string name;
+
+	//只有上传堆有效
+	BYTE* mapped_data = nullptr;
+
+	UINT element_byte_size = 0;
+	UINT memory_size = 0;
+
 };

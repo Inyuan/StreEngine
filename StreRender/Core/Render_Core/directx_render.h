@@ -30,6 +30,8 @@ enum DIRECTX_RESOURCE_DESC_TYPE
 class directx_render : public render 
 {
 protected:
+
+
     Microsoft::WRL::ComPtr<IDXGIFactory4> dxgi_factory;
     Microsoft::WRL::ComPtr<IDXGISwapChain> swap_chain;
     Microsoft::WRL::ComPtr<ID3D12Device> d3d_device;
@@ -41,8 +43,14 @@ protected:
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> command_list;
 
 private:
-    DXGI_FORMAT back_buffer_format = DXGI_FORMAT_R8G8B8A8_UNORM;//???
+    //??? ¾«¶È¿ØÖÆ
+    DXGI_FORMAT back_buffer_format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    
+    DXGI_FORMAT depth_stencil_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    
+    D3D12_RESOURCE_STATES default_resource_states = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
 
+    float clear_color[4] = { 0.0,0.0f,0.0f,0.0f };
 
 private:
     void msaa_configuration();//???
@@ -57,7 +65,8 @@ public:
         ComPtr<ID3D12Resource> in_out_resource,
         CD3DX12_HEAP_PROPERTIES in_heap_properties,
         CD3DX12_RESOURCE_DESC in_rescource_desc,
-        D3D12_RESOURCE_STATES in_resource_states = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON);
+        D3D12_RESOURCE_STATES in_resource_states = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
+        D3D12_CLEAR_VALUE* clearValue = nullptr);
 
     void switch_gpu_memory_state(
         ComPtr<ID3D12Resource> in_out_resource,
@@ -84,8 +93,24 @@ public:
         D3D12_GRAPHICS_PIPELINE_STATE_DESC& in_pso_desc,
         ComPtr<ID3D12PipelineState> in_pso);
     
+    void allocate_upload_resource(
+        UINT in_elem_size, 
+        UINT in_number, 
+        directx_gpu_resource_element* in_res_elem);
 
+    void allocate_default_resource(
+        UINT in_buffer_size,
+        void* in_cpu_data,
+        directx_gpu_resource_element* in_res_elem);
 
+    void update_all_upload_resource(
+        void* data,
+        directx_gpu_resource_element* in_res_elem);
+
+    void update_elem_upload_resource(
+        void* data,
+        int elementIndex,
+        directx_gpu_resource_element* in_res_elem);
 
 public:
 
@@ -93,7 +118,9 @@ public:
 
     //virtual gpu_resource* update_gpu_memory(cg_resource* in_resource) override;
 
-    virtual gpu_resource* create_gpu_texture(std::string in_gpu_texture_name) override;
+    virtual gpu_resource_element* create_gpu_texture(
+        std::string in_gpu_texture_name,
+        GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE in_resoure_type) override;
 
 public:
 
@@ -122,26 +149,3 @@ public:
 };
 
 
-template<typename T>
-gpu_resource* allocate_upload_resource(directx_render* in_render, cg_resource* in_resource)
-{
-    UINT Elementbytesize = sizeof(T);
-    UINT Memorysize = Elementbytesize * IelementCount;
-
-    if (IsConstantbuffer)
-        Elementbytesize = MathHelper::CalcConstantBufferByteSize(sizeof(T));
-
-    CD3DX12_HEAP_PROPERTIES Heapproperties(D3D12_HEAP_TYPE_UPLOAD);
-    CD3DX12_RESOURCE_DESC Resourcebuffer = CD3DX12_RESOURCE_DESC::Buffer(Elementbytesize * IelementCount);
-
-    ThrowIfFailed(Idevice->CreateCommittedResource(
-        &Heapproperties,
-        D3D12_HEAP_FLAG_NONE,
-        &Resourcebuffer,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&Uploadresource)));
-
-    ThrowIfFailed(Uploadresource->Map(0, nullptr, reinterpret_cast<void**>(&Mappeddata)));
-
-}

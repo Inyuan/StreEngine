@@ -3,14 +3,24 @@
 #include<map>
 #include<string>
 
+//先有cg_resource 再构建物体 再构建gpu资源布局
+
+
+//要求每个物体类型都有自己的构造函数
+//并在构造函数定义gpu资源布局
+
+
 struct GPU_RESOURCE_LAYOUT
 {
 	enum GPU_RESOURCE_TYPE
 	{
-		GPU_RES_VERTEX,
-		GPU_RES_INDEX,
-		GPU_RES_TEXTURE,
-		GPU_RES_BUFFER
+		GPU_RES_VERTEX = 0,
+		GPU_RES_INDEX = 1,
+		GPU_RES_TEXTURE = 2,
+		GPU_RES_BUFFER = 3,
+		GPU_RES_RENDER_TARGET = 4,
+		GPU_RES_DEPTH_STENCIL = 5,
+		GPU_RES_TYPE_NUMBER = 6
 	};
 
 	enum GPU_RESOURCE_STATE
@@ -20,6 +30,12 @@ struct GPU_RESOURCE_LAYOUT
 	};
 
 	std::string gpu_resource_name;
+	//指向cg_resource的data_ptr
+	void** cpu_data; 
+	// 一个元素的大小
+	UINT cpu_data_size; 
+	// 元素的数量
+	UINT cpu_data_number;
 
 	GPU_RESOURCE_TYPE gpu_resource_type = GPU_RESOURCE_TYPE::GPU_RES_BUFFER;
 	GPU_RESOURCE_STATE gpu_resource_state = GPU_RESOURCE_STATE::GPU_RES_CONSTANT;
@@ -28,9 +44,15 @@ struct GPU_RESOURCE_LAYOUT
 
 	GPU_RESOURCE_LAYOUT(
 		std::string in_name, 
+		void **in_cpu_data,
+		UINT in_cpu_data_size,
+		UINT in_cpu_data_number = 1,
 		GPU_RESOURCE_TYPE in_type = GPU_RESOURCE_TYPE::GPU_RES_BUFFER,
 		GPU_RESOURCE_STATE in_state = GPU_RESOURCE_STATE::GPU_RES_CONSTANT)
 		: gpu_resource_name(in_name),
+		cpu_data(in_cpu_data),
+		cpu_data_size(in_cpu_data_size),
+		cpu_data_number(in_cpu_data_number),
 		gpu_resource_type(in_type),
 		gpu_resource_state(in_state)
 	{};
@@ -62,6 +84,7 @@ public:
 	virtual char* get_path() override { return local_path; };
 	virtual char* get_name() override { return name; };
 	virtual RESOURCE_TYPE get_type() override { return resource_type; };
+
 };
 
 
@@ -127,18 +150,26 @@ public:
 class cg_static_object : public s_static_object, cg_mesh_object
 {
 public:
-
+	cpu_mesh_data* cpu_static_mesh_data;
 public:
-	cg_static_object()
+	cg_static_object() = delete;
+
+	cg_static_object(cg_resource* in_resource)
 	{
+		resource = in_resource;
+		cpu_static_mesh_data = (cpu_mesh_data*)in_resource->data_ptr;
 		object_type = SENCE_OBJECT_TYPE::OBJ_STATIC_OBJECT;
 		resource->resource_type = s_resource::RESOURCE_TYPE::RES_STATIC_OBJECT;
 
 		resource->resource_gpu_layout["vertex"] 
 			= GPU_RESOURCE_LAYOUT(
 				"vertex", 
+				reinterpret_cast<void**>(&(cpu_static_mesh_data->vertex_group_ptr)),
+				cpu_static_mesh_data->vertex_group_size * sizeof(s_vertex),
+				1,
 				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_VERTEX,
 				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_CONSTANT);
+		//...
 	}
 
 	virtual s_resource* get_resource() override { return resource; };

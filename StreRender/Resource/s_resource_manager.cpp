@@ -8,61 +8,107 @@
 
 s_memory_allocater_register resource_allocater("resource_allocater");
 
-s_object* s_resource_manager::create_object()
+s_object* s_resource_manager::create_object(s_resource* in_resource)
 {
 	auto allocater = memory_allocater_group["resource_allocater"];
 	
-	return allocater->allocate<cg_object>();
+	return allocater->allocate<cg_object>((cg_resource*)in_resource);
 }
-s_static_object* s_resource_manager::create_static_object()
+s_static_object* s_resource_manager::create_static_object(s_resource* in_resource)
 {
 	auto allocater = memory_allocater_group["resource_allocater"];
 
-	return allocater->allocate<cg_static_object>();
+	return allocater->allocate<cg_static_object,cg_resource>((cg_resource*)in_resource);
 
 }
-s_dynamic_object* s_resource_manager::create_dynamic_object()
+s_dynamic_object* s_resource_manager::create_dynamic_object(s_resource* in_resource)
 {
 	auto allocater = memory_allocater_group["resource_allocater"];
 
-	return allocater->allocate<cg_dynamic_object>();
+	return allocater->allocate<cg_dynamic_object>((cg_resource*)in_resource);
 
 }
-s_camera* s_resource_manager::create_camera()
+s_camera* s_resource_manager::create_camera(s_resource* in_resource)
 {
 	auto allocater = memory_allocater_group["resource_allocater"];
 
-	return allocater->allocate<cg_camera>();
+	return allocater->allocate<cg_camera>((cg_resource*)in_resource);
 
 }
-s_light* s_resource_manager::create_light()
+s_light* s_resource_manager::create_light(s_resource* in_resource)
 {
 	auto allocater = memory_allocater_group["resource_allocater"];
 
-	return allocater->allocate<cg_light>();
+	return allocater->allocate<cg_light>((cg_resource*)in_resource);
 
 }
-s_sence* s_resource_manager::create_sence()
+s_sence* s_resource_manager::create_sence(s_resource* in_resource)
 {
 	auto allocater = memory_allocater_group["resource_allocater"];
 
-	return allocater->allocate<cg_sence>();
+	return allocater->allocate<cg_sence>((cg_resource*)in_resource);
 
 }
-s_material* s_resource_manager::create_material()
+s_material* s_resource_manager::create_material(s_resource* in_resource)
 {
 	auto allocater = memory_allocater_group["resource_allocater"];
 
-	return allocater->allocate<cg_material>();
+	return allocater->allocate<cg_material>((cg_resource*)in_resource);
 
 }
-s_texture* s_resource_manager::create_texture()
+s_texture* s_resource_manager::create_texture(s_resource* in_resource)
 {
 	auto allocater = memory_allocater_group["resource_allocater"];
 
-	return allocater->allocate<cg_texture>();
+	return allocater->allocate<cg_texture>((cg_resource*)in_resource);
 
 }
+
+/***
+************************************************************
+*
+* Init Resource
+*
+************************************************************
+*/
+//资源的构建依赖cg_resource_factory
+// 
+//cpu资源构建过程
+//1.利用reource_factory构建默认的resource
+//2.再利用resource 构建对应物体类型
+//3.物体类型的构造函数中构建 GPU layout
+
+s_resource* s_resource_manager::create_object_resource()
+{
+
+}
+
+s_resource* s_resource_manager::create_camera_resource()
+{
+
+}
+
+s_resource* s_resource_manager::create_light_resource()
+{
+
+}
+
+s_resource* s_resource_manager::create_sence_resource()
+{
+
+}
+
+s_resource* s_resource_manager::create_material_resource()
+{
+
+}
+
+s_resource* s_resource_manager::create_texture_resource()
+{
+
+}
+
+
 
 ////////////////////////////////////////////////////////////////////
 //read resource
@@ -96,6 +142,7 @@ std::string WstringToString(std::wstring wstr)
     return result;
 }
 
+
 /***
 ************************************************************
 *
@@ -104,10 +151,8 @@ std::string WstringToString(std::wstring wstr)
 ************************************************************
 */
 
-
-
 //按照后缀区分类型，进而读取
-bool s_resource_manager::load_local_resource(s_resource* in_out_resource, wchar_t* in_path)
+s_resource* s_resource_manager::load_local_resource( wchar_t* in_path)
 {
 
 }
@@ -232,26 +277,13 @@ std::string GetFbxFile(std::wstring DirPath)
 //}
 
 //fbx解包
-bool s_resource_manager::load_local_fbx(s_resource* in_out_resource, wchar_t* in_path)
+s_resource* s_resource_manager::load_local_fbx(wchar_t* in_path)
 {
     bool has_animation = false;
-    //检查资源类型
-    switch (in_out_resource->get_type())
-    {
-    case s_resource::RESOURCE_TYPE::RES_EMPTY_OBJECT:
-    case s_resource::RESOURCE_TYPE::RES_CAMERA:
-    case s_resource::RESOURCE_TYPE::RES_LIGHT:
-    case s_resource::RESOURCE_TYPE::RES_MATERIAL:
-    case s_resource::RESOURCE_TYPE::RES_TEXTURE:
-    case s_resource::RESOURCE_TYPE::RES_SENCE:
-        return false;
-        break;
-    case s_resource::RESOURCE_TYPE::RES_STATIC_OBJECT:
-        break;
-    case s_resource::RESOURCE_TYPE::RES_DYNAMIC_OBJECT:
-        has_animation = true;
-        break;
-    }
+
+    auto allocater = memory_allocater_group["resource_allocater"];
+
+    s_resource* out_resource = allocater->allocate<cg_resource>();
 
     //路径
     std::wstring IDictionary(in_path);
@@ -277,7 +309,7 @@ bool s_resource_manager::load_local_fbx(s_resource* in_out_resource, wchar_t* in
     cg_mesh_object::cpu_mesh_data* mesh_data;
     {
         cg_resource_factory mesh_factory;
-        mesh_data = mesh_factory.allocate_mesh((cg_resource*)in_out_resource, controlPointCount, (int)polygonCount * PolygonType, material_size);
+        mesh_data = mesh_factory.allocate_mesh((cg_resource*)out_resource, controlPointCount, (int)polygonCount * PolygonType, material_size);
     }
     auto vertices = mesh_data->vertex_group_ptr;
     auto indices = mesh_data->index_group_ptr;
@@ -482,7 +514,7 @@ bool s_resource_manager::load_local_fbx(s_resource* in_out_resource, wchar_t* in
     //    CopyMemory(SkeVectorptr, StaVectorptr, vbByteSize);
     //}
 
-    return true;
+    return out_resource;
 }
 
 

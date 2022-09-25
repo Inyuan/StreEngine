@@ -26,41 +26,251 @@ void directx_render::allocate_pass()
 
 }
 
+void directx_render::allocate_upload_resource( 
+	UINT in_elem_size, 
+	UINT in_number, 
+	directx_gpu_resource_element* in_res_elem)
+{
+	in_res_elem->element_byte_size = sizeof(in_elem_size);
+	in_res_elem->memory_size = in_res_elem->element_byte_size * in_number;
+
+	CD3DX12_HEAP_PROPERTIES Heapproperties(D3D12_HEAP_TYPE_UPLOAD);
+	CD3DX12_RESOURCE_DESC Resourcedesc = CD3DX12_RESOURCE_DESC::Buffer(in_res_elem->element_byte_size * in_number);
+
+	create_gpu_memory(
+		in_res_elem->dx_resource,
+		Heapproperties,
+		Resourcedesc
+	);
+
+	ThrowIfFailed(in_res_elem->dx_resource->Map(0, nullptr, reinterpret_cast<void**>(&(in_res_elem->mapped_data))));
+
+}
+
+void directx_render::update_all_upload_resource(
+	void* data,
+	directx_gpu_resource_element* in_res_elem)
+{
+	memcpy(&(in_res_elem->mapped_data[0]), data, in_res_elem->memory_size);
+}
+
+void directx_render::update_elem_upload_resource(
+	void* data,
+	int element_index,
+	directx_gpu_resource_element* in_res_elem)
+{
+	memcpy(&(in_res_elem->mapped_data[element_index * in_res_elem->element_byte_size]), &data, in_res_elem->element_byte_size);
+}
+
+void directx_render::allocate_default_resource(
+	UINT in_buffer_size, 
+	void* in_cpu_data, 
+	directx_gpu_resource_element* in_res_elem)
+{
+	in_res_elem->memory_size = in_buffer_size;
+	in_res_elem->element_byte_size = in_buffer_size;
+
+	// Create the actual default buffer resource.
+	CD3DX12_HEAP_PROPERTIES Heapproperties(D3D12_HEAP_TYPE_DEFAULT);
+	CD3DX12_RESOURCE_DESC Resourcedesc = CD3DX12_RESOURCE_DESC::Buffer(in_buffer_size);
+
+	create_gpu_memory(
+		in_res_elem->dx_resource,
+		Heapproperties,
+		Resourcedesc
+	);
+
+	//??? 不知道这样用上传堆对不对
+	ComPtr<ID3D12Resource> upload_buffer;
+	// In order to copy CPU memory data into our default buffer, we need to create
+	// an intermediate upload heap. 
+	CD3DX12_HEAP_PROPERTIES Heappropertiesup(D3D12_HEAP_TYPE_UPLOAD);
+	Resourcedesc = CD3DX12_RESOURCE_DESC::Buffer(in_buffer_size);
+
+	create_gpu_memory(
+		upload_buffer,
+		Heappropertiesup,
+		Resourcedesc
+	);
+
+	// Describe the data we want to copy into the default buffer.
+	D3D12_SUBRESOURCE_DATA subResourceData = {};
+	subResourceData.pData = in_cpu_data;
+	subResourceData.RowPitch = in_buffer_size;
+	subResourceData.SlicePitch = subResourceData.RowPitch;
+
+	// Schedule to copy the data to the default buffer resource.  At a high level, the helper function UpdateSubresources
+	// will copy the CPU memory into the intermediate upload heap.  Then, using ID3D12CommandList::CopySubresourceRegion,
+	// the intermediate upload heap data will be copied to mBuffer.
+	switch_gpu_memory_state(
+		in_res_elem->dx_resource, 
+		D3D12_RESOURCE_STATE_COMMON, 
+		D3D12_RESOURCE_STATE_COPY_DEST);
+
+	UpdateSubresources<1>(
+		command_list.Get(), 
+		in_res_elem->dx_resource.Get(), 
+		upload_buffer.Get(), 
+		0, 0, 1, &subResourceData);
+
+	switch_gpu_memory_state(
+		in_res_elem->dx_resource, 
+		D3D12_RESOURCE_STATE_COPY_DEST, 
+		D3D12_RESOURCE_STATE_COMMON);
+
+
+	// Note: uploadBuffer has to be kept alive after the above function calls because
+	// the command list has not been executed yet that performs the actual copy.
+	// The caller can Release the uploadBuffer after it knows the copy has been executed.
+}
+
+
+
 s_memory_allocater_register gpu_resource_element_ptr_allocater("gpu_resource_element_ptr_allocater");
 
-
-gpu_resource_element* directx_render::allocate_gpu_memory(GPU_RESOURCE_LAYOUT in_resource_layout)
+gpu_resource_element* directx_render::allocate_gpu_memory(
+	GPU_RESOURCE_LAYOUT in_resource_layout)
 {
 	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE GPU_RES_TYPE;
 	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE GPU_RES_STATE;
 	auto allocater = memory_allocater_group["gpu_resource_element_ptr_allocater"];
 
 	directx_gpu_resource_element* dx_gpu_res_elem = (directx_gpu_resource_element*)allocater->allocate<directx_gpu_resource_element>();
-
-	dx_gpu_res_elem->gpu_resource_layout = in_resource_layout;
-
-	auto gpu_res_type = dx_gpu_res_elem->gpu_resource_layout.gpu_resource_type;
-	auto gpu_res_state = dx_gpu_res_elem->gpu_resource_layout.gpu_resource_state;
+	dx_gpu_res_elem->name = in_resource_layout.gpu_resource_name;
+	auto gpu_res_type = in_resource_layout.gpu_resource_type;
+	auto gpu_res_state = in_resource_layout.gpu_resource_state;
 	
-	switch (gpu_res_type)
+	//switch (gpu_res_type)
+	//{
+	//case GPU_RES_TYPE::GPU_RES_BUFFER:
+	//	break;
+	//case GPU_RES_TYPE::GPU_RES_TEXTURE:
+	//	break;
+	//case GPU_RES_TYPE::GPU_RES_VERTEX:
+	//	break;
+	//case GPU_RES_TYPE::GPU_RES_INDEX:
+	//	break;
+	//}
+	switch (gpu_res_state)
 	{
-	case GPU_RES_TYPE::GPU_RES_BUFFER:
-		break;
-	case GPU_RES_TYPE::GPU_RES_TEXTURE:
-		break;
-	case GPU_RES_TYPE::GPU_RES_VERTEX:
-		break;
-	case GPU_RES_TYPE::GPU_RES_INDEX:
-		break;
+	case GPU_RES_STATE::GPU_RES_CONSTANT:
+		allocate_default_resource(
+			in_resource_layout.cpu_data_size,
+			in_resource_layout.cpu_data,
+			dx_gpu_res_elem);
+			break;
+	case GPU_RES_STATE::GPU_RES_UPLOAD:
+		allocate_upload_resource(
+			in_resource_layout.cpu_data_size,
+			in_resource_layout.cpu_data_number,
+			dx_gpu_res_elem);
+			break;
 	}
+	return dx_gpu_res_elem;
 }
 
 
 
 
-gpu_resource* directx_render::create_gpu_texture(std::string in_gpu_texture_name)
+gpu_resource_element* directx_render::create_gpu_texture(
+	std::string in_gpu_texture_name, 
+	GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE in_resoure_type)
 {
+	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE GPU_RES_TYPE;
+	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE GPU_RES_STATE;
+	auto allocater = memory_allocater_group["gpu_resource_element_ptr_allocater"];
 
+	directx_gpu_resource_element* dx_gpu_res_elem = (directx_gpu_resource_element*)allocater->allocate<directx_gpu_resource_element>();
+	dx_gpu_res_elem->name = in_gpu_texture_name;
+
+	CD3DX12_RESOURCE_DESC resourceDesc;
+	ZeroMemory(&resourceDesc, sizeof(resourceDesc));
+	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	resourceDesc.Alignment = 0;
+	resourceDesc.SampleDesc.Count = MSAAX4_STATE ? 4 : 1;
+	resourceDesc.SampleDesc.Quality = MSAAX4_STATE ? (MSAAX4_QUALITY - 1) : 0;
+	resourceDesc.MipLevels = 1;
+	resourceDesc.DepthOrArraySize = 1;
+	resourceDesc.Width = CLIENT_WIDTH;
+	resourceDesc.Height = CLIENT_HEIGHT;
+	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	resourceDesc.Format = back_buffer_format;
+
+	if (in_resoure_type == GPU_RES_TYPE::GPU_RES_RENDER_TARGET)
+	{
+		resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+		D3D12_CLEAR_VALUE clearVal;
+		clearVal.Color[0] = clear_color[0];
+		clearVal.Color[1] = clear_color[1];
+		clearVal.Color[2] = clear_color[2];
+		clearVal.Color[3] = clear_color[3];
+		clearVal.Format = back_buffer_format;
+
+		CD3DX12_HEAP_PROPERTIES heapproperties(D3D12_HEAP_TYPE_DEFAULT);
+
+		create_gpu_memory(
+			dx_gpu_res_elem->dx_resource,
+			heapproperties,
+			resourceDesc,
+			default_resource_states,
+			&clearVal);
+
+		D3D12_RENDER_TARGET_VIEW_DESC descRTV;
+		ZeroMemory(&descRTV, sizeof(descRTV));
+		descRTV.Texture2D.MipSlice = 0;
+		descRTV.Texture2D.PlaneSlice = 0;
+		descRTV.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+		descRTV.Format = back_buffer_format;
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC descSRV;
+		ZeroMemory(&descSRV, sizeof(descSRV));
+		descSRV.Texture2D.MipLevels = 1;
+		descSRV.Texture2D.MostDetailedMip = 0;
+		descSRV.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		descSRV.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		descSRV.Format = back_buffer_format;
+
+		dx_gpu_res_elem->dx_rtv = descRTV;
+		dx_gpu_res_elem->dx_srv = descSRV;
+	}
+	else if (in_resoure_type == GPU_RES_TYPE::GPU_RES_DEPTH_STENCIL)
+	{
+		resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+		D3D12_CLEAR_VALUE optClear;
+		optClear.Format = depth_stencil_format;
+		optClear.DepthStencil.Depth = 1.0f;
+		optClear.DepthStencil.Stencil = 0;
+		
+		CD3DX12_HEAP_PROPERTIES heapproperties(D3D12_HEAP_TYPE_DEFAULT);
+
+		create_gpu_memory(
+			dx_gpu_res_elem->dx_resource,
+			heapproperties,
+			resourceDesc,
+			default_resource_states,
+			&optClear);
+
+		// Create descriptor to mip level 0 of entire resource using the format of the resource.
+		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+		dsvDesc.Format = depth_stencil_format;
+		dsvDesc.Texture2D.MipSlice = 0;
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC descSRV;
+		ZeroMemory(&descSRV, sizeof(descSRV));
+		descSRV.Texture2D.MipLevels = 1;
+		descSRV.Texture2D.MostDetailedMip = 0;
+		descSRV.Format = depth_stencil_format;
+		descSRV.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		descSRV.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		
+		dx_gpu_res_elem->dx_dsv = dsvDesc;
+		dx_gpu_res_elem->dx_srv = descSRV;
+
+	}
 }
 
 //
@@ -81,15 +291,15 @@ void directx_render::create_gpu_memory(
 	ComPtr<ID3D12Resource> in_out_resource,
 	CD3DX12_HEAP_PROPERTIES in_heap_properties,
 	CD3DX12_RESOURCE_DESC in_rescource_desc,
-	D3D12_RESOURCE_STATES in_resource_states
-	)
+	D3D12_RESOURCE_STATES in_resource_states,
+	D3D12_CLEAR_VALUE* clearValue = nullptr)
 {
 	ThrowIfFailed(d3d_device->CreateCommittedResource(
 		&in_heap_properties,
 		D3D12_HEAP_FLAG_NONE,
 		&in_rescource_desc,
 		in_resource_states,
-		nullptr,
+		clearValue,
 		IID_PPV_ARGS(&in_out_resource)));
 }
 

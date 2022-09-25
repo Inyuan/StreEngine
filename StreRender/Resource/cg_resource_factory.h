@@ -17,4 +17,7 @@ public:
 		std::size_t in_index_number,
 		std::size_t in_material_numder);
 
+
+
+
 };

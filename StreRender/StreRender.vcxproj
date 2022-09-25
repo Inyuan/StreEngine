@@ -25,7 +25,6 @@
     <ClCompile Include="Core\Render_Core\directx_render.cpp" />
     <ClCompile Include="Core\Render_Core\Resource\constant_pass.cpp" />
     <ClCompile Include="Core\Render_Core\Resource\gpu_resource.cpp" />
-    <ClCompile Include="Core\Render_Core\Resource\gpu_resource_factory.cpp" />
     <ClCompile Include="Core\Window\s_window.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Function\Render_Function\deferred_rendering.cpp" />
@@ -44,7 +43,6 @@
     <ClInclude Include="Core\Render_Core\Render_API\d3dx12.h" />
     <ClInclude Include="Core\Render_Core\Resource\constant_pass.h" />
     <ClInclude Include="Core\Render_Core\Resource\gpu_resource.h" />
-    <ClInclude Include="Core\Render_Core\Resource\gpu_resource_factory.h" />
     <ClInclude Include="Core\Window\s_window.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Function\Render_Function\deferred_rendering.h" />

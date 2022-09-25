@@ -40,40 +40,42 @@ gpu_resource* render_system::allocate_gpu_memory(cg_resource* in_resource)
 	auto allocater = memory_allocater_group["gpu_resource_ptr_allocater"];
 
 	gpu_resource* gpu_resource_ptr = (gpu_resource*)allocater->allocate<gpu_resource>();
-
+	gpu_resource_ptr->name = in_resource->get_name();
 	auto it = in_resource->resource_gpu_layout.begin();
+	
 	for (; it != in_resource->resource_gpu_layout.end(); it++)
 	{
-		gpu_resource_ptr->gpu_resource_group[it->first]
-			= renderer->allocate_gpu_memory(it->second);
-	}
-
-	switch (in_resource->get_type())
-	{
-	case s_resource::RESOURCE_TYPE::RES_EMPTY_OBJECT:
-		//包围盒线条
-		break;
-	case s_resource::RESOURCE_TYPE::RES_CAMERA:
-		//构建cameraCB
-		break;
-	case s_resource::RESOURCE_TYPE::RES_LIGHT:
-		break;
-	case s_resource::RESOURCE_TYPE::RES_MATERIAL:
-		break;
-	case s_resource::RESOURCE_TYPE::RES_TEXTURE:
-		break;
-	case s_resource::RESOURCE_TYPE::RES_SENCE:
-		break;
-	case s_resource::RESOURCE_TYPE::RES_STATIC_OBJECT:
-		break;
-	case s_resource::RESOURCE_TYPE::RES_DYNAMIC_OBJECT:
-		break;
+		auto gpu_res_type = it->second.gpu_resource_type;
+		gpu_resource_ptr->gpu_resource_group[
+			gpu_res_type]
+			.push_back(renderer->allocate_gpu_memory(
+				it->second));
 	}
 
 	return gpu_resource_ptr;
 }
-
-gpu_resource* render_system::create_gpu_texture(std::string in_gpu_texture_name)
+//必须是 RT 或者Depth
+gpu_resource* render_system::create_gpu_texture(
+	std::string in_gpu_texture_name, 
+	GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE in_resoure_type)
 {
+	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE GPU_RES_TYPE;
+
+	switch (in_resoure_type)
+	{
+	case GPU_RES_TYPE::GPU_RES_RENDER_TARGET:
+	case GPU_RES_TYPE::GPU_RES_DEPTH_STENCIL:
+
+		auto allocater = memory_allocater_group["gpu_resource_ptr_allocater"];
+
+		gpu_resource* gpu_resource_ptr = (gpu_resource*)allocater->allocate<gpu_resource>();
+		gpu_resource_ptr->name = in_gpu_texture_name;
+
+		gpu_resource_ptr->gpu_resource_group[in_resoure_type].push_back(renderer->create_gpu_texture(in_gpu_texture_name, in_resoure_type));
+		return gpu_resource_ptr;
+		break;
+	}
+
+	return nullptr;
 
 }

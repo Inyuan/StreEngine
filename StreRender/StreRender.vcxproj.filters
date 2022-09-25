@@ -66,9 +66,6 @@
     <ClCompile Include="Core\Render_Core\Resource\gpu_resource.cpp">
       <Filter>Core\Render_Core\Resource</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Render_Core\Resource\gpu_resource_factory.cpp">
-      <Filter>Core\Render_Core\Resource</Filter>
-    </ClCompile>
     <ClCompile Include="Function\Render_Function\render_system.cpp">
       <Filter>Function\Render_Function</Filter>
     </ClCompile>
@@ -115,9 +112,6 @@
       <Filter>Core\Render_Core\Resource</Filter>
     </ClInclude>
     <ClInclude Include="Core\Render_Core\Resource\gpu_resource.h">
-      <Filter>Core\Render_Core\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Render_Core\Resource\gpu_resource_factory.h">
       <Filter>Core\Render_Core\Resource</Filter>
     </ClInclude>
     <ClInclude Include="Core\Render_Core\Render_API\d3dx12.h">
