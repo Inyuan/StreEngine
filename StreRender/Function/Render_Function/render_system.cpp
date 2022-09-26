@@ -56,6 +56,7 @@ gpu_resource* render_system::allocate_gpu_memory(cg_resource* in_resource)
 
 	return gpu_resource_ptr;
 }
+
 //必须是 RT 或者Depth
 gpu_resource* render_system::create_gpu_texture(
 	std::string in_gpu_texture_name, 
@@ -80,4 +81,19 @@ gpu_resource* render_system::create_gpu_texture(
 
 	return nullptr;
 
+}
+
+void render_system::clear_gpu_texture(gpu_resource* in_gpu_resource)
+{
+	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE GPU_RES_TYPE;
+
+	for (auto it : in_gpu_resource->gpu_resource_group[GPU_RES_TYPE::GPU_RES_RENDER_TARGET])
+	{
+
+	}
+
+	for (auto it : in_gpu_resource->gpu_resource_group[GPU_RES_TYPE::GPU_RES_DEPTH_STENCIL])
+	{
+
+	}
 }

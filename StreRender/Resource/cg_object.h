@@ -2,6 +2,7 @@
 #include "Core/Memory/s_memory.h"
 #include<map>
 #include<string>
+#include<vector>
 
 //先有cg_resource 再构建物体 再构建gpu资源布局
 
@@ -14,10 +15,10 @@ struct GPU_RESOURCE_LAYOUT
 {
 	enum GPU_RESOURCE_TYPE
 	{
-		GPU_RES_VERTEX = 0,
-		GPU_RES_INDEX = 1,
-		GPU_RES_TEXTURE = 2,
-		GPU_RES_BUFFER = 3,
+		GPU_RES_VERTEX = 0, //额外保存大小等数据
+		GPU_RES_INDEX = 1,  //额外保存大小等数据
+		GPU_RES_TEXTURE = 2, //自定义贴图gpu_resource只能有一个gpu_resource_element
+		GPU_RES_BUFFER = 3,  // mesh 的0 为 objcb  1为 mat
 		GPU_RES_RENDER_TARGET = 4,
 		GPU_RES_DEPTH_STENCIL = 5,
 		GPU_RES_TYPE_NUMBER = 6
@@ -36,6 +37,8 @@ struct GPU_RESOURCE_LAYOUT
 	UINT cpu_data_size; 
 	// 元素的数量
 	UINT cpu_data_number;
+	//隔多少个元素为一组
+	std::vector<UINT> element_group_number;
 
 	GPU_RESOURCE_TYPE gpu_resource_type = GPU_RESOURCE_TYPE::GPU_RES_BUFFER;
 	GPU_RESOURCE_STATE gpu_resource_state = GPU_RESOURCE_STATE::GPU_RES_CONSTANT;
@@ -47,12 +50,14 @@ struct GPU_RESOURCE_LAYOUT
 		void **in_cpu_data,
 		UINT in_cpu_data_size,
 		UINT in_cpu_data_number = 1,
+		std::vector<UINT> in_element_group_number = {},
 		GPU_RESOURCE_TYPE in_type = GPU_RESOURCE_TYPE::GPU_RES_BUFFER,
 		GPU_RESOURCE_STATE in_state = GPU_RESOURCE_STATE::GPU_RES_CONSTANT)
 		: gpu_resource_name(in_name),
 		cpu_data(in_cpu_data),
 		cpu_data_size(in_cpu_data_size),
 		cpu_data_number(in_cpu_data_number),
+		element_group_number(in_element_group_number),
 		gpu_resource_type(in_type),
 		gpu_resource_state(in_state)
 	{};

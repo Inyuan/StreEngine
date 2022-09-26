@@ -21,7 +21,15 @@ protected:
 
 	REDNER_API render_api;
 
-	std::map<std::string, gpu_resource*> gpu_resource_group;
+	enum SENCE_ELEMENT_TYPE
+	{
+		SENCE_CAMERA = 0,
+		SENCE_LIGHT = 1,
+		SENCE_OBJECT = 2,
+		SENCE_ELEMENT_TYPE_NUMBER = 3
+	};
+
+	std::vector<gpu_resource*> sence_gpu_resource_group[SENCE_ELEMENT_TYPE::SENCE_ELEMENT_TYPE_NUMBER];
 
 public:
 
@@ -33,6 +41,7 @@ public:
 		std::string in_gpu_texture_name,
 		GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE in_resoure_type);
 
+	void clear_gpu_texture(gpu_resource * in_gpu_resource);
 
 	void init(HINSTANCE in_instance,REDNER_API in_render_api);
 	void over();
