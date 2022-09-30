@@ -7,15 +7,14 @@
 // 所有资源都已经装好在GPU后在这使用
 //
 // input: GPU_object
-// input: GPU_camera
-// input: GPU_light
+// input: GPU_camera sence->buffer0
+// input: GPU_light sence->buffer1
 // input: GPU_pass
 //
 void directx_render::draw_call(
 	constant_pass* in_pass,
 	std::vector<gpu_resource*>& in_object,
-	gpu_resource* in_camera = nullptr,
-	gpu_resource* in_light = nullptr)
+	gpu_resource* in_sence = nullptr)
 {
 	typedef constant_pass::PASS_INPUT_RESOURCE_TYPE PASS_RES_TYPE;
 	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE GPU_RES_TYPE;
@@ -56,14 +55,14 @@ void directx_render::draw_call(
 			break;
 		}
 
-		if (pass->constant_pass_layout.use_resource_flag[PASS_RES_TYPE::USE_CAMERA_CB] && in_camera)
+		if (pass->constant_pass_layout.use_resource_flag[PASS_RES_TYPE::USE_CAMERA_CB] && in_sence)
 		{
-			directx_gpu_resource_element* camera_res = (directx_gpu_resource_element*)in_camera->gpu_resource_group[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_BUFFER][0];
+			directx_gpu_resource_element* camera_res = (directx_gpu_resource_element*)in_sence->gpu_resource_group[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_BUFFER][0];
 			command_list->SetGraphicsRootConstantBufferView(cbv_index++, camera_res->dx_resource.Get()->GetGPUVirtualAddress());
 		}
-		if (pass->constant_pass_layout.use_resource_flag[PASS_RES_TYPE::USE_LIGHT_CB] && in_light)
+		if (pass->constant_pass_layout.use_resource_flag[PASS_RES_TYPE::USE_LIGHT_CB] && in_sence)
 		{
-			directx_gpu_resource_element* light_res = (directx_gpu_resource_element*)in_light->gpu_resource_group[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_BUFFER][0];
+			directx_gpu_resource_element* light_res = (directx_gpu_resource_element*)in_sence->gpu_resource_group[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_BUFFER][1];
 			command_list->SetGraphicsRootShaderResourceView(srv_index++, light_res->dx_resource.Get()->GetGPUVirtualAddress());
 		}
 		if (pass->constant_pass_layout.use_resource_flag[PASS_RES_TYPE::USE_CUSTOM_TEXTURE])

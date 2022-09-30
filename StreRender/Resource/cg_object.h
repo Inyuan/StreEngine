@@ -70,8 +70,9 @@ struct GPU_RESOURCE_LAYOUT
 class cg_resource : public s_resource
 {
 public:
+	//用于构建 子资源 gpu_resource_element
+	std::vector<GPU_RESOURCE_LAYOUT> resource_gpu_layout[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TYPE_NUMBER];
 
-	std::map<std::string, GPU_RESOURCE_LAYOUT> resource_gpu_layout;
 
 public:
 	RESOURCE_TYPE resource_type = RESOURCE_TYPE::RES_BUFFER;
@@ -100,6 +101,7 @@ public:
 //物体
 class cg_object : public s_object
 {
+
 public:
 	SENCE_OBJECT_TYPE object_type = SENCE_OBJECT_TYPE::OBJ_EMPTY_OBJECT;
 	//坐标等
@@ -119,23 +121,63 @@ public:
 		bound_box object_bound_box;
 		s_float material_index = 0;
 	};
+	
+	struct gpu_material_data
+	{
+		//...
+		std::uint32_t mat_index;//??? 目前只支持一张贴图
+	};
+
+
+	cpu_object_data* object_data = nullptr;
+
+protected:
+	cg_object();
 
 public:
-	cg_object()
-	{
-		object_type = SENCE_OBJECT_TYPE::OBJ_EMPTY_OBJECT;
-		resource->resource_type = s_resource::RESOURCE_TYPE::RES_EMPTY_OBJECT;
-	}
+	
+	cg_object(cg_resource* in_resource);
 
 	virtual s_resource* get_resource() override { return resource; };
 
 };
 
-class cg_mesh_object : public cg_object
+
+
+//静态物体
+class cg_static_object : public s_static_object, cg_object
 {
 public:
-	char mesh_type[32] = { '\0' };
-	struct cpu_mesh_data
+
+	struct cpu_static_mesh_data
+	{
+		std::uint32_t vertex_group_size = 0;
+		std::uint32_t index_group_size = 0;
+		std::uint32_t material_size = 0;
+		cpu_object_data object_constant_data;
+		cg_material** material_group_ptr; //指针数组
+		gpu_material_data* material_data_buffer_ptr = nullptr;//要换算成复制入GPU的数组形式
+		std::uint32_t* material_index_offset_group_ptr = nullptr;;//数组
+		s_vertex* vertex_group_ptr = nullptr;//数组
+		s_index* index_group_ptr = nullptr;//数组
+		
+	};
+	cpu_static_mesh_data* static_mesh_data = nullptr;
+public:
+	cg_static_object() = delete;
+
+	cg_static_object(cg_resource* in_resource);
+
+	virtual s_resource* get_resource() override { return resource; };
+
+};
+
+//动态物体
+class cg_dynamic_object : public s_dynamic_object, cg_object
+{
+public:
+
+	struct cpu_dynamic_mesh_data
 	{
 		std::uint32_t vertex_group_size = 0;
 		std::uint32_t index_group_size = 0;
@@ -145,57 +187,15 @@ public:
 		std::uint32_t* material_index_offset_group_ptr;
 		s_vertex* vertex_group_ptr = nullptr;
 		s_index* index_group_ptr = nullptr;
-	};
-
-public:
-
-};
-
-//静态物体
-class cg_static_object : public s_static_object, cg_mesh_object
-{
-public:
-	cpu_mesh_data* cpu_static_mesh_data;
-public:
-	cg_static_object() = delete;
-
-	cg_static_object(cg_resource* in_resource)
-	{
-		resource = in_resource;
-		cpu_static_mesh_data = (cpu_mesh_data*)in_resource->data_ptr;
-		object_type = SENCE_OBJECT_TYPE::OBJ_STATIC_OBJECT;
-		resource->resource_type = s_resource::RESOURCE_TYPE::RES_STATIC_OBJECT;
-
-		resource->resource_gpu_layout["vertex"] 
-			= GPU_RESOURCE_LAYOUT(
-				"vertex", 
-				reinterpret_cast<void**>(&(cpu_static_mesh_data->vertex_group_ptr)),
-				cpu_static_mesh_data->vertex_group_size * sizeof(s_vertex),
-				1,
-				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_VERTEX,
-				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_CONSTANT);
-		//...
-	}
-
-	virtual s_resource* get_resource() override { return resource; };
-
-};
-
-//动态物体
-class cg_dynamic_object : public s_dynamic_object, cg_mesh_object
-{
-public:
-	struct cpu_dynamic_mesh_data
-	{
-		cpu_mesh_data mesh_data;
 		//animation data
 	};
+
+	cpu_dynamic_mesh_data* dynamic_mesh_data = nullptr;
+
 public:
-	cg_dynamic_object()
-	{
-		object_type = SENCE_OBJECT_TYPE::OBJ_DYNAMIC_OBJECT;
-		resource->resource_type = s_resource::RESOURCE_TYPE::RES_DYNAMIC_OBJECT;
-	}
+	cg_dynamic_object() = delete;
+
+	cg_dynamic_object(cg_resource* in_resource);
 
 	virtual s_resource* get_resource() override { return resource; };
 
@@ -229,25 +229,23 @@ public:
 
 	};
 
+	cpu_camera_data * camera_data = nullptr;
+
 public:
-	cg_camera()
-	{
-		object_type = SENCE_OBJECT_TYPE::OBJ_CAMERA;
-		resource->resource_type = s_resource::RESOURCE_TYPE::RES_CAMERA;
-	}
+	cg_camera(cg_resource* in_resource);
 
 
 	virtual s_resource* get_resource() override { return resource; };
 
 };
 
-//灯光
+//灯光 所有灯光为一个
 class cg_light : public s_light, cg_object
 {
 public:
 
 	cg_resource* resource;
-
+	//只有方向光？
 	struct cpu_light_data
 	{
 		s_float3 strength = { 10.0f, 10.0f, 10.0f };
@@ -258,12 +256,10 @@ public:
 		s_float spot_power = 64.0f;
 	};
 
+	cpu_light_data* light_data = nullptr;
+
 public:
-	cg_light()
-	{
-		object_type = SENCE_OBJECT_TYPE::OBJ_LIGHT;
-		resource->resource_type = s_resource::RESOURCE_TYPE::RES_LIGHT;
-	}
+	cg_light(cg_resource* in_resource);
 
 	virtual s_resource* get_resource() override { return resource; };
 
@@ -274,21 +270,24 @@ class cg_material : public s_material
 {
 public:
 
-	cg_texture* textrue;
-
 	cg_resource* resource;
 
 	struct cpu_material_data
 	{
-
+		cg_texture* textrue;
 	};
+
+	struct gpu_material_data
+	{
+		std::uint32_t texture_index = 0;
+	};
+
+	cpu_material_data* material_data;
 
 public:
 
-	cg_material()
-	{
-		resource->resource_type = s_resource::RESOURCE_TYPE::RES_MATERIAL;
-	}
+	cg_material(cg_resource* in_resource);
+
 
 	virtual s_resource* get_resource() override { return resource; };
 
@@ -301,12 +300,16 @@ public:
 
 	cg_resource* resource;
 
+	struct cpu_texture_data
+	{
+		std::uint32_t width = 1;
+		std::uint32_t height = 1;
+		void* data;
+	};
+	cpu_texture_data* texture_data;
 public:
 
-	cg_texture()
-	{
-		resource->resource_type = s_resource::RESOURCE_TYPE::RES_TEXTURE;
-	}
+	cg_texture(cg_resource* in_resource);
 
 	virtual s_resource* get_resource() override { return resource; };
 
@@ -330,14 +333,15 @@ public:
 	{
 		s_float TotalTime = 0.0f;
 		s_float DeltaTime = 0.0f;
+		//多个灯合成一个数组
+		std::uint32_t cpu_light_group_size;
+		cg_light* cpu_light_group_ptr = nullptr;
+		cg_camera* cpu_camera_ptr = nullptr;
 	};
-
+	cpu_sence_data* sence_data;
 public:
 
-	cg_sence()
-	{
-		resource->resource_type = s_resource::RESOURCE_TYPE::RES_SENCE;
-	}
+	cg_sence(cg_resource* in_resource);
 
 	virtual s_resource* get_resource() override { return resource; };
 

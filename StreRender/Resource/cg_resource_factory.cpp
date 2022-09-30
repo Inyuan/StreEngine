@@ -2,7 +2,7 @@
 
 s_memory_allocater_register resoucre_memory_allocater("resoucre_memory_allocater");
 
-cg_mesh_object::cpu_mesh_data* cg_resource_factory::allocate_mesh(
+cg_static_object::cpu_static_mesh_data* cg_resource_factory::allocate_static_mesh(
 	cg_resource* in_resource, 
 	std::size_t in_vertex_number,
 	std::size_t in_index_number,
@@ -19,26 +19,27 @@ cg_mesh_object::cpu_mesh_data* cg_resource_factory::allocate_mesh(
 		//sizeof(cg_mesh_object::cpu_mesh_data::material_index_offset_group_ptr) +
 		//sizeof(cg_mesh_object::cpu_mesh_data::vertex_group_ptr) +
 		//sizeof(cg_mesh_object::cpu_mesh_data::index_group_ptr) +
-		sizeof(cg_mesh_object::cpu_mesh_data) + 
+		sizeof(cg_static_object::cpu_static_mesh_data) +
 		in_material_numder * sizeof(cg_material*) +
+		in_material_numder * sizeof(cg_object::gpu_material_data) +
 		in_material_numder * sizeof(std::uint32_t) +
 		in_vertex_number * sizeof(s_vertex) +
 		in_index_number * sizeof(s_index));
 
-	cg_mesh_object::cpu_mesh_data* result = (cg_mesh_object::cpu_mesh_data*)in_resource->data_ptr;
+	cg_static_object::cpu_static_mesh_data* result = (cg_static_object::cpu_static_mesh_data*)in_resource->data_ptr;
 
 	result->vertex_group_size = in_vertex_number;
 	result->index_group_size = in_index_number;
 	result->material_size = in_material_numder;
 	//修正指针
-	return read_resource_as_mesh(in_resource);
+	return read_resource_as_static_mesh(in_resource);
 }
 
 
 //自己是头部
-cg_mesh_object::cpu_mesh_data* cg_resource_factory::read_resource_as_mesh(cg_resource* in_resource)
+cg_static_object::cpu_static_mesh_data* cg_resource_factory::read_resource_as_static_mesh(cg_resource* in_resource)
 {
-	cg_mesh_object::cpu_mesh_data* mesh_data = (cg_mesh_object::cpu_mesh_data*)in_resource->data_ptr;
+	cg_static_object::cpu_static_mesh_data* mesh_data = (cg_static_object::cpu_static_mesh_data*)in_resource->data_ptr;
 
 	//std::uint32_t* size_data_offset = (std::uint32_t*)(in_resource->data_ptr);
 	////获取顶点数量
@@ -55,13 +56,18 @@ cg_mesh_object::cpu_mesh_data* cg_resource_factory::read_resource_as_mesh(cg_res
 	//mesh_data->object_constant_data = *object_data_offset;
 	//object_data_offset += 1;
 
-	//材质指针
-	cg_material* material_group_offset = (cg_material*)(mesh_data + 1);
+	//材质指针数组
+	cg_material** material_group_offset = (cg_material**)(mesh_data + 1);
 	mesh_data->material_group_ptr = material_group_offset;
 	material_group_offset+= mesh_data->material_size;
 
+	//GPU材质数组
+	cg_object::gpu_material_data* gpu_mat_group_offset = (cg_object::gpu_material_data*)material_group_offset;
+	mesh_data->material_data_buffer_ptr = gpu_mat_group_offset;
+	gpu_mat_group_offset += mesh_data->material_size;
+
 	//材质偏移数组
-	std::uint32_t* material_index_offset_group_offset = (std::uint32_t*)material_group_offset;
+	std::uint32_t* material_index_offset_group_offset = (std::uint32_t*)gpu_mat_group_offset;
 	mesh_data->material_index_offset_group_ptr = material_index_offset_group_offset;
 	material_index_offset_group_offset += mesh_data->material_size;
 
@@ -75,4 +81,77 @@ cg_mesh_object::cpu_mesh_data* cg_resource_factory::read_resource_as_mesh(cg_res
 	mesh_data->index_group_ptr = index_data_offset;
 
 	return mesh_data;
+}
+
+//dynamic_mesh
+
+cg_dynamic_object::cpu_dynamic_mesh_data* cg_resource_factory::read_resource_as_dynamic_mesh(cg_resource* in_resource)
+{
+
+}
+
+cg_dynamic_object::cpu_dynamic_mesh_data* cg_resource_factory::allocate_dynamic_mesh(
+	cg_resource* in_resource,
+	std::size_t in_vertex_number,
+	std::size_t in_index_number,
+	std::size_t in_material_numder) 
+{
+
+}
+
+//camera_data
+
+
+cg_camera::cpu_camera_data* cg_resource_factory::read_resource_as_camera(cg_resource* in_resource)
+{
+
+}
+
+
+cg_camera::cpu_camera_data* cg_resource_factory::allocate_camera(
+	cg_resource* in_resource)
+{
+
+}
+
+//light_data
+
+cg_light::cpu_light_data* cg_resource_factory::read_resource_as_light(cg_resource* in_resource)
+{
+
+}
+
+
+cg_light::cpu_light_data* cg_resource_factory::allocate_light(
+	cg_resource* in_resource)
+{
+
+}
+
+//material_data
+
+cg_material::cpu_material_data* cg_resource_factory::read_resource_as_material(cg_resource* in_resource)
+{
+
+}
+
+
+cg_material::cpu_material_data* cg_resource_factory::allocate_material(
+	cg_resource* in_resource)
+{
+
+}
+
+//texture_data
+
+cg_texture::cpu_texture_data* cg_resource_factory::read_resource_as_texture(cg_resource* in_resource)
+{
+
+}
+
+
+cg_texture::cpu_texture_data* cg_resource_factory::allocate_texture(
+	cg_resource* in_resource)
+{
+
 }

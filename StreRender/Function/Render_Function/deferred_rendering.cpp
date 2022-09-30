@@ -10,11 +10,14 @@ void deferred_rendering::init(HINSTANCE in_instance, REDNER_API in_render_api)
 {
 	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE GPU_RES_TYPE;
 	typedef constant_pass::pass_layout cs_pass_layout;
-	//typedef constant_pass::PASS_RESOURCE_TYPE pass_res_type;
+	typedef constant_pass::PASS_INPUT_RESOURCE_TYPE pass_inpu_res_type;
 	typedef constant_pass::shader_layout::SHADER_TYPE SHADER_TYPE;
 	typedef constant_pass::shader_layout::shader_input::INPUT_ELEMENT_SIZE INPUT_ELEMENT_SIZE;
 	deferred_render_system = new render_system();
 	deferred_render_system->init(in_instance, in_render_api);
+
+
+	gpu_resource* shadow_map = deferred_render_system->create_gpu_texture("shadow_map", GPU_RES_TYPE::GPU_RES_RENDER_TARGET);
 
 	gpu_resource* render_target_1 = deferred_render_system->create_gpu_texture("render_target_1", GPU_RES_TYPE::GPU_RES_RENDER_TARGET);
 	gpu_resource* render_target_2 = deferred_render_system->create_gpu_texture("render_target_2", GPU_RES_TYPE::GPU_RES_RENDER_TARGET);
@@ -22,32 +25,17 @@ void deferred_rendering::init(HINSTANCE in_instance, REDNER_API in_render_api)
 	gpu_resource* render_target_4 = deferred_render_system->create_gpu_texture("render_target_4", GPU_RES_TYPE::GPU_RES_RENDER_TARGET);
 	gpu_resource* render_target_5 = deferred_render_system->create_gpu_texture("render_target_5", GPU_RES_TYPE::GPU_RES_RENDER_TARGET);
 
+
+
 	gpu_resource* depth_stencil = deferred_render_system->create_gpu_texture("depth_stencil", GPU_RES_TYPE::GPU_RES_DEPTH_STENCIL);
 	//BASE PASS
 	{
 		cs_pass_layout base_pass_layout;
 		base_pass_layout.pass_type = constant_pass::PASS_TYPE::MESH_PASS;
+		
+		base_pass_layout.use_resource_flag[pass_inpu_res_type::USE_CUSTOM_TEXTURE];
 
-		//ObjCB
-		base_pass_layout.input_gpu_resource_layout.
-			push_back({ pass_res_type::PASS_RES_CBV,
-				1,nullptr });
-		//Camera
-		base_pass_layout.input_gpu_resource_layout.
-			push_back({ pass_res_type::PASS_RES_CBV,
-				1,nullptr });
-		//MatCB
-		base_pass_layout.input_gpu_resource_layout.
-			push_back({ pass_res_type::PASS_RES_SRV,
-				1,nullptr });
-		//ShadowMap
-		base_pass_layout.input_gpu_resource_layout.
-			push_back({ pass_res_type::PASS_RES_SRV,
-				1,nullptr });
-		//Texture
-		base_pass_layout.input_gpu_resource_layout.
-			push_back({ pass_res_type::PASS_RES_DESCRIPTOR_TBALE,
-				1,nullptr });
+		base_pass_layout.input_gpu_resource.push_back(shadow_map);
 
 		base_pass_layout.pass_shader_layout.shader_vaild[SHADER_TYPE::VS] = true;
 		base_pass_layout.pass_shader_layout.shader_vaild[SHADER_TYPE::PS] = true;

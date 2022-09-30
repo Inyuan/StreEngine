@@ -10,8 +10,7 @@ public:
 	virtual void draw_call(
 		constant_pass * in_pass,
 		std::vector<gpu_resource*>& in_object,
-		gpu_resource* in_camera = nullptr,
-		gpu_resource* in_light = nullptr) = 0;
+		gpu_resource* in_sence) = 0;
 
 	virtual constant_pass* allocate_pass(constant_pass::pass_layout in_constant_pass_layout) = 0;
 

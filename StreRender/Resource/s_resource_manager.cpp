@@ -276,6 +276,8 @@ std::string GetFbxFile(std::wstring DirPath)
 //
 //}
 
+
+
 //fbx解包
 s_resource* s_resource_manager::load_local_fbx(wchar_t* in_path)
 {
@@ -306,10 +308,25 @@ s_resource* s_resource_manager::load_local_fbx(wchar_t* in_path)
     
     
     //为资源分配空间
-    cg_mesh_object::cpu_mesh_data* mesh_data;
+    cg_static_object::cpu_static_mesh_data* mesh_data;
     {
         cg_resource_factory mesh_factory;
-        mesh_data = mesh_factory.allocate_mesh((cg_resource*)out_resource, controlPointCount, (int)polygonCount * PolygonType, material_size);
+        mesh_data = mesh_factory.allocate_static_mesh((cg_resource*)out_resource, controlPointCount, (int)polygonCount * PolygonType, material_size);
+        //构建默认材质
+        for (int i = 0; i < material_size; i++)
+        {
+            s_resource* mat_resource = allocater->allocate<cg_resource>();
+            
+            auto mat_data = mesh_factory.allocate_material((cg_resource*)mat_resource);
+            
+            //??? 材质默认参数！！！
+            //...
+            //mat_data->textrue
+
+            //放入object
+            mesh_data->material_group_ptr[i] = (cg_material*)create_material(mat_resource);
+        }
+    
     }
     auto vertices = mesh_data->vertex_group_ptr;
     auto indices = mesh_data->index_group_ptr;
