@@ -73,7 +73,6 @@ public:
 	//用于构建 子资源 gpu_resource_element
 	std::vector<GPU_RESOURCE_LAYOUT> resource_gpu_layout[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TYPE_NUMBER];
 
-
 public:
 	RESOURCE_TYPE resource_type = RESOURCE_TYPE::RES_BUFFER;
 	//是否在本地存在
@@ -277,6 +276,7 @@ public:
 		cg_texture* textrue;
 	};
 
+	//固定了大小
 	struct gpu_material_data
 	{
 		std::uint32_t texture_index = 0;

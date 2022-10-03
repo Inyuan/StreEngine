@@ -4,7 +4,7 @@
 #include <array>
 
 
-// 所有资源都已经装好在GPU后在这使用
+// 所有资源都已经装好在GPU后在这使用,并且已经刷新好
 //
 // input: GPU_object
 // input: GPU_camera sence->buffer0

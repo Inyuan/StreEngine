@@ -1,5 +1,7 @@
 #include "cg_object.h"
 
+//物体和resource的链接
+//以及物体的GPU资源声明
 
 void calculate_element_group(
 	std::uint32_t* const in_mat_index_offset_group_ptr,
@@ -122,7 +124,7 @@ cg_static_object::cg_static_object(cg_resource* in_resource)
 				//更新对应贴图的索引
 				gpu_mat_group[i].mat_index = texture_group.size() - 1;
 
-
+				//这里直接就由模型储存贴图 不对
 				resource->resource_gpu_layout[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TEXTURE]
 					.push_back(GPU_RESOURCE_LAYOUT(
 						"texture",
@@ -134,7 +136,7 @@ cg_static_object::cg_static_object(cg_resource* in_resource)
 						GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_CONSTANT));//???
 			}
 		}
-
+		//这里直接就由模型储存了材质 不对
 		resource->resource_gpu_layout[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_BUFFER]
 			.push_back(GPU_RESOURCE_LAYOUT(
 				"material_group",
@@ -143,7 +145,7 @@ cg_static_object::cg_static_object(cg_resource* in_resource)
 				static_mesh_data->material_size,
 				{},
 				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_BUFFER,
-				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_UPLOAD));
+				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_UPLOAD));//???
 
 	}
 	//...
@@ -237,7 +239,7 @@ cg_sence::cg_sence(cg_resource* in_resource)
 				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_BUFFER,
 				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_UPLOAD));
 	}
-	//lights
+	//lights 直接这样就写死了多少个灯
 	{
 		resource->resource_gpu_layout[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_BUFFER]
 			.push_back(GPU_RESOURCE_LAYOUT(
@@ -247,6 +249,6 @@ cg_sence::cg_sence(cg_resource* in_resource)
 				sence_data->cpu_light_group_size,
 				{},
 				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_BUFFER,
-				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_UPLOAD));
+				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_UPLOAD));//???
 	}
 }

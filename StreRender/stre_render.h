@@ -152,8 +152,6 @@ class s_resource_manager
 {
 public:
 
-	
-
 	//物体需要资源来构建
 	s_object* create_object(s_resource* in_resource);
 
