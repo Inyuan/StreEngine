@@ -1,5 +1,4 @@
 #pragma once
-#include "stre_render.h"
 #include"Core/Memory/s_memory.h"
 #include"cg_object.h"
 

@@ -95,7 +95,7 @@ cg_static_object::cg_static_object(cg_resource* in_resource)
 				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_UPLOAD));
 	}
 
-	//构建mat group & texture 
+	//构建mat group & ???默认texture 
 	{
 		
 		std::vector<cg_texture*> texture_group;
@@ -106,37 +106,41 @@ cg_static_object::cg_static_object(cg_resource* in_resource)
 		{
 			
 			auto mat = static_mesh_data->material_group_ptr[i];
-			auto texture = mat->material_data->textrue;
+			auto textures = mat->material_data->textrue;
 			
-			bool had_texture = false;
-			for(uint32_t j = 0; j < texture_group.size(); j++)
+			for (int i = 0; i < mat->material_data->textrue_group_size;i++)
 			{
-				if (texture_group[j] == texture)
+				auto texture = textures[i];
+				bool had_texture = false;
+				for (uint32_t j = 0; j < texture_group.size(); j++)
 				{
-					had_texture = true;
-					break;
+					if (texture_group[j] == texture)
+					{
+						had_texture = true;
+						break;
 
+					}
+				}
+				if (!had_texture)
+				{
+					texture_group.push_back(texture);
+					//更新对应贴图的索引
+					gpu_mat_group[i].mat_index = texture_group.size() - 1;
+
+					//这里直接就由模型储存贴图 只是默认贴图
+					resource->resource_gpu_layout[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TEXTURE]
+						.push_back(GPU_RESOURCE_LAYOUT(
+							"texture",
+							reinterpret_cast<void**>(&(texture->texture_data->data)),
+							sizeof(texture->texture_data->width * texture->texture_data->height),
+							1,
+							{},
+							GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TEXTURE,
+							GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_CONSTANT));//???
 				}
 			}
-			if (!had_texture)
-			{
-				texture_group.push_back(texture);
-				//更新对应贴图的索引
-				gpu_mat_group[i].mat_index = texture_group.size() - 1;
-
-				//这里直接就由模型储存贴图 不对
-				resource->resource_gpu_layout[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TEXTURE]
-					.push_back(GPU_RESOURCE_LAYOUT(
-						"texture",
-						reinterpret_cast<void**>(&(texture->texture_data->data)),
-						sizeof(texture->texture_data->width * texture->texture_data->height),
-						1,
-						{},
-						GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TEXTURE,
-						GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_CONSTANT));//???
-			}
 		}
-		//这里直接就由模型储存了材质 不对
+		//这里直接就由模型储存材质
 		resource->resource_gpu_layout[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_BUFFER]
 			.push_back(GPU_RESOURCE_LAYOUT(
 				"material_group",
@@ -148,6 +152,7 @@ cg_static_object::cg_static_object(cg_resource* in_resource)
 				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_UPLOAD));//???
 
 	}
+	//没有贴图 需要可刷新的贴图函数
 	//...
 }
 
@@ -208,7 +213,7 @@ cg_texture::cg_texture(cg_resource* in_resource)
 	texture_data = (cpu_texture_data*)in_resource->data_ptr;
 	resource->resource_type = s_resource::RESOURCE_TYPE::RES_TEXTURE;
 
-	{//texture 也是按常规套路上传吗
+	{//texture ??? 也能按常规套路上传吗
 		resource->resource_gpu_layout[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TEXTURE]
 			.push_back(GPU_RESOURCE_LAYOUT(
 				"texture",
@@ -217,7 +222,7 @@ cg_texture::cg_texture(cg_resource* in_resource)
 				1,
 				{},
 				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TEXTURE,
-				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_UPLOAD));//???
+				GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE::GPU_RES_CONSTANT));//??? 必须是常量
 	}
 }
 

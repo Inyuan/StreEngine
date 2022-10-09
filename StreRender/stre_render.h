@@ -189,9 +189,8 @@ public:
 	//fbx导入物体 ??? 缺动画
 	s_resource* load_local_fbx( wchar_t* in_path);
 
-	//
-	void sence_add_object(s_object* in_object);
-
+	//回调绑定关系
+	void change_material_texture();
 
 };
 

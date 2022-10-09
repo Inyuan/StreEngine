@@ -5,7 +5,7 @@
 #include <wrl.h>
 #include "Core/Render_Core/Render_API/d3dx12.h"
 #include "gpu_resource.h"
-#include "stre_render.h"
+
 using Microsoft::WRL::ComPtr;
 
 

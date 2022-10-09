@@ -448,7 +448,7 @@ constant_pass* directx_render::allocate_pass(constant_pass::pass_layout in_const
 			mat_cb_rp.InitAsShaderResourceView(input_texture_number++);
 
 			CD3DX12_DESCRIPTOR_RANGE texTable;
-			//50???
+			//50??? 要改成shdaerDX12回调获取编译的信息
 			texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 50, input_texture_number++);
 
 			CD3DX12_ROOT_PARAMETER texture_rp;
@@ -800,11 +800,46 @@ void directx_render::allocate_default_resource(
 	// The caller can Release the uploadBuffer after it knows the copy has been executed.
 }
 
+s_memory_allocater_register gpu_resource_ptr_allocater("gpu_resource_ptr_allocater");
+
+gpu_resource* directx_render::allocate_gpu_resource(cg_resource* in_resource)
+{
+	auto allocater = memory_allocater_group["gpu_resource_ptr_allocater"];
+
+	directx_gpu_resource* gpu_resource_ptr = (directx_gpu_resource*)allocater->allocate<gpu_resource>();
+	gpu_resource_ptr->name = in_resource->get_name();
+
+	//遍历每种类型往里面塞
+	for (int i = 0; i < GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TYPE_NUMBER; i++)
+	{
+		auto it = in_resource->resource_gpu_layout[i].begin();
+
+		for (; it != in_resource->resource_gpu_layout[i].end(); it++)
+		{
+			auto gpu_res_type = it->gpu_resource_type;
+			gpu_resource_ptr->gpu_resource_group[
+				gpu_res_type]
+				.push_back(allocate_gpu_memory(
+					*it));
+		}
+	}
+
+	int texture_size = in_resource->resource_gpu_layout[GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TEXTURE].size();
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	srvHeapDesc.NumDescriptors = texture_size;
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	
+	create_descriptor_heap(srvHeapDesc, gpu_resource_ptr->srv_heap);
+
+	return gpu_resource_ptr;
+}
+
 s_memory_allocater_register gpu_resource_element_ptr_allocater("gpu_resource_element_ptr_allocater");
 
 //新建GPU内存 并复制数据
 gpu_resource_element* directx_render::allocate_gpu_memory(
-	GPU_RESOURCE_LAYOUT in_resource_layout)
+	GPU_RESOURCE_LAYOUT& in_resource_layout)
 {
 	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE GPU_RES_TYPE;
 	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE GPU_RES_STATE;
@@ -812,6 +847,7 @@ gpu_resource_element* directx_render::allocate_gpu_memory(
 
 	directx_gpu_resource_element* dx_gpu_res_elem = (directx_gpu_resource_element*)allocater->allocate<directx_gpu_resource_element>();
 	dx_gpu_res_elem->name = in_resource_layout.gpu_resource_name;
+	dx_gpu_res_elem->cpu_resource_layout = &in_resource_layout;
 	auto gpu_res_type = in_resource_layout.gpu_resource_type;
 	auto gpu_res_state = in_resource_layout.gpu_resource_state;
 	
@@ -850,7 +886,50 @@ gpu_resource_element* directx_render::allocate_gpu_memory(
 	return dx_gpu_res_elem;
 }
 
+void directx_render::update_gpu_memory(GPU_RESOURCE_LAYOUT& in_resource_layout, gpu_resource_element* in_out_resource_elem_ptr)
+{
+	update_all_upload_resource(in_resource_layout.cpu_data, (directx_gpu_resource_element*)in_out_resource_elem_ptr);
+}
 
+
+void directx_render::update_gpu_resource(cg_resource* in_resource, gpu_resource* in_out_gpu_resouce_ptr)
+{
+	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE GPU_RES_STATE;
+
+
+	auto gpu_resource_ptr = (directx_gpu_resource*)in_out_gpu_resouce_ptr;
+	for (int i = 0; i < GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TYPE_NUMBER; i++)
+	{
+		for (int j = 0; j< in_resource->resource_gpu_layout[i].size(); j++)
+		{
+			auto cpu_elem = in_resource->resource_gpu_layout[i][j];
+			if (cpu_elem.need_update)
+			{
+				auto gpu_res_type = in_resource->resource_gpu_layout[i][j].gpu_resource_type;
+				auto gpu_elem = gpu_resource_ptr->gpu_resource_group[gpu_res_type][j];
+				
+				//换了一个新的资源
+				//或者是常量缓存
+				if (&cpu_elem != gpu_elem->cpu_resource_layout
+					|| cpu_elem.gpu_resource_state == GPU_RES_STATE::GPU_RES_CONSTANT)
+				{
+					//??? !!!... 卸载旧资源
+
+					//重新分配 
+					//gpu_elem = allocate_gpu_memory(cpu_elem);
+
+				}
+				//上传堆更新
+				else if(cpu_elem.gpu_resource_state == GPU_RES_STATE::GPU_RES_UPLOAD)
+				{
+					update_gpu_memory(cpu_elem, gpu_elem);
+				}
+				cpu_elem.need_update = false;
+			}
+		}
+	}
+
+}
 
 
 gpu_resource_element* directx_render::create_gpu_texture(

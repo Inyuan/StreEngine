@@ -1,13 +1,7 @@
 #pragma once
 #include "Core/Render_Core/render.h"
 #include "Core/Memory/s_memory.h"
-#include "Core/Process/BProcess.h"
-#include "Core/Render_Core/Resource/constant_pass.h"
-#include "Core/Render_Core/Resource/gpu_resource.h"
 #include "stre_render.h"
-#include "Resource/cg_object.h"
-
-#include <map>
 
 class render_system
 {
@@ -36,6 +30,8 @@ public:
 	constant_pass* allocate_pass(constant_pass::pass_layout in_constant_pass_layout);
 
 	gpu_resource* allocate_gpu_memory(cg_resource* in_resource);
+
+	void update_gpu_memory(cg_resource* in_resource, gpu_resource* in_out_gpu_resouce);
 
 	gpu_resource* create_gpu_texture(
 		std::string in_gpu_texture_name,

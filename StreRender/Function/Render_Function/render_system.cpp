@@ -1,6 +1,5 @@
 #include "render_system.h"
 #include "Core/Render_Core/directx_render.h"
-#include "Resource/cg_resource_factory.h"
 s_memory_allocater_register render_memory_allocater("render_memory_allocater");
 
 void render_system::init(HINSTANCE in_instance, REDNER_API in_render_api)
@@ -34,35 +33,18 @@ constant_pass* render_system::allocate_pass(constant_pass::pass_layout in_consta
 }
 
 
-s_memory_allocater_register gpu_resource_ptr_allocater("gpu_resource_ptr_allocater");
+
+//使用回调调用
 
 //按照GPU_RESOURCE_TYPE
 //将物体的CPU资源复制到GPU上
 //每个type有自己的资源数组
 gpu_resource* render_system::allocate_gpu_memory(cg_resource* in_resource)
 {
-	auto allocater = memory_allocater_group["gpu_resource_ptr_allocater"];
-
-	gpu_resource* gpu_resource_ptr = (gpu_resource*)allocater->allocate<gpu_resource>();
-	gpu_resource_ptr->name = in_resource->get_name();
-
-	//遍历每种类型往里面塞
-	for (int i = 0; i < GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TYPE_NUMBER; i++)
-	{
-		auto it = in_resource->resource_gpu_layout[i].begin();
-
-		for (; it != in_resource->resource_gpu_layout[i].end(); it++)
-		{
-			auto gpu_res_type = it->gpu_resource_type;
-			gpu_resource_ptr->gpu_resource_group[
-				gpu_res_type]
-				.push_back(renderer->allocate_gpu_memory(
-					*it));
-		}
-	}
+	
 
 
-	return gpu_resource_ptr;
+	return renderer->allocate_gpu_resource(in_resource);
 }
 
 //必须是 RT 或者Depth
@@ -90,6 +72,14 @@ gpu_resource* render_system::create_gpu_texture(
 	return nullptr;
 
 }
+
+//使用回调调用
+void render_system::update_gpu_memory(cg_resource* in_resource, gpu_resource* in_out_gpu_resouce)
+{
+
+}
+
+
 
 void render_system::clear_gpu_texture(gpu_resource* in_gpu_resource)
 {

@@ -30,8 +30,10 @@ struct GPU_RESOURCE_LAYOUT
 		GPU_RES_CONSTANT
 	};
 
+	bool need_update = false;
+
 	std::string gpu_resource_name;
-	//指向cg_resource的data_ptr
+	//指向cg_resource的data_ptr defulatbuffer用的
 	void** cpu_data; 
 	// 一个元素的大小
 	UINT cpu_data_size; 
@@ -273,7 +275,8 @@ public:
 
 	struct cpu_material_data
 	{
-		cg_texture* textrue;
+		std::uint32_t textrue_group_size = 0;
+		cg_texture* textrue[256];
 	};
 
 	//固定了大小

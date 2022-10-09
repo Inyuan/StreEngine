@@ -27,6 +27,47 @@ enum DIRECTX_RESOURCE_DESC_TYPE
     DX_UAV
 };
 
+class directx_gpu_resource_element : public gpu_resource_element
+{
+public:
+    ComPtr<ID3D12Resource> dx_resource;
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC dx_srv;
+    D3D12_RENDER_TARGET_VIEW_DESC dx_rtv;
+    D3D12_DEPTH_STENCIL_VIEW_DESC dx_dsv;
+    D3D12_CONSTANT_BUFFER_VIEW_DESC dx_csv;
+    D3D12_UNORDERED_ACCESS_VIEW_DESC dx_uav;
+
+    D3D12_RESOURCE_STATES current_state = D3D12_RESOURCE_STATE_GENERIC_READ;
+
+    DXGI_FORMAT dx_format;
+};
+
+class directx_gpu_resource : public gpu_resource
+{
+public:
+    ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
+};
+
+class directx_constant_pass : public constant_pass
+{
+public:
+    ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
+    ComPtr<ID3D12DescriptorHeap> rtv_heap = nullptr;
+    ComPtr<ID3D12DescriptorHeap> dsv_heap = nullptr;
+    ComPtr<ID3D12DescriptorHeap> uav_heap = nullptr;
+
+    ComPtr<ID3D12RootSignature> rootsignature = nullptr;
+
+    std::unordered_map<std::string, ComPtr<ID3DBlob>> shader_group;
+    ComPtr<ID3D12PipelineState> pso;
+
+    std::vector<D3D12_INPUT_ELEMENT_DESC> input_layout;
+
+};
+
+
+
 class directx_render : public render 
 {
 protected:
@@ -131,10 +172,13 @@ public:
         directx_gpu_resource_element* in_res_elem);
 
 public:
+    virtual gpu_resource* allocate_gpu_resource(cg_resource* in_resource) override;
 
-    virtual gpu_resource_element* allocate_gpu_memory(GPU_RESOURCE_LAYOUT in_resource_layout) override;
+    virtual void update_gpu_resource(cg_resource* in_resource, gpu_resource* in_out_gpu_resouce_ptr) override;
 
-    //virtual gpu_resource* update_gpu_memory(cg_resource* in_resource) override;
+    virtual gpu_resource_element* allocate_gpu_memory(GPU_RESOURCE_LAYOUT& in_resource_layout) override;
+
+    virtual void update_gpu_memory(GPU_RESOURCE_LAYOUT& in_resource_layout, gpu_resource_element* in_out_resource_elem_ptr) override;
 
     virtual gpu_resource_element* create_gpu_texture(
         std::string in_gpu_texture_name,
@@ -158,45 +202,6 @@ public:
     virtual void init(HWND in_main_wnd) override;
 
     virtual void over() override;
-
-};
-
-class directx_gpu_resource_element : public gpu_resource_element
-{
-public:
-    ComPtr<ID3D12Resource> dx_resource;
-
-    D3D12_SHADER_RESOURCE_VIEW_DESC dx_srv;
-    D3D12_RENDER_TARGET_VIEW_DESC dx_rtv;
-    D3D12_DEPTH_STENCIL_VIEW_DESC dx_dsv;
-    D3D12_CONSTANT_BUFFER_VIEW_DESC dx_csv;
-    D3D12_UNORDERED_ACCESS_VIEW_DESC dx_uav;
-
-    D3D12_RESOURCE_STATES current_state = D3D12_RESOURCE_STATE_GENERIC_READ;
-
-    DXGI_FORMAT dx_format;
-};
-
-class directx_gpu_resource : public gpu_resource
-{
-public:
-    ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
-};
-
-class directx_constant_pass : public constant_pass
-{
-public:
-    ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
-    ComPtr<ID3D12DescriptorHeap> rtv_heap = nullptr;
-    ComPtr<ID3D12DescriptorHeap> dsv_heap = nullptr;
-    ComPtr<ID3D12DescriptorHeap> uav_heap = nullptr;
-
-    ComPtr<ID3D12RootSignature> rootsignature = nullptr;
-
-    std::unordered_map<std::string, ComPtr<ID3DBlob>> shader_group;
-    ComPtr<ID3D12PipelineState> pso;
-
-    std::vector<D3D12_INPUT_ELEMENT_DESC> input_layout;
 
 };
 

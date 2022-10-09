@@ -36,4 +36,6 @@ public:
 
 	//隔多少个元素为一组
 	std::vector<UINT> element_group_number; //用于存储index等数据的内部偏移( [0] 第0组有多少个元素)
+
+	GPU_RESOURCE_LAYOUT* cpu_resource_layout;
 };
