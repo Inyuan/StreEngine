@@ -891,12 +891,12 @@ void directx_render::update_gpu_memory(GPU_RESOURCE_LAYOUT& in_resource_layout, 
 	update_all_upload_resource(in_resource_layout.cpu_data, (directx_gpu_resource_element*)in_out_resource_elem_ptr);
 }
 
-
+//???回调 让外面写这个函数
 void directx_render::update_gpu_resource(cg_resource* in_resource, gpu_resource* in_out_gpu_resouce_ptr)
 {
 	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE GPU_RES_STATE;
 
-
+	//这里是遍历物体内部查刷新 
 	auto gpu_resource_ptr = (directx_gpu_resource*)in_out_gpu_resouce_ptr;
 	for (int i = 0; i < GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TYPE_NUMBER; i++)
 	{
@@ -914,10 +914,8 @@ void directx_render::update_gpu_resource(cg_resource* in_resource, gpu_resource*
 					|| cpu_elem.gpu_resource_state == GPU_RES_STATE::GPU_RES_CONSTANT)
 				{
 					//??? !!!... 卸载旧资源
-
 					//重新分配 
 					//gpu_elem = allocate_gpu_memory(cpu_elem);
-
 				}
 				//上传堆更新
 				else if(cpu_elem.gpu_resource_state == GPU_RES_STATE::GPU_RES_UPLOAD)

@@ -1,6 +1,14 @@
 #pragma once
 #include <Windows.h>
 
+/***
+************************************************************
+*
+* Configuration
+*
+************************************************************
+*/
+
 ///configuration
 #define CLIENT_WIDTH s_render_configuration::client_width
 #define CLIENT_HEIGHT s_render_configuration::client_height
@@ -31,6 +39,13 @@ enum REDNER_API
 };
 
 
+/***
+************************************************************
+*
+* Renderer
+*
+************************************************************
+*/
 
 ///rendering type
 
@@ -58,6 +73,13 @@ public:
 
 
 
+/***
+************************************************************
+*
+* Resource
+*
+************************************************************
+*/
 
 //资源
 class s_resource
@@ -128,30 +150,71 @@ class s_light : public s_object
 class s_material 
 {
 public:
-	virtual s_resource* get_resource() = 0;
+
 };
 
 //贴图
 class s_texture 
 {
 public:
-	virtual s_resource* get_resource() = 0;
+
 };
 
 //场景
 class s_sence 
 {
 public:
-	virtual s_resource* get_resource() = 0;
+
 };
 
-//资源导入导出器
+/***
+************************************************************
+*
+* Resource Manager
+*
+************************************************************
+*/
+
+//资源导入导出器 (内部新建的内存由静态memory_allocater管理)
 // 管理场景的资源加入和删除
 // 资源的CPU和GPU内存管理
-class s_resource_manager
+class s_material_manager
 {
 public:
+	//物体需要资源来构建
+	s_material* create_material(s_resource* in_resource);
 
+	//??? 缺默认的物体构建
+	s_resource* create_material_resource();
+
+	//??? 缺读取资源
+	s_resource* load_local_resource(wchar_t* in_path);
+
+	//回调绑定关系
+	void change_texture();
+
+	void add_texture();
+
+	void release_texture();
+};
+
+class s_texture_manager
+{
+public:
+	//物体需要资源来构建
+	s_texture* create_texture(s_resource* in_resource);
+
+	//??? 缺默认的物体构建
+	s_resource* create_texture_resource();
+
+	//??? 缺读取资源
+	s_resource* load_local_resource(wchar_t* in_path);
+};
+
+
+class s_object_manager
+{
+public:
 	//物体需要资源来构建
 	s_object* create_object(s_resource* in_resource);
 
@@ -159,40 +222,46 @@ public:
 
 	s_dynamic_object* create_dynamic_object(s_resource* in_resource);
 
+	//??? 缺默认的物体构建
+	s_resource* create_object_resource();
+
+	//??? 缺读取资源
+	s_resource* load_local_resource(wchar_t* in_path);
+
+	//fbx导入物体 ??? 缺动画
+	s_resource* load_local_fbx(wchar_t* in_path);
+};
+
+class s_sence_manager
+{
+public:
+	//物体需要资源来构建
 	s_camera* create_camera(s_resource* in_resource);
 
 	s_light* create_light(s_resource* in_resource);
 
 	s_sence* create_sence(s_resource* in_resource);
 
-	s_material* create_material(s_resource* in_resource);
-
-	s_texture* create_texture(s_resource* in_resource);
-
 	//??? 缺默认的物体构建
-	s_resource* create_object_resource();
-
 	s_resource* create_camera_resource();
 
 	s_resource* create_light_resource();
 
 	s_resource* create_sence_resource();
 
-	s_resource* create_material_resource();
-
-	s_resource* create_texture_resource();
-
 	//??? 缺读取资源
-
 	s_resource* load_local_resource(wchar_t* in_path);
 
-	//fbx导入物体 ??? 缺动画
-	s_resource* load_local_fbx( wchar_t* in_path);
-
-	//回调绑定关系
-	void change_material_texture();
-
 };
+
+
+/***
+************************************************************
+*
+* Base Type
+*
+************************************************************
+*/
 
 ///base type
 
@@ -303,3 +372,4 @@ struct s_vertex
 
 
 typedef std::uint32_t s_index;
+

@@ -32,7 +32,10 @@
     <ClCompile Include="Function\Render_Function\render_system.cpp" />
     <ClCompile Include="Resource\cg_object.cpp" />
     <ClCompile Include="Resource\cg_resource_factory.cpp" />
-    <ClCompile Include="Resource\s_resource_manager.cpp" />
+    <ClCompile Include="Resource\s_material_manager.cpp" />
+    <ClCompile Include="Resource\s_object_manager.cpp" />
+    <ClCompile Include="Resource\s_sence_manager.cpp" />
+    <ClCompile Include="Resource\s_texture_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Exception\exception.h" />

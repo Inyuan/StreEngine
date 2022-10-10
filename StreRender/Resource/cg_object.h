@@ -292,7 +292,6 @@ public:
 	cg_material(cg_resource* in_resource);
 
 
-	virtual s_resource* get_resource() override { return resource; };
 
 };
 
@@ -314,7 +313,6 @@ public:
 
 	cg_texture(cg_resource* in_resource);
 
-	virtual s_resource* get_resource() override { return resource; };
 
 };
 
@@ -345,7 +343,5 @@ public:
 public:
 
 	cg_sence(cg_resource* in_resource);
-
-	virtual s_resource* get_resource() override { return resource; };
 
 };
