@@ -110,9 +110,8 @@ private:
     void msaa_configuration();//???
 
     void ScreenViewportResize(int in_width, int in_height);
-public:
+private:
 
-    //??? 有必要暴露在外面吗
     void create_descriptor_heap(
         D3D12_DESCRIPTOR_HEAP_DESC& in_dx_descheap_desc,
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> in_out_descheap);
@@ -171,6 +170,12 @@ public:
         int elementIndex,
         directx_gpu_resource_element* in_res_elem);
 
+    void switch_gpu_resource_state(
+        directx_gpu_resource_element* in_gpu_res_elem,
+        D3D12_RESOURCE_STATES in_new_resource_states);
+
+    void screen_vertexs_and_indexes_input();
+
 public:
     virtual gpu_resource* allocate_gpu_resource(cg_resource* in_resource) override;
 
@@ -184,11 +189,7 @@ public:
         std::string in_gpu_texture_name,
         GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE in_resoure_type) override;
 
-    void switch_gpu_resource_state(
-        directx_gpu_resource_element* in_gpu_res_elem,
-        D3D12_RESOURCE_STATES in_new_resource_states);
 
-    void screen_vertexs_and_indexes_input();
 
 public:
 

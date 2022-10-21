@@ -39,3 +39,6 @@ public:
 
 	GPU_RESOURCE_LAYOUT* cpu_resource_layout;
 };
+
+
+

@@ -6,16 +6,14 @@
 //利用render_system设定输出目标
 
 //延迟渲染
-void deferred_rendering::init(HINSTANCE in_instance, REDNER_API in_render_api)
+template<typename T_render>
+ void deferred_rendering<T_render>::pass_init()
 {
 	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE GPU_RES_TYPE;
 	typedef constant_pass::pass_layout cs_pass_layout;
 	typedef constant_pass::PASS_INPUT_RESOURCE_TYPE pass_inpu_res_type;
 	typedef constant_pass::shader_layout::SHADER_TYPE SHADER_TYPE;
 	typedef constant_pass::shader_layout::shader_input::INPUT_ELEMENT_SIZE INPUT_ELEMENT_SIZE;
-	deferred_render_system = new render_system();
-	deferred_render_system->init(in_instance, in_render_api);
-
 
 	gpu_resource* shadow_map = deferred_render_system->create_gpu_texture("shadow_map", GPU_RES_TYPE::GPU_RES_RENDER_TARGET);
 
@@ -65,12 +63,14 @@ void deferred_rendering::init(HINSTANCE in_instance, REDNER_API in_render_api)
 
 }
 
-void deferred_rendering::over()
+template<typename T_render>
+void deferred_rendering<T_render>::over()
 {
 
 }
 
-void deferred_rendering::draw(s_sence* in_sence)
+template<typename T_render>
+void deferred_rendering<T_render>::draw(s_sence* in_sence)
 {
 	//
 

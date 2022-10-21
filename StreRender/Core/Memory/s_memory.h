@@ -10,11 +10,8 @@ private:
 	void* memory_ptr;
 public:
 
-	s_memory(std::size_t in_size) // 10000
+	s_memory() // 10000
 	{
-		memory_ptr = malloc(in_size);
-
-
 	}
 
 	template<typename T>
@@ -60,7 +57,6 @@ void* s_memory::custom_allocate(std::size_t in_size)
 
 
 std::map<std::string, s_memory* > memory_allocater_group;
-
 
 class s_memory_allocater_register
 {

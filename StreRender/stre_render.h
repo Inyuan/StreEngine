@@ -33,12 +33,6 @@ unsigned int s_render_configuration::client_height = 600;
 bool s_render_configuration::msaax4_state = false;
 unsigned int s_render_configuration::msaax4_quality = 0;
 
-enum REDNER_API
-{
-	DIRECTX_RENDER
-};
-
-
 /***
 ************************************************************
 *
@@ -51,6 +45,7 @@ enum REDNER_API
 
 //渲染器
 // 渲染流程的控制
+template<typename T_render>
 class s_rendering
 {
 private:
@@ -63,7 +58,7 @@ public:
 public:
 
 	//初始化渲染流程，各种PASS的注册和准备
-	virtual void init(HINSTANCE in_instance, REDNER_API in_render_api) = 0;
+	virtual void init(HINSTANCE in_instance) = 0;
 	//绘制场景
 	virtual void draw(s_sence* in_sence) = 0;
 
@@ -371,5 +366,5 @@ struct s_vertex
 };
 
 
-typedef std::uint32_t s_index;
+typedef uint32_t s_index;
 
