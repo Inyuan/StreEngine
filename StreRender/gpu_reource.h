@@ -30,6 +30,8 @@ struct gpu_shader_resource
 
 	std::string name;
 	//只有上传堆有效
+	//
+	const bool can_update = false;
 	BYTE* mapped_data = nullptr;
 
 	size_t element_size = 0;
@@ -39,7 +41,8 @@ struct gpu_shader_resource
 
 	//隔多少个元素为一组
 	std::vector<UINT> element_group_number; //用于存储index等数据的内部偏移( [0] 第0组有多少个元素)
-
+	
+	gpu_shader_resource(bool in_can_update = false) : can_update(in_can_update) {};
 	//...
 };
 
