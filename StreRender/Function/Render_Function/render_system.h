@@ -1,33 +1,46 @@
 #pragma once
 #include "Core/Render_Core/render.h"
 #include "Core/Memory/s_memory.h"
-#include "stre_render.h"
+#include "gpu_reource.h"
+#include "cpu_resource.h"
 #include <queue>
+
+//functor
+template<class t_render>
+class render_command
+{
+public:
+	struct command
+	{
+
+	};
+
+	static std::queue<command> command_queue;
+
+};
+
+
 
 s_memory_allocater_register render_memory_allocater("render_memory_allocater");
 
 //策略模式 选择渲染策略
-template<typename T_render = render>
+template<typename t_render>
 class render_system
 {
+public:
+	render_system(HINSTANCE in_instance) { init(in_instance); };
+protected:
+	render_system() {};
+	//不许复制
+	render_system(const render_system&);
+	render_system& operator=(const render_system&);
+	~render_system()
+	{
+		over();
+	};
 protected:
 	s_window* render_window = nullptr;
-	T_render* renderer = nullptr;
-	//BProcess* render_window_process;
-
-	//gpu_resource_factory* gpu_res_factory;
-
-	REDNER_API render_api;
-
-	enum SENCE_ELEMENT_TYPE
-	{
-		SENCE_CAMERA = 0,
-		SENCE_LIGHT = 1,
-		SENCE_OBJECT = 2,
-		SENCE_ELEMENT_TYPE_NUMBER = 3
-	};
-
-	std::vector<gpu_resource*> sence_gpu_resource_group[SENCE_ELEMENT_TYPE::SENCE_ELEMENT_TYPE_NUMBER];
+	t_render* renderer = nullptr;
 
 	//update callback queue 刷新函数回调结构
 	typedef void (*update_gpu_res_callback)(cg_resource* in_resource, gpu_resource* in_out_gpu_resouce, render* in_renderer);
@@ -46,10 +59,15 @@ protected:
 
 public:
 
-	//使用回调调用??? 有返回值，考虑多线程异步获取
-	constant_pass* render_system::allocate_pass(constant_pass::pass_layout in_constant_pass_layout)
+	void draw_pass(const s_pass* in_pass)
 	{
-		return renderer->allocate_pass(in_constant_pass_layout);
+		renderer->draw_pass(in_pass);
+	}
+
+	//使用回调调用??? 有返回值，考虑多线程异步获取
+	s_pass* render_system::allocate_pass()
+	{
+		return renderer->allocate_pass();
 	}
 
 	//使用回调调用??? 有返回值，考虑多线程异步获取
@@ -167,9 +185,15 @@ public:
 		}
 	}
 
-
+private:
 	void init(HINSTANCE in_instance)
 	{
+		if (is_init)
+		{
+			return;
+		}
+		is_init = true;
+
 		s_memory* memory_allocater = memory_allocater_group["render_memory_allocater"];
 
 		//gpu_res_factory = memory_allocater->allocate<gpu_resource_factory>();
@@ -183,7 +207,7 @@ public:
 		renderer->init(render_window->get_hwnd());
 	}
 
-	void over();
+	void over() {};
 };
 
 

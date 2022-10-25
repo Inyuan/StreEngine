@@ -1,16 +1,28 @@
 #pragma once
 #include "Core/Window/s_window.h"
-#include "Resource/constant_pass.h"
+#include "stre_pass.h"
+#include "gpu_reource.h"
 
 class render
 {
 public:
+
+	//所有资源按照要求安装好了 直接执行pass
+	virtual void draw_pass(const s_pass* in_pass) = 0;
+
+	virtual s_pass* allocate_pass() = 0;
+
+	virtual gpu_shader_resource* allocate_shader_resource(
+		gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type) = 0;
+
+	virtual void update_shader_resource(gpu_shader_resource* in_gpu_sr) = 0;
+
 	virtual void draw_call(
 		constant_pass * in_pass,
 		std::vector<gpu_resource*>& in_object,
 		gpu_resource* in_sence) = 0;
 
-	virtual constant_pass* allocate_pass(constant_pass::pass_layout in_constant_pass_layout) = 0;
+	//virtual constant_pass* allocate_pass(constant_pass::pass_layout in_constant_pass_layout) = 0;
 
 	virtual gpu_resource* allocate_gpu_resource(cg_resource* in_resource) = 0;
 

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -24,20 +24,19 @@
     <ClCompile Include="Core\Memory\s_memory.cpp" />
     <ClCompile Include="Core\Process\BProcess.cpp" />
     <ClCompile Include="Core\Render_Core\directx_render.cpp" />
-    <ClCompile Include="Core\Render_Core\Resource\constant_pass.cpp" />
-    <ClCompile Include="Core\Render_Core\Resource\gpu_resource.cpp" />
     <ClCompile Include="Core\Window\s_window.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Function\Render_Function\deferred_rendering.cpp" />
     <ClCompile Include="Function\Render_Function\render_system.cpp" />
-    <ClCompile Include="Resource\cg_object.cpp" />
-    <ClCompile Include="Resource\cg_resource_factory.cpp" />
-    <ClCompile Include="Resource\s_material_manager.cpp" />
-    <ClCompile Include="Resource\s_object_manager.cpp" />
-    <ClCompile Include="Resource\s_sence_manager.cpp" />
-    <ClCompile Include="Resource\s_texture_manager.cpp" />
+    <ClCompile Include="Resource\material_manager.cpp" />
+    <ClCompile Include="Resource\object_manager.cpp" />
+    <ClCompile Include="Resource\pass_factory.cpp" />
+    <ClCompile Include="Resource\resource_factory.cpp" />
+    <ClCompile Include="Resource\sence_manager.cpp" />
+    <ClCompile Include="Resource\texture_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="base_type.h" />
     <ClInclude Include="Core\Exception\exception.h" />
     <ClInclude Include="Core\File_Manager\s_fbx.h" />
     <ClInclude Include="Core\Memory\s_handle.h" />
@@ -46,14 +45,13 @@
     <ClInclude Include="Core\Render_Core\directx_render.h" />
     <ClInclude Include="Core\Render_Core\render.h" />
     <ClInclude Include="Core\Render_Core\Render_API\d3dx12.h" />
-    <ClInclude Include="Core\Render_Core\Resource\constant_pass.h" />
-    <ClInclude Include="Core\Render_Core\Resource\gpu_resource.h" />
     <ClInclude Include="Core\Window\s_window.h" />
+    <ClInclude Include="cpu_resource.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Function\Render_Function\deferred_rendering.h" />
     <ClInclude Include="Function\Render_Function\render_system.h" />
-    <ClInclude Include="Resource\cg_object.h" />
-    <ClInclude Include="Resource\cg_resource_factory.h" />
+    <ClInclude Include="gpu_reource.h" />
+    <ClInclude Include="stre_pass.h" />
     <ClInclude Include="stre_render.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

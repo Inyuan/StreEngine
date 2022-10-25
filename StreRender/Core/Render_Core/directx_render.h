@@ -11,6 +11,7 @@
 #include <DirectXCollision.h>
 #include <string>
 #include <memory>
+#include <unordered_map>
 #include "Render_API/d3dx12.h"
 #include "stre_render.h"
 #include "render.h"
@@ -27,47 +28,6 @@ enum DIRECTX_RESOURCE_DESC_TYPE
     DX_UAV
 };
 
-class directx_gpu_resource_element : public gpu_resource_element
-{
-public:
-    ComPtr<ID3D12Resource> dx_resource;
-
-    D3D12_SHADER_RESOURCE_VIEW_DESC dx_srv;
-    D3D12_RENDER_TARGET_VIEW_DESC dx_rtv;
-    D3D12_DEPTH_STENCIL_VIEW_DESC dx_dsv;
-    D3D12_CONSTANT_BUFFER_VIEW_DESC dx_csv;
-    D3D12_UNORDERED_ACCESS_VIEW_DESC dx_uav;
-
-    D3D12_RESOURCE_STATES current_state = D3D12_RESOURCE_STATE_GENERIC_READ;
-
-    DXGI_FORMAT dx_format;
-};
-
-class directx_gpu_resource : public gpu_resource
-{
-public:
-    ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
-};
-
-class directx_constant_pass : public constant_pass
-{
-public:
-    ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
-    ComPtr<ID3D12DescriptorHeap> rtv_heap = nullptr;
-    ComPtr<ID3D12DescriptorHeap> dsv_heap = nullptr;
-    ComPtr<ID3D12DescriptorHeap> uav_heap = nullptr;
-
-    ComPtr<ID3D12RootSignature> rootsignature = nullptr;
-
-    std::unordered_map<std::string, ComPtr<ID3DBlob>> shader_group;
-    ComPtr<ID3D12PipelineState> pso;
-
-    std::vector<D3D12_INPUT_ELEMENT_DESC> input_layout;
-
-};
-
-
-
 class directx_render : public render 
 {
 protected:
@@ -82,6 +42,94 @@ protected:
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> command_queue;
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> direct_cmdlist_alloc;
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> command_list;
+
+
+    struct directx_shader_resource : public gpu_shader_resource
+    {
+        ComPtr<ID3D12Resource> dx_resource;
+        D3D12_SHADER_RESOURCE_VIEW_DESC dx_srv;
+        D3D12_RENDER_TARGET_VIEW_DESC dx_rtv;
+        D3D12_DEPTH_STENCIL_VIEW_DESC dx_dsv;
+        D3D12_CONSTANT_BUFFER_VIEW_DESC dx_csv;
+        D3D12_UNORDERED_ACCESS_VIEW_DESC dx_uav;
+        D3D12_RESOURCE_STATES dx_current_state = D3D12_RESOURCE_STATE_GENERIC_READ;
+        DXGI_FORMAT dx_format;
+    };
+    
+    typedef directx_shader_resource directx_sr_custom_buffer;//csv
+    typedef directx_shader_resource directx_sr_custom_buffer_group;//srv
+    typedef directx_shader_resource directx_sr_texture;//srv
+    typedef directx_shader_resource directx_sr_render_target;//table
+
+    //模板？
+    struct directx_sr_texture_group : public gpu_shader_resource
+    {
+        std::vector<directx_sr_texture*> dx_res_group;
+        ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
+    };
+
+    struct directx_sr_render_target_group : public gpu_shader_resource
+    {
+        std::vector<directx_sr_render_target*> dx_rt_group;
+
+        ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
+        ComPtr<ID3D12DescriptorHeap> rtv_heap = nullptr;
+    };
+
+    struct directx_sr_depth_stencil : public directx_shader_resource
+    {
+        ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
+        ComPtr<ID3D12DescriptorHeap> dsv_heap = nullptr;
+    };
+
+    //struct
+    //{
+    //    ComPtr<ID3D12Resource> dx_resource;
+    //    D3D12_SHADER_RESOURCE_VIEW_DESC dx_srv;
+    //    D3D12_RENDER_TARGET_VIEW_DESC dx_rtv;
+    //    D3D12_DEPTH_STENCIL_VIEW_DESC dx_dsv;
+    //    D3D12_CONSTANT_BUFFER_VIEW_DESC dx_csv;
+    //    D3D12_UNORDERED_ACCESS_VIEW_DESC dx_uav;
+    //    D3D12_RESOURCE_STATES dx_current_state = D3D12_RESOURCE_STATE_GENERIC_READ;
+    //    DXGI_FORMAT dx_format;
+    //    ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
+    //    ComPtr<ID3D12DescriptorHeap> rtv_heap = nullptr;
+    //    ComPtr<ID3D12DescriptorHeap> dsv_heap = nullptr;
+    //    ComPtr<ID3D12DescriptorHeap> uav_heap = nullptr;
+    //};
+    
+    //...
+
+    struct directx_pass : public s_pass
+    {
+    public:
+
+        
+        ComPtr<ID3D12RootSignature> rootsignature = nullptr;
+
+        std::unordered_map<std::string, ComPtr<ID3DBlob>> shader_group;
+        ComPtr<ID3D12PipelineState> pso;
+
+        std::vector<D3D12_INPUT_ELEMENT_DESC> input_layout;
+    };
+
+private:
+    void Load_resource(
+        const std::map < std::string, const gpu_shader_resource*>& in_gpu_res_group,
+        bool set_render_tager = false);
+
+    void draw_call(const s_pass::mesh_resource::vertex_layout* in_gpu_vertex_layout);
+
+public:
+
+    virtual void draw_pass(const s_pass* in_pass) override;
+
+    virtual s_pass* allocate_pass() override;
+
+    virtual gpu_shader_resource* allocate_shader_resource(
+        gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type) override;
+
+    virtual void update_shader_resource(gpu_shader_resource* in_gpu_sr) override;
 
 private:
     //屏幕空间的顶点输入
@@ -105,6 +153,8 @@ private:
     D3D12_RESOURCE_STATES default_resource_states = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ;
 
     float clear_color[4] = { 0.0,0.0f,0.0f,0.0f };
+
+
 
 private:
     void msaa_configuration();//???
@@ -131,7 +181,7 @@ private:
 
     void create_gpu_memory_view(
         DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
-        directx_gpu_resource_element* in_gpu_res_elem,
+        directx_shader_resource* in_gpu_res_elem,
         D3D12_CPU_DESCRIPTOR_HANDLE in_out_dest_descriptor);
 
     void create_rootsignature(
@@ -149,13 +199,13 @@ private:
         ComPtr<ID3D12PipelineState> in_pso);
     
     void allocate_upload_resource(
-        directx_gpu_resource_element* in_res_elem,
+        directx_shader_resource* in_res_elem,
         UINT in_elem_size,
         UINT in_number,
         std::vector<UINT> in_element_group_number = {});
 
     void allocate_default_resource(
-        directx_gpu_resource_element* in_res_elem,
+        directx_shader_resource* in_res_elem,
         UINT in_elem_size,
         UINT in_number,
         void* in_cpu_data,
@@ -163,18 +213,19 @@ private:
 
     void update_all_upload_resource(
         void* data,
-        directx_gpu_resource_element* in_res_elem);
+        directx_shader_resource* in_res_elem);
 
     void update_elem_upload_resource(
         void* data,
         int elementIndex,
-        directx_gpu_resource_element* in_res_elem);
+        directx_shader_resource* in_res_elem);
 
     void switch_gpu_resource_state(
-        directx_gpu_resource_element* in_gpu_res_elem,
+        directx_shader_resource* in_gpu_res_elem,
         D3D12_RESOURCE_STATES in_new_resource_states);
 
     void screen_vertexs_and_indexes_input();
+
 
 public:
     virtual gpu_resource* allocate_gpu_resource(cg_resource* in_resource) override;
