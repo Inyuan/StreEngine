@@ -1,5 +1,14 @@
 #include "stre_render.h"
 #include "Core/Memory/s_memory.h"
+
+/***
+************************************************************
+*
+* Create & Load Function
+*
+************************************************************
+*/
+
 s_memory_allocater_register material_resource_allocater("material_resource_allocater");
 
 template<class t_render>
@@ -16,6 +25,17 @@ cpu_material* custom_manager<cpu_material, t_render>::load_resource(wchar_t* in_
 {
 
 }
+
+
+
+
+/***
+************************************************************
+*
+* Update Function
+*
+************************************************************
+*/
 
 template<class t_render>
 void custom_manager<cpu_material, t_render>::change_texture()

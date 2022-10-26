@@ -1,7 +1,6 @@
 #pragma once
 #include <Windows.h>
 #include "cpu_resource.h"
-#include "gpu_reource.h"
 #include "stre_pass.h"
 /***
 ************************************************************
@@ -18,7 +17,6 @@
 #define MSAAX4_STATE s_render_configuration::msaax4_state
 #define MSAAX4_QUALITY s_render_configuration::msaax4_quality
 
-#define CLIENT_RENDER_API REDNER_API::DIRECTX_RENDER
 
 static class s_render_configuration
 {
@@ -44,9 +42,6 @@ unsigned int s_render_configuration::msaax4_quality = 0;
 */
 
 ///rendering type
-
-class directx_render;
-
 //渲染器
 
 
@@ -92,8 +87,9 @@ struct custom_manager
 	//不允许默认申请空间 故意编译报错
 	//static void allocate_gpu(const t_cpu_res_type* in_cpu_data);
 
-	static void allocate_gpu(const t_cpu_res_type* in_cpu_data, 
-		gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type);
+	static void allocate_gpu(t_cpu_res_type* in_cpu_data, 
+		gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type,
+		std::vector<UINT>& elem_group_number);
 };
 
 
@@ -191,7 +187,7 @@ public:
 		return t_cpu_res_manager<t_cpu_res_type, t_render>::load_resource(in_path);
 	}
 
-	virtual void allocate_gpu(const t_cpu_res_type* in_cpu_data)
+	virtual void allocate_gpu(t_cpu_res_type* in_cpu_data)
 	{
 		t_cpu_res_manager<t_cpu_res_type, t_render>::allocate_gpu(in_cpu_data);
 	};
@@ -201,24 +197,6 @@ public:
 		t_cpu_res_manager<t_cpu_res_type, t_render>::update_gpu(in_cpu_data);
 	};
 
-
-	//{
-	//	//检查啥的
-	//	if (in_gpu_resource.cpu_res_ptr_group.find(in_cpu_data))
-	//	{
-	//	}
-	//	//设置刷新请求
-	//	update_request_layout update_rq;
-	//	update_rq.update_type = UPDATE_TYPE_UPDATE;
-	//	update_rq.offset = 0;
-	//	auto render_system_ptr = render_system::get_instance();
-	//	render_system_ptr->
-	//		add_update_res_request(
-	//			update_gpu(
-	//				(void*)in_cpu_data.get_data(),
-	//				in_gpu_resource->gpu_sr_ptr,
-	//				update_rq));
-	//}
 };
 
 /***
@@ -233,8 +211,9 @@ class pass_factory
 {
 public:
 	//创建pass
-	template<class t_render>
 	s_pass* create_pass();
+	void dx_allocate_gpu_pass(s_pass* in_out_pass);
+	//??? 差刷新pass函数
 
 	void add_mesh(
 		s_pass* in_out_pass,

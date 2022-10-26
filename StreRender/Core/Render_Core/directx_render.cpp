@@ -1,9 +1,10 @@
 #include "directx_render.h"
+#include "stre_render.h"
 #include <WindowsX.h>
 #include "Core/Exception/exception.h"
 #include <array>
 #include "Core/Memory/s_memory.h"
-
+#include <string>
 
 /***
 ************************************************************
@@ -14,319 +15,138 @@
 */
 
 
-s_memory_allocater_register pass_allocater("pass_allocater");
+s_memory_allocater_register gpu_pass_allocater("gpu_pass_allocater");
 
-s_pass* directx_render::allocate_pass()
+gpu_pass* directx_render::allocate_pass()
 {
-	auto pass_allocater = memory_allocater_group["pass_allocater"];
+	auto pass_allocater = memory_allocater_group["gpu_pass_allocater"];
 
-	return dynamic_cast<s_pass*>(pass_allocater->allocate<directx_pass>());
+	return dynamic_cast<gpu_pass*>(pass_allocater->allocate<directx_pass>());
 }
 
-//BuildDescriptorHeaps ???
-//CreateDescriptors ???
-
-//pass creation
-//BuildRootSignature
-//BuildShadersAndInputLayout
-//BuildPSO
-
-constant_pass* directx_render::allocate_pass(constant_pass::pass_layout in_constant_pass_layout)
+void directx_render::load_rootparpameter(
+	std::vector<CD3DX12_ROOT_PARAMETER>& in_out_root_parameter, 
+	const gpu_shader_resource* in_gpu_sr)
 {
-	typedef constant_pass::PASS_INPUT_RESOURCE_TYPE PASS_RES_TYPE;
-	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE GPU_RES_TYPE;
-
-	auto pass_allocater = memory_allocater_group["pass_allocater"];
-
-	directx_constant_pass* pass = (directx_constant_pass*)pass_allocater->allocate<directx_constant_pass>();
-
-	pass->constant_pass_layout = in_constant_pass_layout;
-
-	//Heap Create & Heap insert desc 
-	//装填 pass 间交流的gpu_resource资源 srv rtv dsv 
-	// (cbv 无需heap)
-	// (模型的贴图另有heap) 
+	switch (in_gpu_sr->shader_resource_type)
 	{
+	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
+		CD3DX12_ROOT_PARAMETER r_p;
+		r_p.InitAsConstantBufferView(in_gpu_sr->register_index);
+		in_out_root_parameter.push_back(r_p);
+		break;
+	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP:
+	case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE:
+		CD3DX12_ROOT_PARAMETER r_p;
+		r_p.InitAsShaderResourceView(in_gpu_sr->register_index);
+		in_out_root_parameter.push_back(r_p);
+		break;
+	case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
+		CD3DX12_DESCRIPTOR_RANGE texTable;
+		texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, in_gpu_sr->element_count, in_gpu_sr->register_index);
+		CD3DX12_ROOT_PARAMETER texture_rp;
+		texture_rp.InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+		in_out_root_parameter.push_back(texture_rp);
+		break;
+	default:
+		break;
+	}
+}
 
-		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-		srvHeapDesc.NumDescriptors = in_constant_pass_layout.input_gpu_resource.size();
-		srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-		srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		create_descriptor_heap(srvHeapDesc, pass->srv_heap);
+void directx_render::create_rootsignature(
+	CD3DX12_ROOT_SIGNATURE_DESC& in_rootsig_desc,
+	gpu_pass* in_gpu_pass)
+{
+	create_rootsignature(
+		in_rootsig_desc,
+		static_cast<directx_pass*>(in_gpu_pass)->rootsignature);
+}
 
-		D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
-		rtvHeapDesc.NumDescriptors = in_constant_pass_layout.output_gpu_resource.size();
-		rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-		rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		rtvHeapDesc.NodeMask = 0;
-		create_descriptor_heap(rtvHeapDesc, pass->rtv_heap);
+void directx_render::create_pso(
+	shader_layout in_shader_layout,
+	gpu_pass* in_gpu_pass,
+	UINT in_rt_number,
+	bool is_translate = false)
+{
+	typedef shader_layout::SHADER_TYPE SHADER_TYPE;
+	typedef shader_layout::shader_input::INPUT_ELEMENT_SIZE INPUT_ELEMENT_SIZE;
+	auto& shader_layout = in_shader_layout;
+	auto pass = static_cast<directx_pass*>(in_gpu_pass);
 
-		D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
-		dsvHeapDesc.NumDescriptors = 1;
-		dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-		dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		dsvHeapDesc.NodeMask = 0;
-		create_descriptor_heap(dsvHeapDesc, pass->dsv_heap);
-
-		//SRV 
-		//所有输入的贴图合成一个组
-		CD3DX12_CPU_DESCRIPTOR_HANDLE srv_handle(
-			pass->srv_heap->GetCPUDescriptorHandleForHeapStart());
-		for (int i = 0;
-			i < in_constant_pass_layout.input_gpu_resource.size();
-			i++)
-		{
-			create_gpu_memory_view(
-				DIRECTX_RESOURCE_DESC_TYPE::DX_SRV,
-				(directx_gpu_resource_element*)in_constant_pass_layout.
-				input_gpu_resource[i]
-				->gpu_resource_group[
-					GPU_RESOURCE_LAYOUT::
-						GPU_RESOURCE_TYPE::
-						GPU_RES_TEXTURE][0],
-						srv_handle);
-
-			srv_handle.Offset(1, cbv_srv_uav_descriptor_size);
-		}
-
-		//RTV
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle(
-			pass->rtv_heap->GetCPUDescriptorHandleForHeapStart());
-		for (int i = 0;
-			i < in_constant_pass_layout.output_gpu_resource.size();
-			i++)
-		{
-			create_gpu_memory_view(
-				DIRECTX_RESOURCE_DESC_TYPE::DX_RTV,
-				(directx_gpu_resource_element*)in_constant_pass_layout.
-				output_gpu_resource[i]
-				->gpu_resource_group[
-					GPU_RESOURCE_LAYOUT::
-						GPU_RESOURCE_TYPE::
-						GPU_RES_TEXTURE][0],
-						rtv_handle);
-
-			rtv_handle.Offset(1, rtv_descriptor_size);
-		}
-
-		//DSV
-		CD3DX12_CPU_DESCRIPTOR_HANDLE dsv_handle(
-			pass->dsv_heap->GetCPUDescriptorHandleForHeapStart());
-
-		create_gpu_memory_view(
-			DIRECTX_RESOURCE_DESC_TYPE::DX_DSV,
-			(directx_gpu_resource_element*)in_constant_pass_layout.
-			output_gpu_depth_stencil_resource
-			->gpu_resource_group[
-				GPU_RESOURCE_LAYOUT::
-					GPU_RESOURCE_TYPE::
-					GPU_RES_TEXTURE][0],
-					dsv_handle);
-
+	if (in_shader_layout.shader_vaild[SHADER_TYPE::VS])
+	{
+		pass->shader_group[std::string(pass->uid.name) + "VS"]
+			= complie_shader(
+				shader_layout.shader_path[SHADER_TYPE::VS],
+				nullptr, "VS", "vs_5_1");
+	}
+	if (in_shader_layout.shader_vaild[SHADER_TYPE::DS])
+	{
+		pass->shader_group[std::string(pass->uid.name) + "DS"]
+			= complie_shader(
+				shader_layout.shader_path[SHADER_TYPE::DS],
+				nullptr, "DS", "ds_5_1");
+	}
+	if (in_shader_layout.shader_vaild[SHADER_TYPE::HS])
+	{
+		pass->shader_group[std::string(pass->uid.name) + "HS"]
+			= complie_shader(
+				shader_layout.shader_path[SHADER_TYPE::HS],
+				nullptr, "HS", "hs_5_1");
+	}
+	if (in_shader_layout.shader_vaild[SHADER_TYPE::GS])
+	{
+		pass->shader_group[std::string(pass->uid.name) + "GS"]
+			= complie_shader(
+				shader_layout.shader_path[SHADER_TYPE::GS],
+				nullptr, "GS", "gs_5_1");
+	}
+	if (in_shader_layout.shader_vaild[SHADER_TYPE::PS])
+	{
+		pass->shader_group[std::string(pass->uid.name) + "PS"]
+			= complie_shader(
+				shader_layout.shader_path[SHADER_TYPE::PS],
+				nullptr, "PS", "ps_5_1");
 	}
 
-
-	//RootSignature
+	UINT elem_size_offset = 0;
+	for (auto it : shader_layout.shader_input_group)
 	{
-		UINT input_cb_number = 0;
-		UINT input_texture_number = 0;
-		std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameter;
+		D3D12_INPUT_ELEMENT_DESC input_elem_desc;
 
-		// mesh b0-> objcb
-		// mesh b1-> cameracb
-		// mesh t0-> mat
-		// mesh t1-> obj texture
-		// mesh t2-> lightcb //光照也是SRV
-		// mesh t3-> custom texture
-
-		// screen b0 cameracb
-		// screen t0 lightcb
-		// screen t1-> custom texture
-
-		switch (in_constant_pass_layout.pass_type)
+		DXGI_FORMAT input_elem_format;
+		UINT offset = 0;
+		switch (it.size)
 		{
-		case constant_pass::PASS_TYPE::MESH_PASS:
-			// shader_input: mesh vertex
-			// resource_input : mesh_object_cb
-			// resource_input : material
-			// resource_input : texture
-
-			CD3DX12_ROOT_PARAMETER mesh_object_cb_rp;
-			mesh_object_cb_rp.InitAsConstantBufferView(input_cb_number++);
-
-			CD3DX12_ROOT_PARAMETER mat_cb_rp;
-			mat_cb_rp.InitAsShaderResourceView(input_texture_number++);
-
-			CD3DX12_DESCRIPTOR_RANGE texTable;
-			//50??? 要改成shdaerDX12回调获取编译的信息
-			texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 50, input_texture_number++);
-			texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, )
-
-				CD3DX12_ROOT_PARAMETER texture_rp;
-			texture_rp.InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-
-			slotRootParameter.push_back(mesh_object_cb_rp);
-			slotRootParameter.push_back(mat_cb_rp);
-			slotRootParameter.push_back(texture_rp);
+		case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32:
+			input_elem_format = DXGI_FORMAT_R32_FLOAT;
+			offset = 4;
 			break;
-		case constant_pass::PASS_TYPE::SCREEN_PASS:
-			//shader_input: four vertex
-			//???
+		case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32:
+			input_elem_format = DXGI_FORMAT_R32G32_FLOAT;
+			offset = 8;
+			break;
+		case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32B32:
+			input_elem_format = DXGI_FORMAT_R32G32B32_FLOAT;
+			offset = 12;
+			break;
+		case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32B32A32:
+			input_elem_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			offset = 16;
 			break;
 		}
+		input_elem_desc = { it.name.c_str(), 0, input_elem_format, 0, elem_size_offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 
-		if (in_constant_pass_layout.use_resource_flag[PASS_RES_TYPE::USE_CAMERA_CB])
-		{
-			CD3DX12_ROOT_PARAMETER camera_cb_rp;
-			camera_cb_rp.InitAsConstantBufferView(input_cb_number++);
-			slotRootParameter.push_back(camera_cb_rp);
+		pass->input_layout.push_back(input_elem_desc);
 
-		}
-		if (in_constant_pass_layout.use_resource_flag[PASS_RES_TYPE::USE_LIGHT_CB])
-		{
-			CD3DX12_ROOT_PARAMETER light_cb_rp;
-			light_cb_rp.InitAsShaderResourceView(input_texture_number++);
-			slotRootParameter.push_back(light_cb_rp);
-		}
-		if (in_constant_pass_layout.use_resource_flag[PASS_RES_TYPE::USE_CUSTOM_TEXTURE])
-		{//自定义贴图gpu_resource只有 一张 gpu_resource_element
-			typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE GPU_RES_TYPE;
-			auto input_resource = in_constant_pass_layout.input_gpu_resource;
-			//不需要逐个做SRV 
-			//for (UINT i = 0; i < input_resource.size(); i++)
-			//{
-			//	auto texture_res = input_resource[GPU_RES_TYPE::GPU_RES_TEXTURE]->gpu_resource_group[0];
-			//	CD3DX12_ROOT_PARAMETER texture_rp;
-			//	texture_rp.InitAsShaderResourceView(input_texture_number++);
-			//	slotRootParameter.push_back(texture_rp);
-			//}
-			//一个table包含所有的SRV
-			CD3DX12_DESCRIPTOR_RANGE texTable;
-			//50???
-			texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, input_resource.size(), input_texture_number++);
-
-			CD3DX12_ROOT_PARAMETER texture_rp;
-			texture_rp.InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-			slotRootParameter.push_back(texture_rp);
-		}
-
-
-		//for (UINT i = 0; i < input_res_number; i++)
-		//{
-		//	switch (input_resource[i].input_resource_type)
-		//	{
-		//	case PASS_RES_TYPE::PASS_RES_CBV:
-		//		slotRootParameter[i].InitAsConstantBufferView(i);
-		//		break;
-		//	case PASS_RES_TYPE::PASS_RES_SRV:
-		//		slotRootParameter[i].InitAsShaderResourceView(i);
-		//		break;
-		//	case PASS_RES_TYPE::PASS_RES_DESCRIPTOR_TBALE:
-		//		CD3DX12_DESCRIPTOR_RANGE texTable;
-		//		texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, input_resource[i].input_resource_number, i);
-		//		slotRootParameter[i].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-		//		break;
-		//	}
-		//}
-
-
-
-		auto staticSamplers = GetStaticSamplers();
-
-		// A root signature is an array of root parameters.
-		CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(slotRootParameter.size(), slotRootParameter.data(),
-			(UINT)staticSamplers.size(), staticSamplers.data(),
-			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-		create_rootsignature(
-			rootSigDesc,
-			pass->rootsignature);
+		elem_size_offset += offset;
 	}
 
-	//Shader Input layout
-	{
-		typedef constant_pass::shader_layout::SHADER_TYPE SHADER_TYPE;
-		typedef constant_pass::shader_layout::shader_input::INPUT_ELEMENT_SIZE INPUT_ELEMENT_SIZE;
-		auto& shader_layout = in_constant_pass_layout.pass_shader_layout;
-		if (shader_layout.shader_vaild[SHADER_TYPE::VS])
-		{
-			pass->shader_group[pass->pass_name + "VS"]
-				= complie_shader(
-					shader_layout.shader_path[SHADER_TYPE::VS],
-					nullptr, "VS", "vs_5_1");
-		}
-		if (shader_layout.shader_vaild[SHADER_TYPE::DS])
-		{
-			pass->shader_group[pass->pass_name + "DS"]
-				= complie_shader(
-					shader_layout.shader_path[SHADER_TYPE::DS],
-					nullptr, "DS", "ds_5_1");
-		}
-		if (shader_layout.shader_vaild[SHADER_TYPE::HS])
-		{
-			pass->shader_group[pass->pass_name + "HS"]
-				= complie_shader(
-					shader_layout.shader_path[SHADER_TYPE::HS],
-					nullptr, "HS", "hs_5_1");
-		}
-		if (shader_layout.shader_vaild[SHADER_TYPE::GS])
-		{
-			pass->shader_group[pass->pass_name + "GS"]
-				= complie_shader(
-					shader_layout.shader_path[SHADER_TYPE::GS],
-					nullptr, "GS", "gs_5_1");
-		}
-		if (shader_layout.shader_vaild[SHADER_TYPE::PS])
-		{
-			pass->shader_group[pass->pass_name + "PS"]
-				= complie_shader(
-					shader_layout.shader_path[SHADER_TYPE::PS],
-					nullptr, "PS", "ps_5_1");
-		}
-
-		UINT elem_size_offset = 0;
-		for (auto it : shader_layout.shader_input_group)
-		{
-			D3D12_INPUT_ELEMENT_DESC input_elem_desc;
-
-			DXGI_FORMAT input_elem_format;
-			UINT offset = 0;
-			switch (it.size)
-			{
-			case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32:
-				input_elem_format = DXGI_FORMAT_R32_FLOAT;
-				offset = 4;
-				break;
-			case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32:
-				input_elem_format = DXGI_FORMAT_R32G32_FLOAT;
-				offset = 8;
-				break;
-			case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32B32:
-				input_elem_format = DXGI_FORMAT_R32G32B32_FLOAT;
-				offset = 12;
-				break;
-			case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32B32A32:
-				input_elem_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-				offset = 16;
-				break;
-			}
-			input_elem_desc = { it.name.c_str(), 0, input_elem_format, 0, elem_size_offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-
-			pass->input_layout.push_back(input_elem_desc);
-
-			elem_size_offset += offset;
-		}
-	}
-
-	//??? 透明功能，很多功能都忽视了
-	//PSO
 	{
 
-		typedef constant_pass::shader_layout::SHADER_TYPE SHADER_TYPE;
-		auto& shader_layout = in_constant_pass_layout.pass_shader_layout;
+		auto pass = static_cast<directx_pass*>(in_gpu_pass);
 
-		auto rt_number = in_constant_pass_layout.output_gpu_resource.size();
-
+		auto rt_number = in_rt_number;
 
 		CD3DX12_RASTERIZER_DESC RastDesc(D3D12_DEFAULT);
 		RastDesc.CullMode = D3D12_CULL_MODE_NONE;
@@ -348,51 +168,49 @@ constant_pass* directx_render::allocate_pass(constant_pass::pass_layout in_const
 			PsoDesc.RTVFormats[i] = back_buffer_format;
 
 
-
-
-		if (shader_layout.shader_vaild[SHADER_TYPE::VS])
+		if (in_shader_layout.shader_vaild[SHADER_TYPE::VS])
 		{
 			PsoDesc.VS =
 			{
 				reinterpret_cast<BYTE*>(
-					pass->shader_group[pass->pass_name + "VS"]->GetBufferPointer()),
-				pass->shader_group[pass->pass_name + "VS"]->GetBufferSize()
+					pass->shader_group[std::string(pass->uid.name) + "VS"]->GetBufferPointer()),
+				pass->shader_group[std::string(pass->uid.name) + "VS"]->GetBufferSize()
 			};
 		}
-		if (shader_layout.shader_vaild[SHADER_TYPE::DS])
+		if (in_shader_layout.shader_vaild[SHADER_TYPE::DS])
 		{
 			PsoDesc.DS =
 			{
 				reinterpret_cast<BYTE*>(
-					pass->shader_group[pass->pass_name + "DS"]->GetBufferPointer()),
-				pass->shader_group[pass->pass_name + "DS"]->GetBufferSize()
+					pass->shader_group[std::string(pass->uid.name) + "DS"]->GetBufferPointer()),
+				pass->shader_group[std::string(pass->uid.name) + "DS"]->GetBufferSize()
 			};
 		}
-		if (shader_layout.shader_vaild[SHADER_TYPE::HS])
+		if (in_shader_layout.shader_vaild[SHADER_TYPE::HS])
 		{
 			PsoDesc.HS =
 			{
 				reinterpret_cast<BYTE*>(
-					pass->shader_group[pass->pass_name + "HS"]->GetBufferPointer()),
-				pass->shader_group[pass->pass_name + "HS"]->GetBufferSize()
+					pass->shader_group[std::string(pass->uid.name) + "HS"]->GetBufferPointer()),
+				pass->shader_group[std::string(pass->uid.name) + "HS"]->GetBufferSize()
 			};
 		}
-		if (shader_layout.shader_vaild[SHADER_TYPE::GS])
+		if (in_shader_layout.shader_vaild[SHADER_TYPE::GS])
 		{
 			PsoDesc.GS =
 			{
 				reinterpret_cast<BYTE*>(
-					pass->shader_group[pass->pass_name + "GS"]->GetBufferPointer()),
-				pass->shader_group[pass->pass_name + "GS"]->GetBufferSize()
+					pass->shader_group[std::string(pass->uid.name) + "GS"]->GetBufferPointer()),
+				pass->shader_group[std::string(pass->uid.name) + "GS"]->GetBufferSize()
 			};
 		}
-		if (shader_layout.shader_vaild[SHADER_TYPE::PS])
+		if (in_shader_layout.shader_vaild[SHADER_TYPE::PS])
 		{
 			PsoDesc.PS =
 			{
 				reinterpret_cast<BYTE*>(
-					pass->shader_group[pass->pass_name + "PS"]->GetBufferPointer()),
-				pass->shader_group[pass->pass_name + "PS"]->GetBufferSize()
+					pass->shader_group[std::string(pass->uid.name) + "PS"]->GetBufferPointer()),
+				pass->shader_group[std::string(pass->uid.name) + "PS"]->GetBufferSize()
 			};
 		}
 
@@ -400,12 +218,7 @@ constant_pass* directx_render::allocate_pass(constant_pass::pass_layout in_const
 			PsoDesc,
 			pass->pso);
 	}
-
-
-
-
 }
-
 
 /***
 ************************************************************
@@ -426,9 +239,9 @@ gpu_shader_resource* directx_render::allocate_shader_resource(gpu_shader_resourc
 		//结构体
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
 	{
-		auto* gpu_ptr = dynamic_cast<directx_sr_custom_buffer*>(
-			gpu_shader_res_allocater->allocate<directx_sr_custom_buffer>(in_can_update));
-		
+		auto gpu_ptr = dynamic_cast<directx_sr_custom_buffer*>(
+			gpu_shader_res_allocater->allocate<directx_sr_custom_buffer>());
+		gpu_ptr->shader_resource_type = in_shader_res_type;
 		return gpu_ptr;
 	}
 	break;
@@ -436,8 +249,10 @@ gpu_shader_resource* directx_render::allocate_shader_resource(gpu_shader_resourc
 	//结构体组
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP:
 	{
-		return dynamic_cast<directx_sr_custom_buffer_group*>(
-			gpu_shader_res_allocater->allocate<directx_sr_custom_buffer_group>(in_can_update));
+		auto gpu_ptr = dynamic_cast<directx_sr_custom_buffer_group*>(
+			gpu_shader_res_allocater->allocate<directx_sr_custom_buffer_group>());
+		gpu_ptr->shader_resource_type = in_shader_res_type;
+		return gpu_ptr;
 
 	}
 	break;
@@ -445,55 +260,67 @@ gpu_shader_resource* directx_render::allocate_shader_resource(gpu_shader_resourc
 	//贴图
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE:
 	{
-		return dynamic_cast<directx_sr_texture*>(
-			gpu_shader_res_allocater->allocate<directx_sr_texture>(in_can_update));
+		auto gpu_ptr = dynamic_cast<directx_sr_texture*>(
+			gpu_shader_res_allocater->allocate<directx_sr_texture>());
+		gpu_ptr->shader_resource_type = in_shader_res_type;
+		return gpu_ptr;
 	}
 	break;
 	//贴图堆
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
 	{
-		return dynamic_cast<directx_sr_texture_group*>(
-			gpu_shader_res_allocater->allocate<directx_sr_texture_group>(in_can_update));
+		auto gpu_ptr = dynamic_cast<directx_sr_texture_group*>(
+			gpu_shader_res_allocater->allocate<directx_sr_texture_group>());
+		gpu_ptr->shader_resource_type = in_shader_res_type;
+		return gpu_ptr;
 	}
 	break;
 	//RT
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP:
 	{
-		return dynamic_cast<directx_sr_render_target_group*>(
-			gpu_shader_res_allocater->allocate<directx_sr_render_target_group>(in_can_update));
+		auto gpu_ptr = dynamic_cast<directx_sr_render_target_group*>(
+			gpu_shader_res_allocater->allocate<directx_sr_render_target_group>());
+		gpu_ptr->shader_resource_type = in_shader_res_type;
+		return gpu_ptr;
 	}
 	break;
 	//Depth
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL:
 	{
-		return dynamic_cast<directx_sr_depth_stencil*>(
-			gpu_shader_res_allocater->allocate<directx_sr_depth_stencil>(in_can_update));
+		auto gpu_ptr = dynamic_cast<directx_sr_depth_stencil*>(
+			gpu_shader_res_allocater->allocate<directx_sr_depth_stencil>());
+		gpu_ptr->shader_resource_type = in_shader_res_type;
+		return gpu_ptr;
 	}
 	break;
 	 
 	default:
-		return dynamic_cast<directx_sr_custom_buffer*>(
-			gpu_shader_res_allocater->allocate<directx_sr_custom_buffer>(in_can_update));
+		{
+		auto gpu_ptr = dynamic_cast<directx_sr_custom_buffer*>(
+			gpu_shader_res_allocater->allocate<directx_sr_custom_buffer>());
+			gpu_ptr->shader_resource_type = in_shader_res_type;
+			return gpu_ptr;
+		}
 		break;
 	}
 }
 
-
 void directx_render::allocate_default_resource(
-	directx_shader_resource* in_res_elem,
+	gpu_shader_resource* in_res,
 	UINT in_elem_size,
 	UINT in_number,
 	void* in_cpu_data,
 	std::vector<UINT> in_element_group_number
 )
 {
-	in_res_elem->memory_size = in_number * in_elem_size;
-	in_res_elem->element_byte_size = in_elem_size;
-	in_res_elem->element_number = in_number;
+	auto in_res_elem = static_cast<directx_shader_resource*>(in_res);
+	size_t memory_size = in_elem_size * in_number;
+	in_res_elem->element_size = in_elem_size;
+	in_res_elem->element_count = in_number;
 	in_res_elem->element_group_number = in_element_group_number;
 	// Create the actual default buffer resource.
 	CD3DX12_HEAP_PROPERTIES Heapproperties(D3D12_HEAP_TYPE_DEFAULT);
-	CD3DX12_RESOURCE_DESC Resourcedesc = CD3DX12_RESOURCE_DESC::Buffer(in_res_elem->memory_size);
+	CD3DX12_RESOURCE_DESC Resourcedesc = CD3DX12_RESOURCE_DESC::Buffer(memory_size);
 
 	create_gpu_memory(
 		in_res_elem->dx_resource,
@@ -506,7 +333,7 @@ void directx_render::allocate_default_resource(
 	// In order to copy CPU memory data into our default buffer, we need to create
 	// an intermediate upload heap. 
 	CD3DX12_HEAP_PROPERTIES Heappropertiesup(D3D12_HEAP_TYPE_UPLOAD);
-	Resourcedesc = CD3DX12_RESOURCE_DESC::Buffer(in_res_elem->memory_size);
+	Resourcedesc = CD3DX12_RESOURCE_DESC::Buffer(memory_size);
 
 	create_gpu_memory(
 		upload_buffer,
@@ -517,7 +344,7 @@ void directx_render::allocate_default_resource(
 	// Describe the data we want to copy into the default buffer.
 	D3D12_SUBRESOURCE_DATA subResourceData = {};
 	subResourceData.pData = in_cpu_data;
-	subResourceData.RowPitch = in_res_elem->memory_size;
+	subResourceData.RowPitch = memory_size;
 	subResourceData.SlicePitch = subResourceData.RowPitch;
 
 	// Schedule to copy the data to the default buffer resource.  At a high level, the helper function UpdateSubresources
@@ -546,18 +373,19 @@ void directx_render::allocate_default_resource(
 }
 
 void directx_render::allocate_upload_resource(
-	directx_shader_resource* in_res_elem,
+	gpu_shader_resource* in_res,
 	UINT in_elem_size,
 	UINT in_number,
 	std::vector<UINT> in_element_group_number
 )
 {
-	in_res_elem->element_byte_size = in_elem_size;
-	in_res_elem->memory_size = in_elem_size * in_number;
-	in_res_elem->element_number = in_number;
+	auto in_res_elem = static_cast<directx_shader_resource*>(in_res);
+	size_t memory_size = in_elem_size * in_number;
+	in_res_elem->element_size = in_elem_size;
+	in_res_elem->element_count = in_number;
 	in_res_elem->element_group_number = in_element_group_number;
 	CD3DX12_HEAP_PROPERTIES Heapproperties(D3D12_HEAP_TYPE_UPLOAD);
-	CD3DX12_RESOURCE_DESC Resourcedesc = CD3DX12_RESOURCE_DESC::Buffer(in_res_elem->memory_size);
+	CD3DX12_RESOURCE_DESC Resourcedesc = CD3DX12_RESOURCE_DESC::Buffer(memory_size);
 
 	create_gpu_memory(
 		in_res_elem->dx_resource,
@@ -628,116 +456,6 @@ void directx_render::update_shader_resource(gpu_shader_resource* in_gpu_sr)
 	}
 
 }
-
-
-void directx_render::update_all_upload_resource(
-	void* data,
-	directx_shader_resource* in_res_elem)
-{
-	memcpy(&(in_res_elem->mapped_data[0]), data, in_res_elem->memory_size);
-}
-
-void directx_render::update_elem_upload_resource(
-	void* data,
-	int element_index,
-	directx_shader_resource* in_res_elem)
-{
-	memcpy(&(in_res_elem->mapped_data[element_index * in_res_elem->element_byte_size]), &data, in_res_elem->element_byte_size);
-}
-
-
-//新建GPU内存 并复制数据
-gpu_resource_element* directx_render::allocate_gpu_memory(
-	GPU_RESOURCE_LAYOUT& in_resource_layout)
-{
-	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE GPU_RES_TYPE;
-	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE GPU_RES_STATE;
-	auto allocater = memory_allocater_group["gpu_resource_element_ptr_allocater"];
-
-	directx_gpu_resource_element* dx_gpu_res_elem = (directx_gpu_resource_element*)allocater->allocate<directx_gpu_resource_element>();
-	dx_gpu_res_elem->name = in_resource_layout.gpu_resource_name;
-	dx_gpu_res_elem->cpu_resource_layout = &in_resource_layout;
-	auto gpu_res_type = in_resource_layout.gpu_resource_type;
-	auto gpu_res_state = in_resource_layout.gpu_resource_state;
-
-	//switch (gpu_res_type)
-	//{
-	//case GPU_RES_TYPE::GPU_RES_BUFFER:
-	//	break;
-	//case GPU_RES_TYPE::GPU_RES_TEXTURE:
-	//	break;
-	//case GPU_RES_TYPE::GPU_RES_VERTEX:
-	//	break;
-	//case GPU_RES_TYPE::GPU_RES_INDEX:
-	//	break;
-	//}
-	switch (gpu_res_state)
-	{
-	case GPU_RES_STATE::GPU_RES_CONSTANT:
-		allocate_default_resource(
-			dx_gpu_res_elem,
-			in_resource_layout.cpu_data_size,
-			in_resource_layout.cpu_data_number,
-			in_resource_layout.cpu_data,
-			in_resource_layout.element_group_number);
-		break;
-	case GPU_RES_STATE::GPU_RES_UPLOAD:
-		allocate_upload_resource(
-			dx_gpu_res_elem,
-			in_resource_layout.cpu_data_size,
-			in_resource_layout.cpu_data_number,
-			in_resource_layout.element_group_number);
-		update_all_upload_resource(
-			in_resource_layout.cpu_data,
-			dx_gpu_res_elem);
-		break;
-	}
-	return dx_gpu_res_elem;
-}
-
-void directx_render::update_gpu_memory(GPU_RESOURCE_LAYOUT& in_resource_layout, gpu_resource_element* in_out_resource_elem_ptr)
-{
-	update_all_upload_resource(in_resource_layout.cpu_data, (directx_gpu_resource_element*)in_out_resource_elem_ptr);
-}
-
-//???回调 让外面写这个函数
-void directx_render::update_gpu_resource(cg_resource* in_resource, gpu_resource* in_out_gpu_resouce_ptr)
-{
-	typedef GPU_RESOURCE_LAYOUT::GPU_RESOURCE_STATE GPU_RES_STATE;
-
-	//这里是遍历物体内部查刷新 
-	auto gpu_resource_ptr = (directx_gpu_resource*)in_out_gpu_resouce_ptr;
-	for (int i = 0; i < GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE::GPU_RES_TYPE_NUMBER; i++)
-	{
-		for (int j = 0; j < in_resource->resource_gpu_layout[i].size(); j++)
-		{
-			auto cpu_elem = in_resource->resource_gpu_layout[i][j];
-			if (cpu_elem.need_update)
-			{
-				auto gpu_res_type = in_resource->resource_gpu_layout[i][j].gpu_resource_type;
-				auto gpu_elem = gpu_resource_ptr->gpu_resource_group[gpu_res_type][j];
-
-				//换了一个新的资源
-				//或者是常量缓存
-				if (&cpu_elem != gpu_elem->cpu_resource_layout
-					|| cpu_elem.gpu_resource_state == GPU_RES_STATE::GPU_RES_CONSTANT)
-				{
-					//??? !!!... 卸载旧资源
-					//重新分配 
-					//gpu_elem = allocate_gpu_memory(cpu_elem);
-				}
-				//上传堆更新
-				else if (cpu_elem.gpu_resource_state == GPU_RES_STATE::GPU_RES_UPLOAD)
-				{
-					update_gpu_memory(cpu_elem, gpu_elem);
-				}
-				cpu_elem.need_update = false;
-			}
-		}
-	}
-
-}
-
 
 gpu_resource_element* directx_render::create_gpu_texture(
 	std::string in_gpu_texture_name,
@@ -1009,75 +727,6 @@ void directx_render::draw_call(
 	}
 }
 
-std::array<const CD3DX12_STATIC_SAMPLER_DESC, 7Ui64> GetStaticSamplers()
-{
-	// Applications usually only need a handful of samplers.  So just define them all up front
-	// and keep them available as part of the root signature.  
-
-	const CD3DX12_STATIC_SAMPLER_DESC pointWrap(
-		0, // shaderRegister
-		D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW*/
-
-	const CD3DX12_STATIC_SAMPLER_DESC pointClamp(
-		1, // shaderRegister
-		D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
-
-	const CD3DX12_STATIC_SAMPLER_DESC linearWrap(
-		2, // shaderRegister
-		D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
-
-	const CD3DX12_STATIC_SAMPLER_DESC linearClamp(
-		3, // shaderRegister
-		D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
-
-	const CD3DX12_STATIC_SAMPLER_DESC anisotropicWrap(
-		4, // shaderRegister
-		D3D12_FILTER_ANISOTROPIC, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressW
-		0.0f,                             // mipLODBias
-		8);                               // maxAnisotropy
-
-	const CD3DX12_STATIC_SAMPLER_DESC anisotropicClamp(
-		5, // shaderRegister
-		D3D12_FILTER_ANISOTROPIC, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressW
-		0.0f,                              // mipLODBias
-		8);                                // maxAnisotropy
-
-	const CD3DX12_STATIC_SAMPLER_DESC shadow(
-		6, // shaderRegister
-		D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressW
-		0.0f,                               // mipLODBias
-		16,                                 // maxAnisotropy
-		D3D12_COMPARISON_FUNC_LESS_EQUAL,
-		D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
-
-	return {
-		pointWrap, pointClamp,
-		linearWrap, linearClamp,
-		anisotropicWrap, anisotropicClamp,
-		shadow
-	};
-}
 
 
 /***

@@ -13,7 +13,6 @@
 #include <memory>
 #include <unordered_map>
 #include "Render_API/d3dx12.h"
-#include "stre_render.h"
 #include "render.h"
 #define SWAP_CHAIN_BUFFER_COUNT 2
 
@@ -100,11 +99,10 @@ protected:
     
     //...
 
-    struct directx_pass : public s_pass
+    struct directx_pass : public gpu_pass
     {
     public:
 
-        
         ComPtr<ID3D12RootSignature> rootsignature = nullptr;
 
         std::unordered_map<std::string, ComPtr<ID3DBlob>> shader_group;
@@ -124,12 +122,114 @@ public:
 
     virtual void draw_pass(const s_pass* in_pass) override;
 
-    virtual s_pass* allocate_pass() override;
+    virtual gpu_pass* allocate_pass() override;
 
     virtual gpu_shader_resource* allocate_shader_resource(
         gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type) override;
 
-    virtual void update_shader_resource(gpu_shader_resource* in_gpu_sr) override;
+    void allocate_upload_resource(
+        gpu_shader_resource* in_res_elem,
+        UINT in_elem_size,
+        UINT in_number,
+        std::vector<UINT> in_element_group_number = {});
+
+    void allocate_default_resource(
+        gpu_shader_resource* in_res_elem,
+        UINT in_elem_size,
+        UINT in_number,
+        void* in_cpu_data,
+        std::vector<UINT> in_element_group_number = {});
+
+
+    virtual void update_shader_resource(
+        gpu_shader_resource* in_gpu_sr) override;
+
+    void load_rootparpameter(
+        std::vector<CD3DX12_ROOT_PARAMETER> & in_out_root_parameter,
+        const gpu_shader_resource* in_gpu_sr);
+
+    void create_rootsignature(
+        CD3DX12_ROOT_SIGNATURE_DESC& in_rootsig_desc, 
+        gpu_pass* in_gpu_pass);
+
+    void create_pso(
+        shader_layout in_shader_layout,
+        gpu_pass* in_gpu_pass,
+        UINT in_rt_number,
+        bool is_translate = false);
+
+
+
+    std::array<const CD3DX12_STATIC_SAMPLER_DESC, 7Ui64> GetStaticSamplers()
+    {
+        // Applications usually only need a handful of samplers.  So just define them all up front
+        // and keep them available as part of the root signature.  
+
+        const CD3DX12_STATIC_SAMPLER_DESC pointWrap(
+            0, // shaderRegister
+            D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW*/
+
+        const CD3DX12_STATIC_SAMPLER_DESC pointClamp(
+            1, // shaderRegister
+            D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+
+        const CD3DX12_STATIC_SAMPLER_DESC linearWrap(
+            2, // shaderRegister
+            D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
+
+        const CD3DX12_STATIC_SAMPLER_DESC linearClamp(
+            3, // shaderRegister
+            D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+
+        const CD3DX12_STATIC_SAMPLER_DESC anisotropicWrap(
+            4, // shaderRegister
+            D3D12_FILTER_ANISOTROPIC, // filter
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressW
+            0.0f,                             // mipLODBias
+            8);                               // maxAnisotropy
+
+        const CD3DX12_STATIC_SAMPLER_DESC anisotropicClamp(
+            5, // shaderRegister
+            D3D12_FILTER_ANISOTROPIC, // filter
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressW
+            0.0f,                              // mipLODBias
+            8);                                // maxAnisotropy
+
+        const CD3DX12_STATIC_SAMPLER_DESC shadow(
+            6, // shaderRegister
+            D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, // filter
+            D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressU
+            D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressV
+            D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressW
+            0.0f,                               // mipLODBias
+            16,                                 // maxAnisotropy
+            D3D12_COMPARISON_FUNC_LESS_EQUAL,
+            D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
+
+        return {
+            pointWrap, pointClamp,
+            linearWrap, linearClamp,
+            anisotropicWrap, anisotropicClamp,
+            shadow
+        };
+    }
+
 
 private:
     //屏幕空间的顶点输入
@@ -198,19 +298,6 @@ private:
         D3D12_GRAPHICS_PIPELINE_STATE_DESC& in_pso_desc,
         ComPtr<ID3D12PipelineState> in_pso);
     
-    void allocate_upload_resource(
-        directx_shader_resource* in_res_elem,
-        UINT in_elem_size,
-        UINT in_number,
-        std::vector<UINT> in_element_group_number = {});
-
-    void allocate_default_resource(
-        directx_shader_resource* in_res_elem,
-        UINT in_elem_size,
-        UINT in_number,
-        void* in_cpu_data,
-        std::vector<UINT> in_element_group_number = {});
-
     void update_all_upload_resource(
         void* data,
         directx_shader_resource* in_res_elem);
@@ -228,7 +315,7 @@ private:
 
 
 public:
-    virtual gpu_resource* allocate_gpu_resource(cg_resource* in_resource) override;
+    
 
     virtual void update_gpu_resource(cg_resource* in_resource, gpu_resource* in_out_gpu_resouce_ptr) override;
 

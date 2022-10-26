@@ -1,5 +1,4 @@
 #pragma once
-#include "base_type.h"
 #include "gpu_reource.h"
 /***
 ************************************************************
@@ -89,6 +88,10 @@ struct cpu_resource
 
 	size_t get_element_count() { return count; };
 
+	const bool can_update = false;
+
+	cpu_resource(bool in_can_update = false) : can_update(in_can_update) {}
+
 	gpu_shader_resource* gpu_sr_ptr;
 	//定义类型
 };
@@ -116,7 +119,7 @@ template<
 
 	t_vertex* vertex_ptr;
 	t_index* index_ptr;
-	std::vector <size_t> index_offset;
+	std::vector <UINT> index_offset;
 
 	t_object_constant* object_constant_ptr;
 	t_material* material_ptr;

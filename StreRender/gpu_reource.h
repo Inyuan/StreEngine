@@ -29,15 +29,13 @@ struct gpu_shader_resource
 	size_t register_index = 0; //使用的寄存器序号
 
 	std::string name;
-	//只有上传堆有效
-	//
 	const bool can_update = false;
+	//只有上传堆有效
 	BYTE* mapped_data = nullptr;
 
 	size_t element_size = 0;
 	size_t element_count = 0;
 
-	
 
 	//隔多少个元素为一组
 	std::vector<UINT> element_group_number; //用于存储index等数据的内部偏移( [0] 第0组有多少个元素)
@@ -46,8 +44,18 @@ struct gpu_shader_resource
 	//...
 };
 
+
+
+
+struct gpu_pass
+{
+	//??? 关切到着色器的名字
+	s_uid uid;
+};
+
 struct gpu_rander_target
 {
+	//??? 关切到渲染目标的名字
 	s_uid uid;
 
 	gpu_shader_resource* gpu_sr_ptr;

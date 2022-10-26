@@ -1,8 +1,15 @@
 #include "stre_render.h"
 #include "Core/Memory/s_memory.h"
 #include "Core/File_Manager/s_fbx.h"
-////////////////////////////////////////////////////////////////////
-//create object
+
+/***
+************************************************************
+*
+* Create & Load Function
+*
+************************************************************
+*/
+
 
 s_memory_allocater_register object_resource_allocater("object_resource_allocater");
 
@@ -15,10 +22,45 @@ cpu_mesh* custom_manager<cpu_mesh, t_render>::create_resource()
 }
 
 template<class t_render>
+void custom_manager<cpu_mesh, t_render>::allocate_gpu(cpu_mesh* in_cpu_data)
+{
+    typedef gpu_shader_resource::SHADER_RESOURCE_TYPE GPU_SR_TYPE;
+
+    custom_manager<cpu_vertex, t_render>::allocate_gpu(
+        in_cpu_data->vertex_ptr,
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP, {});
+
+    custom_manager<cpu_index, t_render>::allocate_gpu(
+        in_cpu_data->index_ptr,
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP, in_cpu_data->index_offset);
+
+    custom_manager<cpu_material, t_render>::allocate_gpu(
+        in_cpu_data->material_ptr,
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP, {});
+
+    custom_manager<cpu_object_constant, t_render>::allocate_gpu(
+        in_cpu_data->object_constant_ptr,
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER, {});
+
+    custom_manager<cpu_texture, t_render>::allocate_gpu(
+        in_cpu_data->texture_ptr,
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_TEXTURE_GROUP);
+}
+
+template<class t_render>
 cpu_mesh* custom_manager<cpu_mesh, t_render>::load_resource(wchar_t* in_path)
 {
 
 }
+
+/***
+************************************************************
+*
+* Update Function
+*
+************************************************************
+*/
+
 
 template<class t_render>
 void custom_manager<cpu_mesh, t_render>::update_gpu(const cpu_mesh* in_cpu_data)
@@ -26,39 +68,7 @@ void custom_manager<cpu_mesh, t_render>::update_gpu(const cpu_mesh* in_cpu_data)
 
 }
 
-template<class t_render>
-void custom_manager<cpu_mesh, t_render>::allocate_gpu(cpu_mesh* in_cpu_data)
-{
-    typedef gpu_shader_resource::SHADER_RESOURCE_TYPE GPU_SR_TYPE;
 
-    custom_manager<cpu_vertex, t_render>::allocate_gpu(
-        in_cpu_data->vertex_ptr, 
-        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
-
-    custom_manager<cpu_index, t_render>::allocate_gpu(
-        in_cpu_data->index_ptr, 
-        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
-
-    custom_manager<cpu_material, t_render>::allocate_gpu(
-        in_cpu_data->material_ptr, 
-        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
-
-    custom_manager<cpu_object_constant, t_render>::allocate_gpu(
-        in_cpu_data->object_constant_ptr, 
-        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER);
-    
-    custom_manager<cpu_texture, t_render>::allocate_gpu(
-        in_cpu_data->texture_ptr, 
-        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_TEXTURE_GROUP);
-}
-
-
-
-
-
-
-////////////////////////////////////////////////////////////////////
-//read resource
 
 /***
 ************************************************************
@@ -463,16 +473,3 @@ cpu_mesh* custom_manager<cpu_mesh, t_render>::load_fbx(wchar_t* in_path)
 
     return out_resource;
 }
-
-
-
-////////////////////////////////////////////////////////////////////
-
-
-/***
-************************************************************
-*
-* Update Resource
-*
-************************************************************
-*/
