@@ -242,6 +242,10 @@ gpu_shader_resource* directx_render::allocate_shader_resource(gpu_shader_resourc
 		auto gpu_ptr = dynamic_cast<directx_sr_custom_buffer*>(
 			gpu_shader_res_allocater->allocate<directx_sr_custom_buffer>());
 		gpu_ptr->shader_resource_type = in_shader_res_type;
+
+		create_gpu_memory_view(DX_CBV, gpu_ptr,)
+
+
 		return gpu_ptr;
 	}
 	break;
