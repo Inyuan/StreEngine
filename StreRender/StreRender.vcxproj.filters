@@ -45,6 +45,9 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Logic</Filter>
     </ClCompile>
+    <ClCompile Include="Core\Render_Core\directx_render.cpp">
+      <Filter>Core\Render_Core</Filter>
+    </ClCompile>
     <ClCompile Include="Core\Window\s_window.cpp">
       <Filter>Core\Window</Filter>
     </ClCompile>
@@ -83,9 +86,6 @@
     </ClCompile>
     <ClCompile Include="Resource\texture_manager.cpp">
       <Filter>Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Render_Core\directx_render.cpp">
-      <Filter>Core\Render_Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

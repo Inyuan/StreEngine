@@ -47,8 +47,6 @@ void custom_manager<t_cpu_res_type, t_render>::allocate_gpu(
 	{
 		in_cpu_data->gpu_sr_ptr = in_render->allocate_shader_resource(in_sr_type);
 
-		
-
 		if (in_cpu_data->can_update)
 		{
 			in_render->allocate_default_resource(
