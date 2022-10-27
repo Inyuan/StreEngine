@@ -58,8 +58,8 @@ protected:
     typedef directx_shader_resource directx_sr_custom_buffer;//csv
     typedef directx_shader_resource directx_sr_custom_buffer_group;//srv
     typedef directx_shader_resource directx_sr_texture;//srv
-    typedef directx_shader_resource directx_sr_render_target;//table
-
+    typedef directx_shader_resource directx_sr_render_target;//srv rtv
+    typedef directx_shader_resource directx_sr_depth_stencil;//srv dsv
     //Ä£°å£¿
     struct directx_sr_texture_group : public gpu_shader_resource
     {
@@ -68,12 +68,12 @@ protected:
 
     struct directx_sr_render_target_group : public gpu_shader_resource
     {
+        UINT rt_number = 0;
         ComPtr<ID3D12DescriptorHeap> rtv_heap = nullptr;
     };
 
-    struct directx_sr_depth_stencil : public directx_shader_resource
+    struct directx_sr_depth_stencil_group : public directx_shader_resource
     {
-        ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
         ComPtr<ID3D12DescriptorHeap> dsv_heap = nullptr;
     };
 
@@ -134,7 +134,9 @@ public:
         UINT in_number,
         void* in_cpu_data);
 
-    void pakeage_textures(std::vector<gpu_shader_resource*>& in_texture_group,gpu_shader_resource* in_out_table);
+    void pakeage_textures(
+        std::vector<const gpu_shader_resource*>& in_texture_group,
+        gpu_shader_resource* in_out_table);
 
     void load_rootparpameter(
         std::vector<CD3DX12_ROOT_PARAMETER> & in_out_root_parameter,
@@ -254,8 +256,9 @@ private:
 private:
 
     void create_descriptor_heap(
-        D3D12_DESCRIPTOR_HEAP_DESC& in_dx_descheap_desc,
-        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> in_out_descheap);
+        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> in_out_descheap,
+        DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
+        UINT in_desc_number);
     
     void create_gpu_memory(
         ComPtr<ID3D12Resource> in_out_resource,
@@ -277,9 +280,9 @@ private:
     /// <param name="in_gpu_res_elem"></param>
     /// <param name="in_out_dest_descriptor">handleÎ»ÖÃ</param>
     void load_descriptor_into_heap(
-        DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
-        directx_shader_resource* in_gpu_res_elem,
-        D3D12_CPU_DESCRIPTOR_HANDLE in_out_dest_descriptor);
+        const DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
+        const directx_shader_resource* in_gpu_res_elem,
+        CD3DX12_CPU_DESCRIPTOR_HANDLE in_out_dest_descriptor);
 
     void create_descriptor(
         DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
@@ -308,16 +311,7 @@ private:
 
 public:
     
-
-    virtual void update_gpu_resource(cg_resource* in_resource, gpu_resource* in_out_gpu_resouce_ptr) override;
-
-    virtual gpu_resource_element* allocate_gpu_memory(GPU_RESOURCE_LAYOUT& in_resource_layout) override;
-
-    virtual void update_gpu_memory(GPU_RESOURCE_LAYOUT& in_resource_layout, gpu_resource_element* in_out_resource_elem_ptr) override;
-
-    virtual gpu_resource_element* create_gpu_texture(
-        std::string in_gpu_texture_name,
-        GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE in_resoure_type) override;
+    virtual void create_gpu_texture(gpu_shader_resource* in_out_gpu_texture) override;
 
 
 

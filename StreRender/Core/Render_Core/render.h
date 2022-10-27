@@ -14,9 +14,7 @@ public:
 	virtual gpu_shader_resource* allocate_shader_resource(
 		gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type) = 0;
 
-	virtual gpu_resource_element* create_gpu_texture(
-		std::string in_gpu_texture_name,
-		GPU_RESOURCE_LAYOUT::GPU_RESOURCE_TYPE in_resoure_type) = 0;
+	virtual void create_gpu_texture(gpu_shader_resource* in_out_gpu_texture) = 0;
 
 	virtual void clear_gpu_texture(gpu_resource_element* in_gpu_resource_element) = 0;
 
