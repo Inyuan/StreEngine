@@ -69,26 +69,27 @@ public:
 
 	//物体资源 一一对应实例
 	//
-	struct mesh_resource
+	struct gpu_mesh_resource
 	{
-		//顶点和索引
-		struct vertex_layout
+		const gpu_shader_resource* vertex;
+		const gpu_shader_resource* index;
+
+		struct mesh_element
 		{
-			const gpu_shader_resource* vertex;
-			const gpu_shader_resource* index;
-		} gpu_vertex_layout;
-		//各种资源，要求类型数量一致！！！ 需要改设计！！！
-		//obj_cb
-		//texutre_group
-		//material 
+			size_t index_start_offset = 0;
+			size_t index_number = 0;
+		};
+		std::vector<mesh_element> mesh_element_group;
+
 		std::map < std::string, const gpu_shader_resource*> gpu_mesh_resource_ptr;
 	};
 
-	std::map< std::string, mesh_resource > gpu_mesh;
+	std::map < std::string, gpu_mesh_resource> gpu_mesh;
 
 	//SRV资源组 buffer texture
 	std::map < std::string, const gpu_shader_resource*> gpu_pass_resource_ptr;
 	//输出资源 
 	std::map < std::string, const gpu_shader_resource*> gpu_rt_texture_ptr;
 };
+
 

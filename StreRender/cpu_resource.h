@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+#include <map>
 #include "gpu_reource.h"
 /***
 ************************************************************
@@ -116,14 +118,12 @@ template<
 	struct s_mesh
 {
 	s_uid uid;
-
 	t_vertex* vertex_ptr;
 	t_index* index_ptr;
-	std::vector <UINT> index_offset;
-
+	std::vector<UINT> mesh_element_index_count;
 	t_object_constant* object_constant_ptr;
 	t_material* material_ptr;
-	std::vector< t_texture*> texture_ptr;
+	std::map<std::string, t_texture*> texture_ptr;
 };
 
 

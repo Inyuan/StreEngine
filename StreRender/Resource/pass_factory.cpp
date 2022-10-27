@@ -90,15 +90,26 @@ void pass_factory::add_mesh(
 	s_pass* in_out_pass, 
 	const cpu_mesh*  in_mesh)
 {
-	s_pass::mesh_resource g_mesh;
-	g_mesh.gpu_vertex_layout.vertex = in_mesh->vertex_ptr->gpu_sr_ptr;
-	g_mesh.gpu_vertex_layout.index = in_mesh->index_ptr->gpu_sr_ptr;
+	s_pass::gpu_mesh_resource g_mesh;
+	g_mesh.vertex = in_mesh->vertex_ptr->gpu_sr_ptr;
+	g_mesh.index = in_mesh->index_ptr->gpu_sr_ptr;
 
 	g_mesh.gpu_mesh_resource_ptr[in_mesh->object_constant_ptr->uid.name] = (in_mesh->object_constant_ptr->gpu_sr_ptr);
 	g_mesh.gpu_mesh_resource_ptr[in_mesh->material_ptr->uid.name] = (in_mesh->material_ptr->gpu_sr_ptr);
-	for (int i = 0; i < in_mesh->texture_ptr.size(); i++)
+	for (auto it : in_mesh->texture_ptr)
 	{
-		g_mesh.gpu_mesh_resource_ptr[in_mesh->texture_ptr[i]->uid.name] = (in_mesh->texture_ptr[i]->gpu_sr_ptr);
+		g_mesh.gpu_mesh_resource_ptr[it.second->uid.name] = (it.second->gpu_sr_ptr);
+	}
+	//×°Ìî×Ómesh
+	size_t index_offset = 0;
+	for (int i = 0; i < in_mesh->mesh_element_index_count.size(); i++)
+	{
+		s_pass::gpu_mesh_resource::mesh_element mesh_e;
+		mesh_e.index_number = in_mesh->mesh_element_index_count[i];
+		mesh_e.index_start_offset = index_offset;
+		index_offset += mesh_e.index_number;
+
+		g_mesh.mesh_element_group.push_back(mesh_e);
 	}
 
 	in_out_pass->gpu_mesh[in_mesh->uid.name] = g_mesh;

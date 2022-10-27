@@ -19,12 +19,15 @@ struct gpu_shader_resource
 	{
 		SHADER_RESOURCE_TYPE_CUSTOM_BUFFER, // CSV
 		SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP, //SRV
+		//跟随mesh子物体顺序读取的CBV group ex:material
+		SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH,
 		SHADER_RESOURCE_TYPE_TEXTURE, //SRV
 		SHADER_RESOURCE_TYPE_TEXTURE_GROUP, //TABLE
 		SHADER_RESOURCE_TYPE_RENDER_TARGET, //SRV
 		SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP, // TABLE
 		SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL // DSV
 	}shader_resource_type;
+
 
 	size_t register_index = 0; //使用的寄存器序号
 
@@ -36,10 +39,6 @@ struct gpu_shader_resource
 	size_t element_size = 0;
 	size_t element_count = 0;
 
-
-	//隔多少个元素为一组
-	std::vector<UINT> element_group_number; //用于存储index等数据的内部偏移( [0] 第0组有多少个元素)
-	
 	gpu_shader_resource(bool in_can_update = false) : can_update(in_can_update) {};
 	//...
 };

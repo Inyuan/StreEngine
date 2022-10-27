@@ -49,7 +49,7 @@ protected:
         D3D12_SHADER_RESOURCE_VIEW_DESC dx_srv;
         D3D12_RENDER_TARGET_VIEW_DESC dx_rtv;
         D3D12_DEPTH_STENCIL_VIEW_DESC dx_dsv;
-        D3D12_CONSTANT_BUFFER_VIEW_DESC dx_csv;
+        D3D12_CONSTANT_BUFFER_VIEW_DESC dx_cbv;
         D3D12_UNORDERED_ACCESS_VIEW_DESC dx_uav;
         D3D12_RESOURCE_STATES dx_current_state = D3D12_RESOURCE_STATE_GENERIC_READ;
         DXGI_FORMAT dx_format;
@@ -63,15 +63,11 @@ protected:
     //模板？
     struct directx_sr_texture_group : public gpu_shader_resource
     {
-        std::vector<directx_sr_texture*> dx_res_group;
         ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
     };
 
     struct directx_sr_render_target_group : public gpu_shader_resource
     {
-        std::vector<directx_sr_render_target*> dx_rt_group;
-
-        ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
         ComPtr<ID3D12DescriptorHeap> rtv_heap = nullptr;
     };
 
@@ -116,7 +112,7 @@ private:
         const std::map < std::string, const gpu_shader_resource*>& in_gpu_res_group,
         bool set_render_tager = false);
 
-    void draw_call(const s_pass::mesh_resource::vertex_layout* in_gpu_vertex_layout);
+    void draw_call(const s_pass::gpu_mesh_resource* in_gpu_mesh);
 
 public:
 
@@ -130,19 +126,15 @@ public:
     void allocate_upload_resource(
         gpu_shader_resource* in_res_elem,
         UINT in_elem_size,
-        UINT in_number,
-        std::vector<UINT> in_element_group_number = {});
+        UINT in_number);
 
     void allocate_default_resource(
         gpu_shader_resource* in_res_elem,
         UINT in_elem_size,
         UINT in_number,
-        void* in_cpu_data,
-        std::vector<UINT> in_element_group_number = {});
+        void* in_cpu_data);
 
-
-    virtual void update_shader_resource(
-        gpu_shader_resource* in_gpu_sr) override;
+    void pakeage_textures(std::vector<gpu_shader_resource*>& in_texture_group,gpu_shader_resource* in_out_table);
 
     void load_rootparpameter(
         std::vector<CD3DX12_ROOT_PARAMETER> & in_out_root_parameter,
@@ -230,7 +222,6 @@ public:
         };
     }
 
-
 private:
     //屏幕空间的顶点输入
     ComPtr<ID3D12Resource> screen_vertex_gpu_resource;
@@ -279,10 +270,20 @@ private:
         D3D12_RESOURCE_STATES in_old_resource_states,
         D3D12_RESOURCE_STATES in_new_resource_states);
 
-    void create_gpu_memory_view(
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="in_texture_desc_type"></param>
+    /// <param name="in_gpu_res_elem"></param>
+    /// <param name="in_out_dest_descriptor">handle位置</param>
+    void load_descriptor_into_heap(
         DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
         directx_shader_resource* in_gpu_res_elem,
         D3D12_CPU_DESCRIPTOR_HANDLE in_out_dest_descriptor);
+
+    void create_descriptor(
+        DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
+        directx_shader_resource* in_gpu_res_elem);
 
     void create_rootsignature(
         CD3DX12_ROOT_SIGNATURE_DESC& in_rootsig_desc,
@@ -298,15 +299,6 @@ private:
         D3D12_GRAPHICS_PIPELINE_STATE_DESC& in_pso_desc,
         ComPtr<ID3D12PipelineState> in_pso);
     
-    void update_all_upload_resource(
-        void* data,
-        directx_shader_resource* in_res_elem);
-
-    void update_elem_upload_resource(
-        void* data,
-        int elementIndex,
-        directx_shader_resource* in_res_elem);
-
     void switch_gpu_resource_state(
         directx_shader_resource* in_gpu_res_elem,
         D3D12_RESOURCE_STATES in_new_resource_states);

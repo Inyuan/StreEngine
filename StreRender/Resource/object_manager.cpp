@@ -28,19 +28,19 @@ void custom_manager<cpu_mesh, t_render>::allocate_gpu(cpu_mesh* in_cpu_data)
 
     custom_manager<cpu_vertex, t_render>::allocate_gpu(
         in_cpu_data->vertex_ptr,
-        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP, {});
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
 
     custom_manager<cpu_index, t_render>::allocate_gpu(
         in_cpu_data->index_ptr,
-        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP, in_cpu_data->index_offset);
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
 
     custom_manager<cpu_material, t_render>::allocate_gpu(
         in_cpu_data->material_ptr,
-        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP, {});
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
 
     custom_manager<cpu_object_constant, t_render>::allocate_gpu(
         in_cpu_data->object_constant_ptr,
-        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER, {});
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER);
 
     custom_manager<cpu_texture, t_render>::allocate_gpu(
         in_cpu_data->texture_ptr,
