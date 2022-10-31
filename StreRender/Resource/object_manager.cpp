@@ -1,55 +1,77 @@
 #include "stre_render.h"
-#include "cg_object.h"
 #include "Core/Memory/s_memory.h"
 #include "Core/File_Manager/s_fbx.h"
-#include "cg_resource_factory.h"
-////////////////////////////////////////////////////////////////////
-//create object
-
-s_memory_allocater_register object_resource_allocater("object_resource_allocater");
-
-s_object* s_object_manager::create_object(s_resource* in_resource)
-{
-	auto allocater = memory_allocater_group["object_resource_allocater"];
-	
-	return allocater->allocate<cg_object>((cg_resource*)in_resource);
-}
-s_static_object* s_object_manager::create_static_object(s_resource* in_resource)
-{
-	auto allocater = memory_allocater_group["object_resource_allocater"];
-
-	return allocater->allocate<cg_static_object,cg_resource>((cg_resource*)in_resource);
-
-}
-s_dynamic_object* s_object_manager::create_dynamic_object(s_resource* in_resource)
-{
-	auto allocater = memory_allocater_group["object_resource_allocater"];
-
-	return allocater->allocate<cg_dynamic_object>((cg_resource*)in_resource);
-
-}
 
 /***
 ************************************************************
 *
-* Init Resource
+* Create & Load Function
 *
 ************************************************************
 */
-//资源的构建依赖cg_resource_factory
-// 
-//cpu资源构建过程
-//1.利用reource_factory构建默认的resource
-//2.再利用resource 构建对应物体类型
-//3.物体类型的构造函数中构建 GPU layout
 
-s_resource* s_object_manager::create_object_resource()
+
+s_memory_allocater_register object_resource_allocater("object_resource_allocater");
+
+template<class t_render>
+cpu_mesh* custom_manager<cpu_mesh, t_render>::create_resource()
+{
+	auto allocater = memory_allocater_group["object_resource_allocater"];
+	
+	return allocater->allocate<cpu_mesh>();
+}
+
+template<class t_render>
+void custom_manager<cpu_mesh, t_render>::allocate_gpu(cpu_mesh* in_cpu_data)
+{
+
+
+    typedef gpu_shader_resource::SHADER_RESOURCE_TYPE GPU_SR_TYPE;
+
+    custom_manager<cpu_vertex, t_render>::allocate_gpu(
+        in_cpu_data->vertex_ptr,
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
+
+    custom_manager<cpu_index, t_render>::allocate_gpu(
+        in_cpu_data->index_ptr,
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
+
+    custom_manager<cpu_material, t_render>::allocate_gpu(
+        in_cpu_data->material_ptr,
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH);
+
+    custom_manager<cpu_object_constant, t_render>::allocate_gpu(
+        in_cpu_data->object_constant_ptr,
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER);
+
+    custom_manager<cpu_texture, t_render>::allocate_gpu(
+        in_cpu_data->texture_ptr,
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_TEXTURE_GROUP);
+}
+
+template<class t_render>
+cpu_mesh* custom_manager<cpu_mesh, t_render>::load_resource(wchar_t* in_path)
 {
 
 }
 
-////////////////////////////////////////////////////////////////////
-//read resource
+
+/***
+************************************************************
+*
+* Update Function
+*
+************************************************************
+*/
+
+
+template<class t_render>
+void custom_manager<cpu_mesh, t_render>::update_gpu(const cpu_mesh* in_cpu_data)
+{
+
+}
+
+
 
 /***
 ************************************************************
@@ -90,10 +112,6 @@ std::string WstringToString(std::wstring wstr)
 */
 
 //按照后缀区分类型，进而读取
-s_resource* s_object_manager::load_local_resource( wchar_t* in_path)
-{
-
-}
 
 std::string GetFbxFile(std::wstring DirPath)
 {
@@ -215,14 +233,14 @@ std::string GetFbxFile(std::wstring DirPath)
 //}
 
 //fbx解包
-s_resource* s_object_manager::load_local_fbx(wchar_t* in_path)
+template<class t_render>
+cpu_mesh* custom_manager<cpu_mesh, t_render>::load_fbx(wchar_t* in_path)
 {
     bool has_animation = false;
 
     auto allocater = memory_allocater_group["resource_allocater"];
 
-    s_resource* out_resource = allocater->allocate<cg_resource>();
-
+    cpu_mesh* out_resource = create_resource();
     //路径
     std::wstring IDictionary(in_path);
 
@@ -244,35 +262,23 @@ s_resource* s_object_manager::load_local_fbx(wchar_t* in_path)
     
     
     //为资源分配空间
-    cg_static_object::cpu_static_mesh_data* mesh_data;
     {
-        cg_resource_factory mesh_factory;
-        mesh_data = mesh_factory.allocate_static_mesh((cg_resource*)out_resource, controlPointCount, (int)polygonCount * PolygonType, material_size);
-        //构建默认材质
-        for (int i = 0; i < material_size; i++)
-        {
-            s_resource* mat_resource = allocater->allocate<cg_resource>();
-            
-            auto mat_data = mesh_factory.allocate_material((cg_resource*)mat_resource);
-            
-            //??? 材质默认参数！！！
-            //...
-            //mat_data->textrue
-            
-            //放入object
-            s_material_manager material_manager;
-            mesh_data->material_group_ptr[i] = (cg_material*)material_manager.create_material(mat_resource);
-        }
-    
+
+        out_resource->vertex_ptr = custom_manager<cpu_vertex, t_render>::create_resource(controlPointCount);
+        out_resource->index_ptr = custom_manager<cpu_index, t_render>::create_resource((int)polygonCount * PolygonType);
+        out_resource->material_ptr = custom_manager<cpu_material, t_render>::create_resource(material_size);
+        out_resource->object_constant_ptr = custom_manager<cpu_object_constant, t_render>::create_resource(material_size);
+        out_resource->index_offset.assign(material_size,0);
+        //贴图得自己更新了
+        //out_resource->texture_ptr.assign();
     }
-    auto vertices = mesh_data->vertex_group_ptr;
-    auto indices = mesh_data->index_group_ptr;
-    auto indeices_offset = mesh_data->material_index_offset_group_ptr;
-    auto& object_constant = mesh_data->object_constant_data;
-    auto& vMin = object_constant.object_bound_box.min_position;
-    auto& vMax = object_constant.object_bound_box.max_position;
 
-
+    auto vertices = out_resource->vertex_ptr->data;
+    auto indices = out_resource->index_ptr->data;
+    auto indeices_offset = out_resource->index_offset;
+    auto object_constant = out_resource->object_constant_ptr->data;
+    s_float3 vMin = object_constant->object_bound_box.min_position;
+    s_float3 vMax = object_constant->object_bound_box.max_position;
 
     //读取数据
     bool HasNormal = myFbx.pMesh->GetElementNormalCount() > 0;
@@ -470,16 +476,3 @@ s_resource* s_object_manager::load_local_fbx(wchar_t* in_path)
 
     return out_resource;
 }
-
-
-
-////////////////////////////////////////////////////////////////////
-
-
-/***
-************************************************************
-*
-* Update Resource
-*
-************************************************************
-*/
