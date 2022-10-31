@@ -24,6 +24,8 @@ cpu_mesh* custom_manager<cpu_mesh, t_render>::create_resource()
 template<class t_render>
 void custom_manager<cpu_mesh, t_render>::allocate_gpu(cpu_mesh* in_cpu_data)
 {
+
+
     typedef gpu_shader_resource::SHADER_RESOURCE_TYPE GPU_SR_TYPE;
 
     custom_manager<cpu_vertex, t_render>::allocate_gpu(
@@ -36,7 +38,7 @@ void custom_manager<cpu_mesh, t_render>::allocate_gpu(cpu_mesh* in_cpu_data)
 
     custom_manager<cpu_material, t_render>::allocate_gpu(
         in_cpu_data->material_ptr,
-        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH);
 
     custom_manager<cpu_object_constant, t_render>::allocate_gpu(
         in_cpu_data->object_constant_ptr,
@@ -52,6 +54,7 @@ cpu_mesh* custom_manager<cpu_mesh, t_render>::load_resource(wchar_t* in_path)
 {
 
 }
+
 
 /***
 ************************************************************
@@ -261,10 +264,10 @@ cpu_mesh* custom_manager<cpu_mesh, t_render>::load_fbx(wchar_t* in_path)
     //为资源分配空间
     {
 
-        out_resource->vertex_ptr = custom_manager<cpu_vertex>::create_resource(controlPointCount);
-        out_resource->index_ptr = custom_manager<cpu_index>::create_resource((int)polygonCount * PolygonType);
-        out_resource->material_ptr = custom_manager<cpu_material>::create_resource(material_size);
-        out_resource->object_constant_ptr = custom_manager<cpu_object_constant>::create_resource(material_size);
+        out_resource->vertex_ptr = custom_manager<cpu_vertex, t_render>::create_resource(controlPointCount);
+        out_resource->index_ptr = custom_manager<cpu_index, t_render>::create_resource((int)polygonCount * PolygonType);
+        out_resource->material_ptr = custom_manager<cpu_material, t_render>::create_resource(material_size);
+        out_resource->object_constant_ptr = custom_manager<cpu_object_constant, t_render>::create_resource(material_size);
         out_resource->index_offset.assign(material_size,0);
         //贴图得自己更新了
         //out_resource->texture_ptr.assign();

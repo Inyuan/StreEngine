@@ -175,7 +175,7 @@ void pass_factory::remove_shader_resource(
 	s_pass* in_out_pass,
 	const t_cpu_resource* in_sr)
 {
-	in_out_pass->gpu_pass_resource_ptr.erase(in_uid.name);
+	in_out_pass->gpu_pass_resource_ptr.erase(in_sr->uid.name);
 }
 
 void pass_factory::remove_render_target(

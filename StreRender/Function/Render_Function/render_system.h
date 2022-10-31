@@ -75,23 +75,17 @@ public:
 	}
 
 private:
-	void init(HINSTANCE in_instance)
+	void init(HINSTANCE in_instance, UINT in_width, UINT in_height)
 	{
-		if (is_init)
-		{
-			return;
-		}
-		is_init = true;
-
 		s_memory* memory_allocater = memory_allocater_group["render_memory_allocater"];
 
 		//gpu_res_factory = memory_allocater->allocate<gpu_resource_factory>();
 
 		render_window = memory_allocater->allocate<s_window>();
 
-		render_window->init(in_instance, CLIENT_WIDTH, CLIENT_HEIGHT);
+		render_window->init(in_instance, in_width, in_height);
 
-		renderer = (render*)memory_allocater->allocate<T_render>();
+		renderer = (render*)memory_allocater->allocate<t_render>();
 
 		renderer->init(render_window->get_hwnd());
 	}

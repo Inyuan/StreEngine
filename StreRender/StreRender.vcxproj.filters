@@ -57,9 +57,6 @@
     <ClCompile Include="Core\Process\BProcess.cpp">
       <Filter>Core\Process</Filter>
     </ClCompile>
-    <ClCompile Include="Function\Render_Function\deferred_rendering.cpp">
-      <Filter>Function\Render_Function</Filter>
-    </ClCompile>
     <ClCompile Include="Function\Render_Function\render_system.cpp">
       <Filter>Function\Render_Function</Filter>
     </ClCompile>
@@ -110,9 +107,6 @@
     </ClInclude>
     <ClInclude Include="Core\Process\BProcess.h">
       <Filter>Core\Process</Filter>
-    </ClInclude>
-    <ClInclude Include="Function\Render_Function\deferred_rendering.h">
-      <Filter>Function\Render_Function</Filter>
     </ClInclude>
     <ClInclude Include="Core\Render_Core\Render_API\d3dx12.h">
       <Filter>Core\Render_Core\Render_API</Filter>

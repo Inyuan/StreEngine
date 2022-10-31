@@ -31,22 +31,28 @@ void directx_render::load_rootparpameter(
 	switch (in_gpu_sr->shader_resource_type)
 	{
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
+	{
 		CD3DX12_ROOT_PARAMETER r_p;
 		r_p.InitAsConstantBufferView(in_gpu_sr->register_index);
 		in_out_root_parameter.push_back(r_p);
+	}
 		break;
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP:
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE:
+	{
 		CD3DX12_ROOT_PARAMETER r_p;
 		r_p.InitAsShaderResourceView(in_gpu_sr->register_index);
 		in_out_root_parameter.push_back(r_p);
+	}
 		break;
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
+	{
 		CD3DX12_DESCRIPTOR_RANGE texTable;
 		texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, in_gpu_sr->element_count, in_gpu_sr->register_index);
 		CD3DX12_ROOT_PARAMETER texture_rp;
 		texture_rp.InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 		in_out_root_parameter.push_back(texture_rp);
+	}
 		break;
 	default:
 		break;
@@ -66,7 +72,7 @@ void directx_render::create_pso(
 	shader_layout in_shader_layout,
 	gpu_pass* in_gpu_pass,
 	UINT in_rt_number,
-	bool is_translate = false)
+	bool is_translate)
 {
 	typedef shader_layout::SHADER_TYPE SHADER_TYPE;
 	typedef shader_layout::shader_input::INPUT_ELEMENT_SIZE INPUT_ELEMENT_SIZE;
@@ -655,10 +661,10 @@ void directx_render::draw_pass(const s_pass* in_pass)
 
 void directx_render::Load_resource(
 	const std::map < std::string, const gpu_shader_resource*>&  in_gpu_res_group,
-	bool set_render_tager = false)
+	bool set_render_tager)
 {
-	D3D12_CPU_DESCRIPTOR_HANDLE* rtv_descs = nullptr;
-	D3D12_CPU_DESCRIPTOR_HANDLE* dsv_desc = nullptr;
+	D3D12_CPU_DESCRIPTOR_HANDLE rtv_descs;
+	D3D12_CPU_DESCRIPTOR_HANDLE dsv_desc;
 	UINT output_rt_size = 0;
 	for (auto gpu_res : in_gpu_res_group)
 	{
@@ -708,12 +714,12 @@ void directx_render::Load_resource(
 		//RT
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP:
 		{
-			if (rtv_descs)
-			{
-				//已经有渲染目标了！
-			}
+			//if (rtv_descs)
+			//{
+			//	//已经有渲染目标了！
+			//}
 			auto* gpu_sr = static_cast<const directx_sr_render_target_group*>(gpu_res.second);
-			rtv_descs = &gpu_sr->rtv_heap.Get()->GetCPUDescriptorHandleForHeapStart();
+			rtv_descs = gpu_sr->rtv_heap.Get()->GetCPUDescriptorHandleForHeapStart();
 			output_rt_size = gpu_sr->rt_number;
 		}
 		break;
@@ -721,7 +727,7 @@ void directx_render::Load_resource(
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL:
 		{
 			auto* gpu_sr = static_cast<const directx_sr_depth_stencil_group*>(gpu_res.second);
-			dsv_desc = &gpu_sr->dsv_heap.Get()->GetCPUDescriptorHandleForHeapStart();
+			dsv_desc = gpu_sr->dsv_heap.Get()->GetCPUDescriptorHandleForHeapStart();
 		}
 		break;
 		}
@@ -729,9 +735,9 @@ void directx_render::Load_resource(
 	if (set_render_tager)
 	{
 		command_list->OMSetRenderTargets(output_rt_size,
-			rtv_descs,
+			&rtv_descs,
 			true,
-			dsv_desc);
+			&dsv_desc);
 	}
 }
 
@@ -845,7 +851,7 @@ void directx_render::create_gpu_memory(
 	CD3DX12_HEAP_PROPERTIES in_heap_properties,
 	CD3DX12_RESOURCE_DESC in_rescource_desc,
 	D3D12_RESOURCE_STATES in_resource_states,
-	D3D12_CLEAR_VALUE* clearValue = nullptr)
+	D3D12_CLEAR_VALUE* clearValue)
 {
 	ThrowIfFailed(d3d_device->CreateCommittedResource(
 		&in_heap_properties,

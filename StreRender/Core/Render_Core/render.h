@@ -16,7 +16,7 @@ public:
 
 	virtual void create_gpu_texture(gpu_shader_resource* in_out_gpu_texture) = 0;
 
-	virtual void clear_gpu_texture(gpu_resource_element* in_gpu_resource_element) = 0;
+	virtual void clear_gpu_texture(gpu_shader_resource* in_out_gpu_texture) = 0;
 
 	virtual void init(HWND in_main_wnd) = 0;
 

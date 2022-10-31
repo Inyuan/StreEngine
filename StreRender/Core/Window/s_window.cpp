@@ -124,19 +124,19 @@ LRESULT s_window::massage_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 		//if (InputFunction_OnMouseDown_ptr != nullptr)
 		//	InputFunction_OnMouseDown_ptr(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		//return 0;
+		return 0;
 	case WM_LBUTTONUP:
 	case WM_MBUTTONUP:
 	case WM_RBUTTONUP:
 		////...
 		//if (InputFunction_OnMouseUp_ptr != nullptr)
 		//	InputFunction_OnMouseUp_ptr(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		//return 0;
+		return 0;
 	case WM_MOUSEMOVE:
 		////...
 		//if (InputFunction_OnMouseMove_ptr != nullptr)
 		//	InputFunction_OnMouseMove_ptr(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		//return 0;
+		return 0;
 
 	}
 

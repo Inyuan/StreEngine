@@ -40,7 +40,7 @@ cpu_material* custom_manager<cpu_material, t_render>::load_resource(wchar_t* in_
 template<class t_render>
 void custom_manager<cpu_material, t_render>::change_texture()
 {
-
+	
 }
 
 template<class t_render>

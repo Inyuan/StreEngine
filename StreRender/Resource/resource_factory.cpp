@@ -33,20 +33,19 @@ t_cpu_res_type* custom_manager<t_cpu_res_type, t_render>::create_resource(size_t
 	return cpu_ptr;
 }
 
-//只复制内存，不构建描述符和描述符堆
+//构建GPU内存
 template<typename t_cpu_res_type, class t_render>
 void custom_manager<t_cpu_res_type, t_render>::allocate_gpu(
 	t_cpu_res_type* in_cpu_data,
 	gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type,
 	std::vector<UINT>& elem_group_number)
 {
-
-	dx_shader_resource_function sr_functor =
-		[in_cpu_data, elem_group_number, in_sr_type]
-	(directx_render* in_render)
+	dx_shader_resource_function sr_functor;
+	sr_functor = [in_cpu_data, elem_group_number, in_sr_type](directx_render* in_render)
 	{
+		//构建描述符
 		in_cpu_data->gpu_sr_ptr = in_render->allocate_shader_resource(in_sr_type);
-
+		//构建内存
 		if (in_cpu_data->can_update)
 		{
 			in_render->allocate_default_resource(
@@ -65,6 +64,7 @@ void custom_manager<t_cpu_res_type, t_render>::allocate_gpu(
 				elem_group_number);
 		}
 	};
+
 }
 
 //void directx_render::update_elem_upload_resource(

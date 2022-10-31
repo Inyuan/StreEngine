@@ -11,9 +11,11 @@
 #include <DirectXCollision.h>
 #include <string>
 #include <memory>
+#include <array>
 #include <unordered_map>
 #include "Render_API/d3dx12.h"
 #include "render.h"
+
 #define SWAP_CHAIN_BUFFER_COUNT 2
 
 using Microsoft::WRL::ComPtr;
@@ -316,13 +318,6 @@ public:
 
 
 public:
-
-    virtual void draw_call(
-        constant_pass* in_pass,
-        std::vector<gpu_resource*>& in_object,
-        gpu_resource* in_sence) override;
-
-    virtual constant_pass* allocate_pass(constant_pass::pass_layout in_constant_pass_layout) override;
 
     virtual void init(HWND in_main_wnd) override;
 

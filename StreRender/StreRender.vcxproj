@@ -26,7 +26,6 @@
     <ClCompile Include="Core\Render_Core\directx_render.cpp" />
     <ClCompile Include="Core\Window\s_window.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="Function\Render_Function\deferred_rendering.cpp" />
     <ClCompile Include="Function\Render_Function\render_system.cpp" />
     <ClCompile Include="Resource\material_manager.cpp" />
     <ClCompile Include="Resource\object_manager.cpp" />
@@ -48,7 +47,6 @@
     <ClInclude Include="Core\Window\s_window.h" />
     <ClInclude Include="cpu_resource.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="Function\Render_Function\deferred_rendering.h" />
     <ClInclude Include="Function\Render_Function\render_system.h" />
     <ClInclude Include="gpu_reource.h" />
     <ClInclude Include="stre_pass.h" />
@@ -78,7 +76,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
