@@ -3,8 +3,7 @@
 #include <cstdint>
 #include <vector>
 #include <map>
-
-#include "stre_render.h"
+#include "base_type.h"
 
 class s_fbx
 {
@@ -32,7 +31,7 @@ public:
 	FbxTakeInfo* PAnimInfo;
 	std::vector<int> SkeletonParentmap;
 	std::vector<FbxSkeleton*> pSkeletongroup;
-	std::map<unsigned long,int> pSkeletongroupIndexmap;
+	std::map<unsigned long,size_t> pSkeletongroupIndexmap;
 	
 
 	bool ReadFbx(const char* lFilename, bool IhasAnime);

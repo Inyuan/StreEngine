@@ -27,6 +27,7 @@
     <ClCompile Include="Core\Window\s_window.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Function\Render_Function\render_system.cpp" />
+    <ClCompile Include="include\stre_configuration.cpp" />
     <ClCompile Include="Resource\material_manager.cpp" />
     <ClCompile Include="Resource\object_manager.cpp" />
     <ClCompile Include="Resource\pass_factory.cpp" />
@@ -35,7 +36,6 @@
     <ClCompile Include="Resource\texture_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="base_type.h" />
     <ClInclude Include="Core\Exception\exception.h" />
     <ClInclude Include="Core\File_Manager\s_fbx.h" />
     <ClInclude Include="Core\Memory\s_handle.h" />
@@ -45,12 +45,14 @@
     <ClInclude Include="Core\Render_Core\render.h" />
     <ClInclude Include="Core\Render_Core\Render_API\d3dx12.h" />
     <ClInclude Include="Core\Window\s_window.h" />
-    <ClInclude Include="cpu_resource.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Function\Render_Function\render_system.h" />
-    <ClInclude Include="gpu_reource.h" />
-    <ClInclude Include="stre_pass.h" />
-    <ClInclude Include="stre_render.h" />
+    <ClInclude Include="include\base_type.h" />
+    <ClInclude Include="include\cpu_resource.h" />
+    <ClInclude Include="include\gpu_reource.h" />
+    <ClInclude Include="include\stre_configuration.h" />
+    <ClInclude Include="include\stre_pass.h" />
+    <ClInclude Include="include\stre_render.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -142,11 +144,12 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;STRERENDER_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;GRAPHICS_EXPORTS;_WINDOWS;_USRDLL;FBXSDK_SHARED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)StreRender\Third_Tool\FBX\include;$(SolutionDir)StreRender;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)StreRender\Third_Tool\FBX\include;$(SolutionDir)StreRender;$(SolutionDir)StreRender\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>6495;26812;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -154,6 +157,7 @@
       <EnableUAC>false</EnableUAC>
       <AdditionalLibraryDirectories>$(SolutionDir)StreRender\Third_Tool\FBX\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libfbxsdk.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>copy $(TargetPath) ..\StreEngine\Rendering

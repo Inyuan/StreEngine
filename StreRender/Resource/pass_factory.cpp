@@ -1,5 +1,6 @@
 #include "stre_render.h"
 #include "Function/Render_Function/render_system.h"
+#include "Core/Memory/s_memory.h"
 
 //创建pass
 
@@ -9,13 +10,14 @@ s_pass* pass_factory::create_pass()
 {
 	auto pass_allocater = memory_allocater_group["pass_allocater"];
 
-	return pass_allocater->allocate<s_pass>();
+	///return pass_allocater->allocate<s_pass>();
+	return new s_pass();
 }
 
 void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 {
 
-	dx_pass_function pass_functor = [in_out_pass](directx_render* in_render)
+	dx_function pass_functor = [in_out_pass](directx_render* in_render)
 	{
 		//根签名
 		{
@@ -45,7 +47,7 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 				auto staticSamplers = in_render->GetStaticSamplers();
 
 				// A root signature is an array of root parameters.
-				CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(slotRootParameter.size(), slotRootParameter.data(),
+				CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc((UINT)slotRootParameter.size(), slotRootParameter.data(),
 					(UINT)staticSamplers.size(), staticSamplers.data(),
 					D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
@@ -82,7 +84,7 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 
 	};
 
-	function_command<dx_pass_function>::command_queue.push(pass_functor);
+	dx_pass_command.command_queue.push(pass_functor);
 }
 
 
@@ -101,7 +103,7 @@ void pass_factory::add_mesh(
 		g_mesh.gpu_mesh_resource_ptr[it.second->uid.name] = (it.second->gpu_sr_ptr);
 	}
 	//装填子mesh
-	size_t index_offset = 0;
+	UINT index_offset = 0;
 	for (int i = 0; i < in_mesh->mesh_element_index_count.size(); i++)
 	{
 		s_pass::gpu_mesh_resource::mesh_element mesh_e;

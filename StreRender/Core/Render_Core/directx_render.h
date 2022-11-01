@@ -16,6 +16,11 @@
 #include "Render_API/d3dx12.h"
 #include "render.h"
 
+#pragma comment(lib,"d3dcompiler.lib")
+#pragma comment(lib, "D3D12.lib")
+#pragma comment(lib, "dxgi.lib")
+
+
 #define SWAP_CHAIN_BUFFER_COUNT 2
 
 using Microsoft::WRL::ComPtr;
@@ -44,7 +49,7 @@ protected:
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> direct_cmdlist_alloc;
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> command_list;
 
-
+public:
     struct directx_shader_resource : public gpu_shader_resource
     {
         ComPtr<ID3D12Resource> dx_resource;

@@ -385,6 +385,7 @@ bool s_fbx::ReadUV(int ctrlPointIndex, int textureUVIndex, int uvLayer, s_float2
     }
     break;
     }
+    return true;
 }
 
 void s_fbx::ReadNormal(int ctrlPointIndex, int vertexCounter, s_float3* pNormal)

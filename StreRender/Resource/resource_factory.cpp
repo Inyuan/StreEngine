@@ -1,6 +1,6 @@
 #include "stre_render.h"
 #include "Core/Memory/s_memory.h"
-
+#include "Function/Render_Function/render_system.h"
 /***
 ************************************************************
 *
@@ -40,8 +40,7 @@ void custom_manager<t_cpu_res_type, t_render>::allocate_gpu(
 	gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type,
 	std::vector<UINT>& elem_group_number)
 {
-	dx_shader_resource_function sr_functor;
-	sr_functor = [in_cpu_data, elem_group_number, in_sr_type](directx_render* in_render)
+	dx_function sr_functor = [in_cpu_data, elem_group_number, in_sr_type](directx_render* in_render)
 	{
 		//¹¹½¨ÃèÊö·û
 		in_cpu_data->gpu_sr_ptr = in_render->allocate_shader_resource(in_sr_type);
@@ -64,6 +63,8 @@ void custom_manager<t_cpu_res_type, t_render>::allocate_gpu(
 				elem_group_number);
 		}
 	};
+
+	dx_shader_resource_command.command_queue.push(sr_functor);
 
 }
 
