@@ -5,4 +5,12 @@
       <UniqueIdentifier>{32a5f65a-9a27-462f-9558-ff696491dd49}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Rendering\stre_render.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="debug_main.cpp" />
+  </ItemGroup>
 </Project>

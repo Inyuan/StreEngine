@@ -27,13 +27,13 @@
     <ClCompile Include="Core\Window\s_window.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Function\Render_Function\render_system.cpp" />
-    <ClCompile Include="include\stre_configuration.cpp" />
     <ClCompile Include="Resource\material_manager.cpp" />
     <ClCompile Include="Resource\object_manager.cpp" />
     <ClCompile Include="Resource\pass_factory.cpp" />
     <ClCompile Include="Resource\resource_factory.cpp" />
     <ClCompile Include="Resource\sence_manager.cpp" />
     <ClCompile Include="Resource\texture_manager.cpp" />
+    <ClCompile Include="stre_configuration.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Exception\exception.h" />
@@ -52,7 +52,7 @@
     <ClInclude Include="include\gpu_reource.h" />
     <ClInclude Include="include\stre_configuration.h" />
     <ClInclude Include="include\stre_pass.h" />
-    <ClInclude Include="include\stre_render.h" />
+    <ClInclude Include="stre_render.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -106,6 +106,10 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>Build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Link\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -160,9 +164,11 @@
       <IgnoreSpecificDefaultLibraries>LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(TargetPath) ..\StreEngine\Rendering
-copy StreRender.h ..\StreEngine\Rendering
-copy libfbxsdk.dll ..\StreEngine\Rendering</Command>
+      <Command>copy $(TargetPath)\..\StreRender.lib ..\StreEngine\Rendering\lib 
+copy $(TargetPath) ..\StreEngine 
+copy stre_render.h ..\StreEngine\Rendering 
+copy libfbxsdk.dll ..\StreEngine 
+copy include ..\StreEngine\Rendering\include </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
