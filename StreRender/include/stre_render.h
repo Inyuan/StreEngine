@@ -4,6 +4,10 @@
 #include "cpu_resource.h"
 #include "stre_pass.h"
 
+#ifdef  DLL_GRAPHICS_API
+#else
+#define DLL_GRAPHICS_API _declspec(dllimport)
+#endif
 
 /***
 ************************************************************
@@ -16,8 +20,6 @@
 ///rendering type
 //渲染器
 
-
-
 /***
 ************************************************************
 *
@@ -26,26 +28,13 @@
 ************************************************************
 */
 
-struct update_request_layout
-{
-	enum
-	{
-		UPDATE_TYPE_UPDATE,
-		UPDATE_TYPE_ADD,
-		UPDATE_TYPE_DELETE
-	}update_type = UPDATE_TYPE_UPDATE;
-
-	int offset = 0;
-};
-
-
 //资源导入导出器 (内部新建的内存由静态memory_allocater管理)
 //资源的CPU和GPU内存管理
 
 //资源策略 特殊的处理函数被factory继承
 
 template<typename t_cpu_res_type,class t_render>
-struct custom_manager
+struct DLL_GRAPHICS_API custom_manager
 {
 	static t_cpu_res_type* create_resource();
 
@@ -64,11 +53,9 @@ struct custom_manager
 		std::vector<UINT>& elem_group_number);
 };
 
-
 //显示定义各种类型的策略
-
 template<class t_render>
-struct custom_manager<cpu_material, t_render>
+struct DLL_GRAPHICS_API custom_manager<cpu_material, t_render>
 {
 	static cpu_material* create_resource();
 	//??? 缺读取资源
@@ -90,7 +77,7 @@ struct custom_manager<cpu_material, t_render>
 };
 
 template<class t_render>
-struct custom_manager<cpu_texture, t_render>
+struct DLL_GRAPHICS_API custom_manager<cpu_texture, t_render>
 {
 public:
 	static cpu_texture* create_resource();
@@ -105,9 +92,8 @@ public:
 
 };
 
-
 template<class t_render>
-struct custom_manager<cpu_mesh, t_render>
+struct DLL_GRAPHICS_API custom_manager<cpu_mesh, t_render>
 {
 public:
 	static cpu_mesh* create_resource();
@@ -126,7 +112,7 @@ public:
 };
 
 template<class t_render>
-struct custom_manager<cpu_sence, t_render>
+struct DLL_GRAPHICS_API custom_manager<cpu_sence, t_render>
 {
 public:
 	static cpu_sence* create_resource();
@@ -143,7 +129,7 @@ template<
 	typename t_cpu_res_type, 
 	template<typename,class> class t_cpu_res_manager,
 	class t_render>
-class resource_factory : public t_cpu_res_manager<t_cpu_res_type,t_render>
+class DLL_GRAPHICS_API resource_factory : public t_cpu_res_manager<t_cpu_res_type,t_render>
 {
 public:
 
@@ -179,7 +165,7 @@ public:
 ************************************************************
 */
 
-class pass_factory
+class DLL_GRAPHICS_API pass_factory
 {
 public:
 	//创建pass

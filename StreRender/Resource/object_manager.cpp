@@ -1,3 +1,8 @@
+#ifdef  DLL_GRAPHICS_API
+#else
+#define DLL_GRAPHICS_API _declspec(dllexport)
+#endif
+
 #include "stre_render.h"
 #include "Core/Memory/s_memory.h"
 #include "Core/File_Manager/s_fbx.h"
