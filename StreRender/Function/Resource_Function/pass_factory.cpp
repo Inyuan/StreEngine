@@ -16,7 +16,7 @@ s_pass* pass_factory::create_pass()
 
 void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 {
-	dx_function pass_functor = [in_out_pass](directx_render_abstract* in_render)
+	dx_function pass_functor = [in_out_pass](s_directx_render* in_render)
 	{
 
 			//????

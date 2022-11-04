@@ -14,6 +14,9 @@
 ///rendering type
 //渲染器
 
+/// <summary>
+/// 渲染系统，外部控制GPU的基本类型，控制总绘制流程。
+/// </summary>
 class s_render_system
 {
 public:
@@ -28,6 +31,7 @@ public:
 	virtual void over() = 0;
 };
 
+
 class DLL_GRAPHICS_API render_factory
 {
 public:
@@ -35,7 +39,7 @@ public:
 	s_render_system* create_render_system();
 
 	template<>
-	s_render_system* create_render_system<directx_render_abstract>();
+	s_render_system* create_render_system<s_directx_render>();
 };
 
 /***
@@ -46,8 +50,12 @@ public:
 ************************************************************
 */
 
+/// <summary>
+/// 自定义资源控制器
+/// </summary>
+/// <typeparam name="t_cpu_res_type">自定义资源</typeparam>
 template<typename t_cpu_res_type>
-struct DLL_GRAPHICS_API s_custom_manager
+struct s_custom_manager
 {
 	virtual t_cpu_res_type* create_resource() = 0;
 
@@ -62,8 +70,10 @@ struct DLL_GRAPHICS_API s_custom_manager
 		gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type) = 0;
 };
 
-
-struct DLL_GRAPHICS_API s_material_manager : public s_custom_manager<cpu_material>
+/// <summary>
+/// 默认材质资源控制器
+/// </summary>
+struct s_material_manager : public s_custom_manager<cpu_material>
 {
 public:
 	//特殊的处理函数
@@ -77,13 +87,19 @@ public:
 
 
 
-
+/// <summary>
+/// 默认贴图资源控制器
+/// </summary>
 struct s_texture_manager : public s_custom_manager<cpu_texture>
 {
 public:
 
 };
 
+
+/// <summary>
+/// 默认模型控制器
+/// </summary>
 struct s_mesh_manager
 {
 public:
@@ -98,7 +114,10 @@ public:
 	virtual void dx_allocate_gpu_resource(cpu_mesh* in_cpu_data) = 0;
 };
 
-
+/// <summary>
+/// 默认场景控制器
+/// </summary>
+/// <returns></returns>
 struct s_sence_manager
 {
 public:
@@ -111,6 +130,9 @@ public:
 	//virtual void dx_allocate_gpu_resource(cpu_mesh* in_cpu_data) = 0;
 };
 
+/// <summary>
+/// 资源控制器工厂
+/// </summary>
 class DLL_GRAPHICS_API resource_manager_factory
 {
 public:
@@ -136,6 +158,9 @@ public:
 ************************************************************
 */
 
+/// <summary>
+/// 绘制过程工厂
+/// </summary>
 class DLL_GRAPHICS_API pass_factory
 {
 public:

@@ -10,7 +10,10 @@
 ************************************************************
 */
 
-class directx_render_abstract
+/// <summary>
+/// 封装的directx图形接口，外部控制GPU的基本类型，允许外部更进一步自定义控制内存分配，pass构建等操作。
+/// </summary>
+class s_directx_render
 {
 public:
 	virtual gpu_pass* allocate_pass() = 0;

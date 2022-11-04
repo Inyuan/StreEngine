@@ -10,7 +10,7 @@
 
 
 template<>
-s_render_system* render_factory::create_render_system<directx_render_abstract>()
+s_render_system* render_factory::create_render_system<s_directx_render>()
 {
 	return new render_system<directx_render>();
 }

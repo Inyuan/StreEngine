@@ -1,7 +1,8 @@
 #pragma once
-#include "gpu_resource.h"
 #include "Core/Memory/s_memory.h"
-#include "Function/Render_Function/render_system.h"
+#include "stre_render.h"
+#include "gpu_resource.h"
+#include "Function/Render_Function/render_functor.h"
 
 template<typename t_cpu_res_type>
 struct custom_manager :public s_custom_manager<t_cpu_res_type>
@@ -35,7 +36,7 @@ struct custom_manager :public s_custom_manager<t_cpu_res_type>
 	virtual void dx_allocate_gpu_resource(t_cpu_res_type* in_cpu_data,
 		gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type) override
 	{
-		dx_function sr_functor = [in_cpu_data, in_sr_type](directx_render_abstract* in_render)
+		dx_function sr_functor = [in_cpu_data, in_sr_type](s_directx_render* in_render)
 		{
 			//¹¹½¨ÃèÊö·û
 			in_cpu_data->gpu_sr_ptr = in_render->allocate_shader_resource(in_sr_type);

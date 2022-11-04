@@ -28,14 +28,14 @@
     <Filter Include="Core\Process">
       <UniqueIdentifier>{851cb229-7688-477f-9c76-ddbfd03e245f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource">
-      <UniqueIdentifier>{3eff622d-92db-4c51-aab6-8cf5a5c35387}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Core\File_Manager">
       <UniqueIdentifier>{dda91376-e6f9-4a82-b2a7-a17b4e97cd83}</UniqueIdentifier>
     </Filter>
     <Filter Include="Include">
       <UniqueIdentifier>{cf774ce9-cc7e-4bcb-88b0-25aa8064ba25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Function\Resource_Function">
+      <UniqueIdentifier>{fcd16e33-8e96-4ad2-b510-99cbcd510595}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -63,26 +63,26 @@
     <ClCompile Include="Core\Memory\s_handle.cpp">
       <Filter>Core\Memory</Filter>
     </ClCompile>
-    <ClCompile Include="Resource\pass_factory.cpp">
-      <Filter>Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="Resource\resource_factory.cpp">
-      <Filter>Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="Resource\material_manager.cpp">
-      <Filter>Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="Resource\object_manager.cpp">
-      <Filter>Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="Resource\sence_manager.cpp">
-      <Filter>Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="Resource\texture_manager.cpp">
-      <Filter>Resource</Filter>
-    </ClCompile>
     <ClCompile Include="stre_configuration.cpp">
       <Filter>Include</Filter>
+    </ClCompile>
+    <ClCompile Include="Function\Resource_Function\material_manager.cpp">
+      <Filter>Function\Resource_Function</Filter>
+    </ClCompile>
+    <ClCompile Include="Function\Resource_Function\object_manager.cpp">
+      <Filter>Function\Resource_Function</Filter>
+    </ClCompile>
+    <ClCompile Include="Function\Resource_Function\pass_factory.cpp">
+      <Filter>Function\Resource_Function</Filter>
+    </ClCompile>
+    <ClCompile Include="Function\Resource_Function\resource_factory.cpp">
+      <Filter>Function\Resource_Function</Filter>
+    </ClCompile>
+    <ClCompile Include="Function\Resource_Function\sence_manager.cpp">
+      <Filter>Function\Resource_Function</Filter>
+    </ClCompile>
+    <ClCompile Include="Function\Resource_Function\texture_manager.cpp">
+      <Filter>Function\Resource_Function</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -132,8 +132,11 @@
     <ClInclude Include="include\stre_render_api.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="Resource\resource_factory.h">
-      <Filter>Resource</Filter>
+    <ClInclude Include="Function\Resource_Function\resource_factory.h">
+      <Filter>Function\Resource_Function</Filter>
+    </ClInclude>
+    <ClInclude Include="Function\Render_Function\render_functor.h">
+      <Filter>Function\Render_Function</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

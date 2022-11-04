@@ -4,27 +4,8 @@
 #define DLL_GRAPHICS_API _declspec(dllexport)
 #endif
 #include "Core/Render_Core/directx_render.h"
-#include "stre_render.h"
-#include <queue>
-#include <functional>
-
-//重名了？？
-typedef std::function<void(directx_render_abstract* in_render)>
-	dx_function;
-
-
-//functor
-template<class t_function>
-class function_command
-{
-public:
-
-	std::queue<t_function> command_queue;
-};
-
-static function_command<dx_function> dx_pass_command;
-
-static function_command<dx_function> dx_shader_resource_command;
+#include "render_functor.h"
+#include "gpu_resource.h"
 
 //策略模式 选择渲染策略
 template<typename t_render>

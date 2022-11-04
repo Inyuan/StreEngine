@@ -35,7 +35,7 @@ enum DIRECTX_RESOURCE_DESC_TYPE
     DX_UAV
 };
 
-class directx_render : public directx_render_abstract
+class directx_render : public s_directx_render
 {
 protected:
 

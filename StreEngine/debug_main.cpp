@@ -14,7 +14,7 @@ void main()
 	render_factory r_fy;
 
 	s_render_system* r_sys;
-	r_sys = r_fy.create_render_system<directx_render_abstract>();
+	r_sys = r_fy.create_render_system<s_directx_render>();
 
 	resource_manager_factory res_m_fy;
 

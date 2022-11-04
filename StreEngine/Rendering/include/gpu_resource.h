@@ -11,6 +11,10 @@
 //vertex
 
 //应该是模板？只为对应的api提供对应的信息？
+
+/// <summary>
+/// GPU资源基本类型，包含GPU读取方法枚举，和资源指针信息。被图像API继承并封装具体化。接口操作GPU的基本单位。
+/// </summary>
 struct gpu_shader_resource
 {
 	enum SHADER_RESOURCE_TYPE
@@ -40,12 +44,18 @@ struct gpu_shader_resource
 	//...
 };
 
+/// <summary>
+/// GPU绘制过程类型，被图像API继承并封装具体化,接口操作GPU的基本单位
+/// </summary>
 struct gpu_pass
 {
 	//??? 关切到着色器的名字
 	s_uid uid;
 };
 
+/// <summary>
+/// GPU绘制结果类型，被图像API继承并封装具体化。接口操作GPU的基本单位。
+/// </summary>
 struct gpu_rander_target
 {
 	//??? 关切到渲染目标的名字
@@ -54,6 +64,9 @@ struct gpu_rander_target
 	gpu_shader_resource* gpu_sr_ptr;
 };
 
+/// <summary>
+/// 着色器布局类型，是控制绘制过程的必要参数。接口操作GPU的基本单位。
+/// </summary>
 struct shader_layout
 {
 	struct shader_input
@@ -90,7 +103,9 @@ struct shader_layout
 	std::vector<shader_input> shader_input_group;
 };
 
-
+/// <summary>
+/// 模型资源的输入类型，包括顶点 索引 材质等等与模型绑定的资源。也可以作为屏幕空间绘制的输入类型（只输入4个顶点和索引并不带任何额外数据）。
+/// </summary>
 struct mesh_shader_resource
 {
 
@@ -103,6 +118,10 @@ struct mesh_shader_resource
 // 输出：
 // texutre resource
 //
+
+/// <summary>
+/// 绘制过程类型，接口控制GPU绘制的基本单位，负责装填GPU资源和被执行绘制。
+/// </summary>
 struct s_pass
 {
 public:
