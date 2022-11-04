@@ -2,25 +2,41 @@
 #include <Windows.h>
 #include "stre_configuration.h"
 #include "cpu_resource.h"
-#include "stre_pass.h"
-
+#include "gpu_resource.h"
+#include "stre_render_api.h"
 #ifdef  DLL_GRAPHICS_API
 #else
 #define DLL_GRAPHICS_API _declspec(dllimport)
 #endif
 
-/***
-************************************************************
-*
-* Renderer
-*
-************************************************************
-*/
-
 
 
 ///rendering type
 //渲染器
+
+class s_render_system
+{
+public:
+
+	virtual void draw_pass(const s_pass* in_pass) = 0;
+
+	//遍历所有刷新数
+	virtual void update_gpu_memory() = 0;
+
+	virtual void init(HINSTANCE in_instance, UINT in_width, UINT in_height) = 0;
+
+	virtual void over() = 0;
+};
+
+class DLL_GRAPHICS_API render_factory
+{
+public:
+	template<class t_render>
+	s_render_system* create_render_system();
+
+	template<>
+	s_render_system* create_render_system<directx_render_abstract>();
+};
 
 /***
 ************************************************************
@@ -30,134 +46,87 @@
 ************************************************************
 */
 
-//资源导入导出器 (内部新建的内存由静态memory_allocater管理)
-//资源的CPU和GPU内存管理
-
-//资源策略 特殊的处理函数被factory继承
-
-template<typename t_cpu_res_type,class t_render>
-struct DLL_GRAPHICS_API custom_manager
+template<typename t_cpu_res_type>
+struct DLL_GRAPHICS_API s_custom_manager
 {
-	static t_cpu_res_type* create_resource();
+	virtual t_cpu_res_type* create_resource() = 0;
 
-	static t_cpu_res_type* create_resource(size_t in_element_number);
+	virtual t_cpu_res_type* create_resource(size_t in_element_number) = 0;
 
 	//??? 缺读取资源
-	static t_cpu_res_type* load_resource(wchar_t* in_path);
+	virtual t_cpu_res_type* load_resource(wchar_t* in_path) = 0;
 
-	static void update_gpu(const t_cpu_res_type* in_cpu_data);
+	virtual void update_gpu(t_cpu_res_type* in_cpu_data) = 0;
 
-	//不允许默认申请空间 故意编译报错
-	//static void allocate_gpu(const t_cpu_res_type* in_cpu_data);
-
-	static void allocate_gpu(t_cpu_res_type* in_cpu_data, 
-		gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type,
-		std::vector<UINT>& elem_group_number);
+	virtual void dx_allocate_gpu_resource(t_cpu_res_type* in_cpu_data,
+		gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type) = 0;
 };
 
-//显示定义各种类型的策略
-template<class t_render>
-struct DLL_GRAPHICS_API custom_manager<cpu_material, t_render>
+
+struct DLL_GRAPHICS_API s_material_manager : public s_custom_manager<cpu_material>
 {
-	static cpu_material* create_resource();
-	//??? 缺读取资源
-	static cpu_material* load_resource(wchar_t* in_path);
-
-	static void allocate_gpu(cpu_material* in_cpu_data);
-
-	static void update_gpu(const cpu_material* in_cpu_data);
-
-	static void release_gpu(cpu_material* in_cpu_data);
-
+public:
 	//特殊的处理函数
 	//回调绑定关系
-	static void change_texture();
+	virtual void change_texture() = 0;
 
-	static void add_texture();
+	virtual void add_texture() = 0;
 
-	static void release_texture();
+	virtual void release_texture() = 0;
 };
 
-template<class t_render>
-struct DLL_GRAPHICS_API custom_manager<cpu_texture, t_render>
+
+
+
+struct s_texture_manager : public s_custom_manager<cpu_texture>
 {
 public:
-	static cpu_texture* create_resource();
-
-	//??? 缺读取资源
-	static cpu_texture* load_resource(wchar_t* in_path);
-
-	static void allocate_gpu(cpu_material* in_cpu_data);
-
-	static void update_gpu(const cpu_texture* in_cpu_data);
-
 
 };
 
-template<class t_render>
-struct DLL_GRAPHICS_API custom_manager<cpu_mesh, t_render>
+struct s_mesh_manager
 {
 public:
-	static cpu_mesh* create_resource();
+	virtual cpu_mesh* create_resource() = 0;
 
-	//??? 缺读取资源
-	static cpu_mesh* load_resource(wchar_t* in_path);
+	virtual cpu_mesh* load_resource(wchar_t* in_path) = 0;
 
-	static void update_gpu(const cpu_mesh* in_cpu_data);
-
-	static void allocate_gpu(cpu_mesh* in_cpu_data);
-
+	virtual void update_gpu(cpu_mesh* in_cpu_data) = 0;
 	//特殊的处理函数
-	static cpu_mesh* load_fbx(wchar_t* in_path);
+	virtual cpu_mesh* load_fbx(wchar_t* in_path) = 0;
 
-
+	virtual void dx_allocate_gpu_resource(cpu_mesh* in_cpu_data) = 0;
 };
 
-template<class t_render>
-struct DLL_GRAPHICS_API custom_manager<cpu_sence, t_render>
+
+struct s_sence_manager
 {
 public:
-	static cpu_sence* create_resource();
+	virtual cpu_sence* create_resource() = 0;
 
-	//??? 缺读取资源
-	static cpu_sence* load_resource(wchar_t* in_path);
+	virtual cpu_sence* load_resource(wchar_t* in_path) = 0;
 
-	static void update_gpu(const cpu_sence* in_cpu_data);
+	virtual void update_gpu(cpu_sence* in_cpu_data) = 0;
 
+	//virtual void dx_allocate_gpu_resource(cpu_mesh* in_cpu_data) = 0;
 };
 
-//策略模式
-template<
-	typename t_cpu_res_type, 
-	template<typename,class> class t_cpu_res_manager,
-	class t_render>
-class DLL_GRAPHICS_API resource_factory : public t_cpu_res_manager<t_cpu_res_type,t_render>
+class DLL_GRAPHICS_API resource_manager_factory
 {
 public:
+	template<typename t_cpu_res_type>
+	s_custom_manager<t_cpu_res_type>* create_manager();
 
-	//??? 缺默认的物体构建
-	virtual t_cpu_res_type* create_resource()
-	{
-		return t_cpu_res_manager<t_cpu_res_type,t_render>::create_resource();
-	};
+	s_material_manager* create_material_manager();
 
-	//??? 缺读取资源
-	virtual t_cpu_res_type* load_resource(wchar_t* in_path)
-	{
-		return t_cpu_res_manager<t_cpu_res_type, t_render>::load_resource(in_path);
-	}
+	s_texture_manager* create_texture_manager();
 
-	virtual void allocate_gpu(t_cpu_res_type* in_cpu_data)
-	{
-		t_cpu_res_manager<t_cpu_res_type, t_render>::allocate_gpu(in_cpu_data);
-	};
+	s_mesh_manager* create_mesh_manager();
 
-	virtual void update_gpu(const t_cpu_res_type* in_cpu_data)
-	{
-		t_cpu_res_manager<t_cpu_res_type, t_render>::update_gpu(in_cpu_data);
-	};
-
+	s_sence_manager* create_sence_manager();
 };
+
+
 
 /***
 ************************************************************

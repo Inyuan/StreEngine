@@ -43,15 +43,15 @@
     <ClInclude Include="Core\Process\BProcess.h" />
     <ClInclude Include="Core\Render_Core\directx_render.h" />
     <ClInclude Include="Core\Render_Core\render.h" />
-    <ClInclude Include="Core\Render_Core\Render_API\d3dx12.h" />
     <ClInclude Include="Core\Window\s_window.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Function\Render_Function\render_system.h" />
     <ClInclude Include="include\base_type.h" />
     <ClInclude Include="include\cpu_resource.h" />
-    <ClInclude Include="include\gpu_reource.h" />
+    <ClInclude Include="include\gpu_resource.h" />
     <ClInclude Include="include\stre_configuration.h" />
-    <ClInclude Include="include\stre_pass.h" />
+    <ClInclude Include="include\stre_render_api.h" />
+    <ClInclude Include="Resource\resource_factory.h" />
     <ClInclude Include="stre_render.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

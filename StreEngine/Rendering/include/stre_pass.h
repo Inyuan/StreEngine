@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <map>
-#include "gpu_reource.h"
+#include "gpu_resource.h"
 
 
 struct shader_layout

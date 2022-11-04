@@ -1,8 +1,20 @@
+#ifdef  DLL_GRAPHICS_API
+#else
+#define DLL_GRAPHICS_API _declspec(dllexport)
+#endif
+
+#include "stre_render.h"
 #include "render_system.h"
 #include "Core/Render_Core/directx_render.h"
 #include "Core/Memory/s_memory.h"
 
-s_memory_allocater_register render_memory_allocater("render_memory_allocater");
+
+template<>
+s_render_system* render_factory::create_render_system<directx_render_abstract>()
+{
+	return new render_system<directx_render>();
+}
+
 
 template<typename t_render>
 void render_system<t_render>::draw_pass(const s_pass* in_pass)
@@ -10,9 +22,18 @@ void render_system<t_render>::draw_pass(const s_pass* in_pass)
 	renderer->draw_pass(in_pass);
 }
 
+
+/***
+************************************************************
+*
+* DX Instance
+*
+************************************************************
+*/
+
 //遍历所有刷新数
-template<typename t_render>
-void render_system<t_render>::update_gpu_memory()
+
+void render_system<directx_render>::update_gpu_memory()
 {
 	while (!dx_pass_command.command_queue.empty())
 	{
@@ -31,24 +52,28 @@ void render_system<t_render>::update_gpu_memory()
 
 		dx_shader_resource_command.command_queue.pop();
 	}
-
 }
 
-template<typename t_render>
-void render_system<t_render>::init(HINSTANCE in_instance, UINT in_width, UINT in_height)
+
+void render_system<directx_render>::init(HINSTANCE in_instance, UINT in_width, UINT in_height)
 {
-	s_memory* memory_allocater = memory_allocater_group["render_memory_allocater"];
+	//s_memory* memory_allocater = memory_allocater_group["render_memory_allocater"];
 
 	//gpu_res_factory = memory_allocater->allocate<gpu_resource_factory>();
 
-	render_window = memory_allocater->allocate<s_window>();
+	//render_window = memory_allocater->allocate<s_window>();
+
+	render_window = new s_window();
 
 	render_window->init(in_instance, in_width, in_height);
 
-	renderer = (render*)memory_allocater->allocate<t_render>();
+	//renderer = (render*)memory_allocater->allocate<t_render>();
+
+	renderer = new directx_render();
 
 	renderer->init(render_window->get_hwnd());
 }
+
 
 
 

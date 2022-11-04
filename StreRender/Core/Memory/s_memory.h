@@ -3,6 +3,16 @@
 #include <string>
 
 
+static void* custom_allocate(std::size_t in_size)
+{
+	void* ptr = malloc(in_size);
+	if (ptr)
+	{
+		memset(ptr, 0, in_size);
+	}
+	return ptr;
+}
+
 class s_memory
 {
 

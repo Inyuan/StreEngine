@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 /***
 ************************************************************
 *
@@ -121,4 +122,4 @@ struct s_vertex
 
 
 typedef uint32_t s_index;
-typedef void s_texture;
+typedef char s_texture;

@@ -3,7 +3,7 @@
 #define DLL_GRAPHICS_API _declspec(dllexport)
 #endif
 
-#include "stre_render.h"
+#include "resource_factory.h"
 #include "Core/Memory/s_memory.h"
 #include "Core/File_Manager/s_fbx.h"
 
@@ -15,49 +15,39 @@
 ************************************************************
 */
 
-
-s_memory_allocater_register object_resource_allocater("object_resource_allocater");
-
-template<class t_render>
-cpu_mesh* custom_manager<cpu_mesh, t_render>::create_resource()
+cpu_mesh* mesh_manager::create_resource()
 {
-	auto allocater = memory_allocater_group["object_resource_allocater"];
-	
-	return allocater->allocate<cpu_mesh>();
+    return new cpu_mesh();
 }
 
-template<class t_render>
-void custom_manager<cpu_mesh, t_render>::allocate_gpu(cpu_mesh* in_cpu_data)
+void mesh_manager::dx_allocate_gpu_resource(cpu_mesh* in_cpu_data)
 {
-
-
     typedef gpu_shader_resource::SHADER_RESOURCE_TYPE GPU_SR_TYPE;
 
-    custom_manager<cpu_vertex, t_render>::allocate_gpu(
+    custom_manager<cpu_vertex>().dx_allocate_gpu_resource(
         in_cpu_data->vertex_ptr,
         GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
 
-    custom_manager<cpu_index, t_render>::allocate_gpu(
+    custom_manager<cpu_index>().dx_allocate_gpu_resource(
         in_cpu_data->index_ptr,
         GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
 
-    custom_manager<cpu_material, t_render>::allocate_gpu(
+    custom_manager<cpu_material>().dx_allocate_gpu_resource(
         in_cpu_data->material_ptr,
         GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH);
 
-    custom_manager<cpu_object_constant, t_render>::allocate_gpu(
+    custom_manager<cpu_object_constant>().dx_allocate_gpu_resource(
         in_cpu_data->object_constant_ptr,
         GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER);
 
-    custom_manager<cpu_texture, t_render>::allocate_gpu(
-        in_cpu_data->texture_ptr,
-        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_TEXTURE_GROUP);
+    //custom_manager<cpu_texture>::dx_allocate_gpu_resource(
+    //    in_cpu_data->texture_ptr,
+    //    GPU_SR_TYPE::SHADER_RESOURCE_TYPE_TEXTURE_GROUP);
 }
 
-template<class t_render>
-cpu_mesh* custom_manager<cpu_mesh, t_render>::load_resource(wchar_t* in_path)
+cpu_mesh* mesh_manager::load_resource(wchar_t* in_path)
 {
-
+    return nullptr;
 }
 
 
@@ -69,14 +59,10 @@ cpu_mesh* custom_manager<cpu_mesh, t_render>::load_resource(wchar_t* in_path)
 ************************************************************
 */
 
-
-template<class t_render>
-void custom_manager<cpu_mesh, t_render>::update_gpu(const cpu_mesh* in_cpu_data)
+void mesh_manager::update_gpu(cpu_mesh* in_cpu_data)
 {
 
 }
-
-
 
 /***
 ************************************************************
@@ -238,22 +224,23 @@ std::string GetFbxFile(std::wstring DirPath)
 //}
 
 //fbx解包
-template<class t_render>
-cpu_mesh* custom_manager<cpu_mesh, t_render>::load_fbx(wchar_t* in_path)
+
+cpu_mesh* mesh_manager::load_fbx(wchar_t* in_path)
 {
     bool has_animation = false;
 
-    auto allocater = memory_allocater_group["resource_allocater"];
-
-    cpu_mesh* out_resource = create_resource();
     //路径
     std::wstring IDictionary(in_path);
-
     //FBX解析
     s_fbx myFbx;
     std::string Fbxpath = GetFbxFile(IDictionary);
-    if (Fbxpath.empty()) return false;
+    if (Fbxpath.empty()) return nullptr;
     myFbx.ReadFbx(Fbxpath.c_str(), has_animation);
+
+    cpu_mesh* out_resource = create_resource();
+
+
+
 
     //获取fbx数据信息
     using GeoElement = FbxGeometryElement;
@@ -269,19 +256,19 @@ cpu_mesh* custom_manager<cpu_mesh, t_render>::load_fbx(wchar_t* in_path)
     //为资源分配空间
     {
 
-        out_resource->vertex_ptr = custom_manager<cpu_vertex, t_render>::create_resource(controlPointCount);
-        out_resource->index_ptr = custom_manager<cpu_index, t_render>::create_resource((int)polygonCount * PolygonType);
-        out_resource->material_ptr = custom_manager<cpu_material, t_render>::create_resource(material_size);
-        out_resource->object_constant_ptr = custom_manager<cpu_object_constant, t_render>::create_resource(material_size);
+        out_resource->vertex_ptr = custom_manager<cpu_vertex>().create_resource(controlPointCount);
+        out_resource->index_ptr = custom_manager<cpu_index>().create_resource((int)polygonCount * PolygonType);
+        out_resource->material_ptr = custom_manager<cpu_material>().create_resource(material_size);
+        out_resource->object_constant_ptr = custom_manager<cpu_object_constant>().create_resource(material_size);
         out_resource->index_offset.assign(material_size,0);
         //贴图得自己更新了
         //out_resource->texture_ptr.assign();
     }
 
-    auto vertices = out_resource->vertex_ptr->data;
-    auto indices = out_resource->index_ptr->data;
+    auto vertices = out_resource->vertex_ptr->get_data();
+    auto indices = out_resource->index_ptr->get_data();
     auto indeices_offset = out_resource->index_offset;
-    auto object_constant = out_resource->object_constant_ptr->data;
+    auto object_constant = out_resource->object_constant_ptr->get_data();
     s_float3 vMin = object_constant->object_bound_box.min_position;
     s_float3 vMax = object_constant->object_bound_box.max_position;
 

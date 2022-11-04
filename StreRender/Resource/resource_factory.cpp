@@ -3,105 +3,33 @@
 #define DLL_GRAPHICS_API _declspec(dllexport)
 #endif
 
-#include "stre_render.h"
-#include "Core/Memory/s_memory.h"
-#include "Function/Render_Function/render_system.h"
-/***
-************************************************************
-*
-* Create & Load Function
-*
-************************************************************
-*/
+#include "resource_factory.h"
 
-
-s_memory_allocater_register custom_allocater("custom_allocater");
-
-template<typename t_cpu_res_type, class t_render>
-t_cpu_res_type* custom_manager<t_cpu_res_type,t_render>::create_resource()
+template<typename t_cpu_res_type>
+s_custom_manager<t_cpu_res_type>* resource_manager_factory::create_manager()
 {
-	auto allocater = memory_allocater_group["custom_allocater"];
-
-	return allocater->allocate<custom_manager<t_cpu_res_type>>();
+	return new custom_manager<t_cpu_res_type>();
 }
 
-
-template<typename t_cpu_res_type, class t_render>
-t_cpu_res_type* custom_manager<t_cpu_res_type, t_render>::create_resource(size_t in_element_number)
+s_material_manager* resource_manager_factory::create_material_manager()
 {
-	auto allocater = memory_allocater_group["custom_allocater"];
-
-	t_cpu_res_type* cpu_ptr = create_resource();
-	cpu_ptr->data = allocater->custom_allocate(in_element_number * sizeof(t_cpu_res_type));
-	cpu_ptr->count = in_element_number;
-
-	return cpu_ptr;
+	return new material_manager();
 }
 
-//构建GPU内存
-template<typename t_cpu_res_type, class t_render>
-void custom_manager<t_cpu_res_type, t_render>::allocate_gpu(
-	t_cpu_res_type* in_cpu_data,
-	gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type,
-	std::vector<UINT>& elem_group_number)
+s_texture_manager* resource_manager_factory::create_texture_manager()
 {
-	dx_function sr_functor = [in_cpu_data, elem_group_number, in_sr_type](directx_render* in_render)
-	{
-		//构建描述符
-		in_cpu_data->gpu_sr_ptr = in_render->allocate_shader_resource(in_sr_type);
-		//构建内存
-		if (in_cpu_data->can_update)
-		{
-			in_render->allocate_default_resource(
-				in_cpu_data->gpu_sr_ptr,
-				in_cpu_data->get_element_size(),
-				in_cpu_data->get_element_count(),
-				in_cpu_data->data,
-				elem_group_number);
-		}
-		else
-		{
-			in_render->allocate_upload_resource(
-				in_cpu_data->gpu_sr_ptr,
-				in_cpu_data->get_element_size(),
-				in_cpu_data->get_element_count(),
-				elem_group_number);
-		}
-	};
-
-	dx_shader_resource_command.command_queue.push(sr_functor);
-
+	return new texture_manager();
 }
 
-//void directx_render::update_elem_upload_resource(
-//	void* data,
-//	int element_index,
-//	directx_shader_resource* in_res_elem)
-//{
-//	memcpy(&(in_res_elem->mapped_data[element_index * in_res_elem->element_byte_size]), &data, in_res_elem->element_byte_size);
-//}
-
-
-template<typename t_cpu_res_type, class t_render>
-t_cpu_res_type* custom_manager<t_cpu_res_type,t_render>::load_resource(wchar_t* in_path)
+s_mesh_manager* resource_manager_factory::create_mesh_manager()
 {
-	
+	return new mesh_manager();
 }
 
-
-/***
-************************************************************
-*
-* Update Function
-*
-************************************************************
-*/
-
-template<typename t_cpu_res_type, class t_render>
-void custom_manager<t_cpu_res_type, t_render>::update_gpu(const t_cpu_res_type* in_cpu_data)
+s_sence_manager* resource_manager_factory::create_sence_manager()
 {
-	gpu_shader_resource* sr_ptr = in_cpu_data->gpu_sr_ptr;
-	size_t memory_size = sr_ptr->element_size * sr_ptr->element_count;
+	return new sence_manager();
+} 
 
-	memcpy(&(sr_ptr->mapped_data[0]), in_cpu_data->get_data(), memory_size);
-}
+
+

@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <map>
-#include "gpu_reource.h"
+#include "gpu_resource.h"
 /***
 ************************************************************
 *
@@ -70,21 +70,17 @@ struct s_sence_constant
 	s_float DeltaTime = 0.0f;
 };
 
-typedef UINT s_index;
-
-typedef void s_texture;
-
 template<typename t_element>
 struct cpu_resource
 {
 	//??? 自动生成
 	s_uid uid;
 
-	t_element* data = nullptr;
+	void* data = nullptr;
 
 	size_t count = 0;
 
-	t_element* get_data() { return data; };
+	t_element* get_data() { return (t_element*)data; };
 
 	size_t get_element_size() { return sizeof(t_element); };
 
@@ -124,6 +120,9 @@ template<
 	t_object_constant* object_constant_ptr;
 	t_material* material_ptr;
 	std::map<std::string, t_texture*> texture_ptr;
+
+	std::vector<UINT> index_offset;
+
 };
 
 
