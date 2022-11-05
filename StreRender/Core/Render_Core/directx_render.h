@@ -23,6 +23,7 @@
 
 
 #define SWAP_CHAIN_BUFFER_COUNT 2
+#define FRAME_BUFFER_COUNT 2
 
 using Microsoft::WRL::ComPtr;
 
@@ -56,6 +57,14 @@ protected:
 
 
 public:
+
+    struct directx_frame_resource : public gpu_shader_resource
+    {
+        gpu_shader_resource* frame_resource_group[FRAME_BUFFER_COUNT];
+
+        UINT current_frame = 0;
+    };
+
     struct directx_shader_resource : public gpu_shader_resource
     {
         ComPtr<ID3D12Resource> dx_resource;

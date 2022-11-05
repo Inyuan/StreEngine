@@ -36,7 +36,7 @@ struct gpu_shader_resource
 
 	std::string name;
 	const bool can_update = false;
-	//只有上传堆有效
+	//只有上传堆有效, 自动切换帧资源目标地址
 	unsigned char* mapped_data = nullptr;
 
 	uint32_t element_size = 0;
