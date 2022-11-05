@@ -34,6 +34,8 @@ public:
 	//遍历所有刷新数
 	void update_gpu_memory();
 
+	//void set_output_
+
 private:
 	void init(HINSTANCE in_instance, UINT in_width, UINT in_height);
 

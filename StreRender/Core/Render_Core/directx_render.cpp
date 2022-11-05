@@ -829,6 +829,28 @@ void directx_render::draw_call(
 	}
 }
 
+
+void directx_render::set_swap_chain_buffer()
+{
+
+}
+
+void directx_render::switch_fence()
+{
+	// Swap the back and front buffers
+	ThrowIfFailed(swap_chain->Present(0, 0));
+	current_back_buffer = (current_back_buffer + 1) % SWAP_CHAIN_BUFFER_COUNT;
+
+	// Advance the fence value to mark commands up to this fence point.
+	mCurrFrameResource->Fence = ++mCurrentFence;
+
+	// Add an instruction to the command queue to set a new fence point. 
+	// Because we are on the GPU timeline, the new fence point won't be 
+	// set until the GPU finishes processing all the commands prior to this Signal().
+	mCommandQueue->Signal(mFence.Get(), mCurrentFence);
+}
+
+
 /***
 ************************************************************
 *
@@ -836,7 +858,6 @@ void directx_render::draw_call(
 *
 ************************************************************
 */
-
 //
 void directx_render::create_descriptor_heap(
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> in_out_descheap,
@@ -1071,86 +1092,98 @@ void directx_render::create_pso(
 }
 
 
-void directx_render::init(HWND in_main_wnd)
+void directx_render::init(HWND in_main_wnd, UINT in_width, UINT in_height)
 {
-	ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&dxgi_factory)));
-
-	// Try to create hardware device.
-	HRESULT hard_ware_result = D3D12CreateDevice(
-		nullptr,             // default adapter
-		D3D_FEATURE_LEVEL_11_0,
-		IID_PPV_ARGS(&d3d_device));
-
-	// Fallback to WARP device.
-	if (FAILED(hard_ware_result))
+	//factory & adapter & device & fance
 	{
-		Microsoft::WRL::ComPtr<IDXGIAdapter> warp_adapter;
-		ThrowIfFailed(dxgi_factory->EnumWarpAdapter(IID_PPV_ARGS(&warp_adapter)));
+		ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&dxgi_factory)));
 
-		ThrowIfFailed(D3D12CreateDevice(
-			warp_adapter.Get(),
+		// Try to create hardware device.
+		HRESULT hard_ware_result = D3D12CreateDevice(
+			nullptr,             // default adapter
 			D3D_FEATURE_LEVEL_11_0,
-			IID_PPV_ARGS(&d3d_device)));
-	}
+			IID_PPV_ARGS(&d3d_device));
 
-	ThrowIfFailed(d3d_device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
-		IID_PPV_ARGS(&fence)));
+
+		// Fallback to WARP device.
+		if (FAILED(hard_ware_result))
+		{
+			Microsoft::WRL::ComPtr<IDXGIAdapter> warp_adapter;
+			ThrowIfFailed(dxgi_factory->EnumWarpAdapter(IID_PPV_ARGS(&warp_adapter)));
+
+			ThrowIfFailed(D3D12CreateDevice(
+				warp_adapter.Get(),
+				D3D_FEATURE_LEVEL_11_0,
+				IID_PPV_ARGS(&d3d_device)));
+		}
+
+		ThrowIfFailed(d3d_device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
+			IID_PPV_ARGS(&fence)));
+	}
 
 	msaa_configuration();
 
-	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-	ThrowIfFailed(d3d_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&command_queue)));
+	//commandqueue & allocator & commandlist
+	{
+		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+		queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+		queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+		ThrowIfFailed(d3d_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&command_queue)));
 
-	ThrowIfFailed(d3d_device->CreateCommandAllocator(
-		D3D12_COMMAND_LIST_TYPE_DIRECT,
-		IID_PPV_ARGS(direct_cmdlist_alloc.GetAddressOf())));
+		ThrowIfFailed(d3d_device->CreateCommandAllocator(
+			D3D12_COMMAND_LIST_TYPE_DIRECT,
+			IID_PPV_ARGS(direct_cmdlist_alloc.GetAddressOf())));
 
-	ThrowIfFailed(d3d_device->CreateCommandList(
-		0,
-		D3D12_COMMAND_LIST_TYPE_DIRECT,
-		direct_cmdlist_alloc.Get(), // Associated command allocator
-		nullptr,                   // Initial PipelineStateObject
-		IID_PPV_ARGS(command_list.GetAddressOf())));
+		ThrowIfFailed(d3d_device->CreateCommandList(
+			0,
+			D3D12_COMMAND_LIST_TYPE_DIRECT,
+			direct_cmdlist_alloc.Get(), // Associated command allocator
+			nullptr,                   // Initial PipelineStateObject
+			IID_PPV_ARGS(command_list.GetAddressOf())));
 
-	// Start off in a closed state.  This is because the first time we refer 
-	// to the command list we will Reset it, and it needs to be closed before
-	// calling Reset.
-	command_list->Close();
+		// Start off in a closed state.  This is because the first time we refer 
+		// to the command list we will Reset it, and it needs to be closed before
+		// calling Reset.
+		command_list->Close();
+	}
 
-	swap_chain.Reset();
+	//swapchain
+	{
+		swap_chain.Reset();
 
-	DXGI_SWAP_CHAIN_DESC sd;
-	sd.BufferDesc.Width = CLIENT_WIDTH;
-	sd.BufferDesc.Height = CLIENT_HEIGHT;
-	sd.BufferDesc.RefreshRate.Numerator = 60;
-	sd.BufferDesc.RefreshRate.Denominator = 1;
-	sd.BufferDesc.Format = back_buffer_format;
-	sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	sd.SampleDesc.Count = MSAAX4_STATE ? 4 : 1;
-	sd.SampleDesc.Quality = MSAAX4_STATE ? (MSAAX4_QUALITY - 1) : 0;
-	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	sd.BufferCount = SWAP_CHAIN_BUFFER_COUNT;
-	sd.OutputWindow = in_main_wnd;
-	sd.Windowed = true;
-	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+		DXGI_SWAP_CHAIN_DESC sd;
+		sd.BufferDesc.Width = in_width;
+		sd.BufferDesc.Height = in_height;
+		sd.BufferDesc.RefreshRate.Numerator = 60;
+		sd.BufferDesc.RefreshRate.Denominator = 1;
+		sd.BufferDesc.Format = back_buffer_format;
+		sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+		sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+		sd.SampleDesc.Count = MSAAX4_STATE ? 4 : 1;
+		sd.SampleDesc.Quality = MSAAX4_STATE ? (MSAAX4_QUALITY - 1) : 0;
+		sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+		sd.BufferCount = SWAP_CHAIN_BUFFER_COUNT;
+		sd.OutputWindow = in_main_wnd;
+		sd.Windowed = true;
+		sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+		sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-	// Note: Swap chain uses queue to perform flush.
-	ThrowIfFailed(dxgi_factory->CreateSwapChain(
-		command_queue.Get(),
-		&sd,
-		swap_chain.GetAddressOf()));
+		// Note: Swap chain uses queue to perform flush.
+		ThrowIfFailed(dxgi_factory->CreateSwapChain(
+			command_queue.Get(),
+			&sd,
+			swap_chain.GetAddressOf()));
+	}
 
-	ScreenViewportResize(CLIENT_WIDTH, CLIENT_HEIGHT);
 
-	screen_vertexs_and_indexes_input();
+	ScreenViewportResize(in_width, in_height);
 
-	rtv_descriptor_size = d3d_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	dsv_descriptor_size = d3d_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	cbv_srv_uav_descriptor_size = d3d_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	//descriptor size
+	{
+		rtv_descriptor_size = d3d_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		dsv_descriptor_size = d3d_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+		cbv_srv_uav_descriptor_size = d3d_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
 }
 
 

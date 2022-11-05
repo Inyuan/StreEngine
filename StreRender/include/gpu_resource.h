@@ -54,17 +54,6 @@ struct gpu_pass
 };
 
 /// <summary>
-/// GPU绘制结果类型，被图像API继承并封装具体化。接口操作GPU的基本单位。
-/// </summary>
-struct gpu_rander_target
-{
-	//??? 关切到渲染目标的名字
-	s_uid uid;
-
-	gpu_shader_resource* gpu_sr_ptr;
-};
-
-/// <summary>
 /// 着色器布局类型，是控制绘制过程的必要参数。接口操作GPU的基本单位。
 /// </summary>
 struct shader_layout

@@ -181,7 +181,7 @@ public:
 
 	void add_render_target(
 		s_pass* in_out_pass,
-		const gpu_rander_target* in_gpu_rt);
+		const cpu_texture* in_gpu_rt);
 
 	void remove_mesh(
 		s_pass* in_out_pass,
@@ -195,6 +195,11 @@ public:
 
 	void remove_render_target(
 		s_pass* in_out_pass,
-		const gpu_rander_target* in_gpu_rt);
+		const cpu_texture* in_gpu_rt);
+
+
+	void set_shader_layout(
+		s_pass* in_out_pass,
+		const shader_layout in_shade_layout);
 };
 

@@ -227,9 +227,8 @@ void pass_factory::add_shader_resource(
 
 void pass_factory::add_render_target(
 	s_pass* in_out_pass,
-	const gpu_rander_target* in_gpu_rt)
+	const cpu_texture* in_gpu_rt)
 {
-
 	in_out_pass->gpu_rt_texture_ptr[in_gpu_rt->uid.name] = in_gpu_rt->gpu_sr_ptr;
 }
 
@@ -249,7 +248,14 @@ void pass_factory::remove_shader_resource(
 
 void pass_factory::remove_render_target(
 	s_pass* in_out_pass,
-	const gpu_rander_target* in_gpu_rt)
+	const cpu_texture* in_gpu_rt)
 {
 	in_out_pass->gpu_rt_texture_ptr.erase(in_gpu_rt->uid.name);
+}
+
+void pass_factory::set_shader_layout(
+	s_pass* in_out_pass,
+	const shader_layout in_shade_layout)
+{
+	in_out_pass->gpu_shader_layout = in_shade_layout;
 }

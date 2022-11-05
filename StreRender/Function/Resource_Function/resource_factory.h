@@ -3,13 +3,15 @@
 #include "stre_render.h"
 #include "gpu_resource.h"
 #include "Function/Render_Function/render_functor.h"
-
+#include "Core/Math/stre_math.h"
 template<typename t_cpu_res_type>
 struct custom_manager :public s_custom_manager<t_cpu_res_type>
 {
 	virtual t_cpu_res_type* create_resource() override
 	{
-		return new t_cpu_res_type();
+		auto instance = new t_cpu_res_type();
+		generate_unique_identifier<t_cpu_res_type>(instance->uid);
+		return instance;
 	}
 
 	virtual t_cpu_res_type* create_resource(size_t in_element_number) override

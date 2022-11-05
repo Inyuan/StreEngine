@@ -41,14 +41,19 @@ protected:
 
 
     Microsoft::WRL::ComPtr<IDXGIFactory4> dxgi_factory;
-    Microsoft::WRL::ComPtr<IDXGISwapChain> swap_chain;
     Microsoft::WRL::ComPtr<ID3D12Device> d3d_device;
-
     Microsoft::WRL::ComPtr<ID3D12Fence> fence;
 
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> command_queue;
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> direct_cmdlist_alloc;
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> command_list;
+
+    Microsoft::WRL::ComPtr<IDXGISwapChain> swap_chain;
+
+    UINT current_back_buffer = 0;
+    UINT current_fence = 0;
+
+
 
 public:
     struct directx_shader_resource : public gpu_shader_resource
@@ -100,7 +105,6 @@ public:
     //    ComPtr<ID3D12DescriptorHeap> dsv_heap = nullptr;
     //    ComPtr<ID3D12DescriptorHeap> uav_heap = nullptr;
     //};
-    
     //...
 
     struct directx_pass : public gpu_pass
@@ -123,12 +127,15 @@ private:
     void draw_call(const s_pass::gpu_mesh_resource* in_gpu_mesh);
 
 public:
-    void init(HWND in_main_wnd);
+    void init(HWND in_main_wnd, UINT in_width, UINT in_height);
 
     void over() {};
 
     void draw_pass(const s_pass* in_pass);
 
+    void set_swap_chain_buffer();
+
+    void switch_fence();
 public:
 
     virtual gpu_pass* allocate_pass() override;

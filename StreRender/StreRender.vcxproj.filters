@@ -37,6 +37,9 @@
     <Filter Include="Function\Resource_Function">
       <UniqueIdentifier>{fcd16e33-8e96-4ad2-b510-99cbcd510595}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core\Math">
+      <UniqueIdentifier>{3db1c902-d1c5-49c6-af55-7ee047f8f70a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -89,7 +92,7 @@
     <ClInclude Include="framework.h">
       <Filter>Logic</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Render_Core\render.h">
+    <ClInclude Include="Core\Render_Core\directx_resource.h">
       <Filter>Core\Render_Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\Render_Core\directx_render.h">
@@ -137,6 +140,9 @@
     </ClInclude>
     <ClInclude Include="Function\Render_Function\render_functor.h">
       <Filter>Function\Render_Function</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Math\stre_math.h">
+      <Filter>Core\Math</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
