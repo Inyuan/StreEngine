@@ -23,7 +23,7 @@
 
 
 #define SWAP_CHAIN_BUFFER_COUNT 2
-#define FRAME_BUFFER_COUNT 2
+#define FRAME_BUFFER_COUNT SWAP_CHAIN_BUFFER_COUNT
 
 using Microsoft::WRL::ComPtr;
 
@@ -38,34 +38,24 @@ enum DIRECTX_RESOURCE_DESC_TYPE
 
 class directx_render : public s_directx_render
 {
-protected:
-
-
-    Microsoft::WRL::ComPtr<IDXGIFactory4> dxgi_factory;
-    Microsoft::WRL::ComPtr<ID3D12Device> d3d_device;
-    Microsoft::WRL::ComPtr<ID3D12Fence> fence;
-
-    Microsoft::WRL::ComPtr<ID3D12CommandQueue> command_queue;
-    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> direct_cmdlist_alloc;
-    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> command_list;
-
-    Microsoft::WRL::ComPtr<IDXGISwapChain> swap_chain;
-
-    UINT current_back_buffer = 0;
-    UINT current_fence = 0;
-
-
-
 public:
+
+    struct directx_resource
+    {
+        UINT64 fence = 0;
+    };
 
     struct directx_frame_resource : public gpu_shader_resource
     {
-        gpu_shader_resource* frame_resource_group[FRAME_BUFFER_COUNT];
-
-        UINT current_frame = 0;
+        directx_resource* frame_resource_group[FRAME_BUFFER_COUNT];
     };
 
-    struct directx_shader_resource : public gpu_shader_resource
+    struct directx_texture_resource : public gpu_shader_resource
+    {
+        directx_resource* resource;
+    };
+
+    struct directx_shader_resource : public directx_resource
     {
         ComPtr<ID3D12Resource> dx_resource;
         D3D12_SHADER_RESOURCE_VIEW_DESC dx_srv;
@@ -76,19 +66,27 @@ public:
         D3D12_RESOURCE_STATES dx_current_state = D3D12_RESOURCE_STATE_GENERIC_READ;
         DXGI_FORMAT dx_format;
     };
-    
-    typedef directx_shader_resource directx_sr_custom_buffer;//csv
-    typedef directx_shader_resource directx_sr_custom_buffer_group;//srv
+
+
     typedef directx_shader_resource directx_sr_texture;//srv
     typedef directx_shader_resource directx_sr_render_target;//srv rtv
     typedef directx_shader_resource directx_sr_depth_stencil;//srv dsv
-    //模板？
-    struct directx_sr_texture_group : public gpu_shader_resource
+
+    struct directx_sr_custom_buffer : public directx_shader_resource
+    {
+        unsigned char* mapped_data = nullptr;
+    };
+    typedef directx_sr_custom_buffer directx_sr_custom_buffer_group;//srv
+
+
+    //贴图组类型必须再用package_textures才能构建
+
+    struct directx_sr_texture_group : public directx_resource
     {
         ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
     };
 
-    struct directx_sr_render_target_group : public gpu_shader_resource
+    struct directx_sr_render_target_group : public directx_resource
     {
         UINT rt_number = 0;
         ComPtr<ID3D12DescriptorHeap> rtv_heap = nullptr;
@@ -128,10 +126,34 @@ public:
         std::vector<D3D12_INPUT_ELEMENT_DESC> input_layout;
     };
 
+
+protected:
+
+
+    Microsoft::WRL::ComPtr<IDXGIFactory4> dx_factory;
+    Microsoft::WRL::ComPtr<ID3D12Device> dx_device;
+    Microsoft::WRL::ComPtr<ID3D12Fence> dx_fence;
+
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue> dx_command_queue;
+    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> dx_cmdlist_alloc;
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> dx_command_list;
+
+    Microsoft::WRL::ComPtr<IDXGISwapChain> dx_swap_chain;
+
+    gpu_shader_resource* swap_chain_buffer[SWAP_CHAIN_BUFFER_COUNT];
+    gpu_shader_resource* swap_chain_buffer_heap[SWAP_CHAIN_BUFFER_COUNT];
+    UINT current_back_buffer = 0;
+    UINT64 current_fence = 0;
+    UINT current_frame = 0;
+
+
+
 private:
-    void Load_resource(
+    void set_render_target(
         const std::map < std::string, const gpu_shader_resource*>& in_gpu_res_group,
-        bool set_render_tager = false);
+        bool is_final_output);
+
+    void load_resource(const std::map < std::string, const gpu_shader_resource*>& in_gpu_res_group);
 
     void draw_call(const s_pass::gpu_mesh_resource* in_gpu_mesh);
 
@@ -140,17 +162,27 @@ public:
 
     void over() {};
 
+
+
     void draw_pass(const s_pass* in_pass);
 
-    void set_swap_chain_buffer();
+    void excute_command_list();
 
-    void switch_fence();
+    void switch_swap_chain();
+
+    void flush_command_queue();
 public:
 
     virtual gpu_pass* allocate_pass() override;
 
     virtual gpu_shader_resource* allocate_shader_resource(
         gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type) override;
+
+    virtual void update_gpu_resource(
+        gpu_shader_resource* in_out_gpu_res, 
+        const void* in_data,
+        UINT in_update_element_index,
+        size_t int_update_element_count) override;
 
     virtual void allocate_upload_resource(
         gpu_shader_resource* in_res_elem,
@@ -163,9 +195,7 @@ public:
         UINT in_number,
         void* in_cpu_data) override;
 
-    virtual void create_gpu_texture(gpu_shader_resource* in_out_gpu_texture) override;
-
-    virtual void pakeage_textures(
+    virtual void package_textures(
         std::vector<const gpu_shader_resource*>& in_texture_group,
         gpu_shader_resource* in_out_table) override;
 
@@ -216,6 +246,14 @@ private:
     void ScreenViewportResize(int in_width, int in_height);
 private:
 
+    const directx_resource* get_current_frame_resource(const gpu_shader_resource* in_gpu_sr);
+    const directx_resource* get_current_frame_resource(const directx_frame_resource* in_gpu_sr);
+
+    //构建RT 和DS
+    void create_gpu_texture(directx_resource* in_out_gpu_texture,
+        gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type);
+
+
     void create_descriptor_heap(
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> in_out_descheap,
         DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
@@ -247,7 +285,8 @@ private:
 
     void create_descriptor(
         DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
-        directx_shader_resource* in_gpu_res_elem);
+        directx_shader_resource* in_gpu_res_elem,
+        UINT in_memory_size = 0);
 
     void create_rootsignature(
         CD3DX12_ROOT_SIGNATURE_DESC& in_rootsig_desc,

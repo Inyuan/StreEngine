@@ -31,6 +31,15 @@ void render_system<t_render>::draw_pass(const s_pass* in_pass)
 ************************************************************
 */
 
+//必须遵守顺序
+//分配内存，
+//分配pass，
+//刷新内存，
+//刷新pass，
+//绘制
+//提交命令
+//交换链
+
 //遍历所有刷新数
 
 void render_system<directx_render>::update_gpu_memory()
