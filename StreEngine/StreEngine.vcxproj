@@ -135,6 +135,9 @@
   <ItemGroup>
     <ClCompile Include="debug_main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shader\debug_pass.hlsl" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

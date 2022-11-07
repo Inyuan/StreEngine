@@ -1,5 +1,8 @@
 #include "Rendering/stre_render.h"
 
+
+void set_screen_vertex_index(cpu_mesh * in_cpu_mesh);
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
 {
@@ -14,33 +17,94 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
 	render_system_instance->init(hInstance,800,600);
 	
-	//构建pass
-	pass_factory pass_factory_instance;
-
-	auto debug_pass = pass_factory_instance.create_pass();
+	resource_manager_factory res_m_fy;
 
 	//构建贴图
-	auto texture_manager_instance = resource_manager_factory().create_texture_manager();
+	auto texture_manager_instance = res_m_fy.create_texture_manager();
 
 	auto debug_texture_rt = texture_manager_instance->create_resource();
 	auto debug_texture_ds = texture_manager_instance->create_resource();
 
-	texture_manager_instance->dx_allocate_gpu_resource(debug_texture_rt,gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET);
+	texture_manager_instance->dx_allocate_gpu_resource(debug_texture_rt, gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET);
 	texture_manager_instance->dx_allocate_gpu_resource(debug_texture_ds, gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL);
 
-	
+	//构建mesh 
+	auto mesh_manager_instance = res_m_fy.create_mesh_manager();
+
+	auto debug_mesh = mesh_manager_instance->create_resource();
+
+	auto vertex_manager_instance = res_m_fy.create_manager<cpu_vertex>();
+	auto index_manager_instance = res_m_fy.create_manager<cpu_index>();
+	debug_mesh->vertex_ptr = vertex_manager_instance->create_resource(4);
+	debug_mesh->index_ptr = index_manager_instance->create_resource(6);
+	set_screen_vertex_index(debug_mesh);
+
+	mesh_manager_instance->dx_allocate_gpu_resource(debug_mesh);
+
+	//构建pass
+
+	pass_factory pass_factory_instance;
+
+	auto debug_pass = pass_factory_instance.create_pass();
+
+	shader_layout debug_shader_layout;
+	debug_shader_layout.shader_vaild[shader_layout::VS] = true;
+	debug_shader_layout.shader_vaild[shader_layout::PS] = true;
+	debug_shader_layout.shader_path[shader_layout::VS] = L"Shaders\\debug_pass.hlsl";
+	debug_shader_layout.shader_path[shader_layout::PS] = L"Shaders\\debug_pass.hlsl";
+	debug_shader_layout.shader_input_group.push_back(
+		{ "POSITION",shader_layout::shader_input::INPUT_ELEMENT_SIZE_R32G32B32 });
+	debug_shader_layout.shader_input_group.push_back(
+		{ "NORMAL",shader_layout::shader_input::INPUT_ELEMENT_SIZE_R32G32B32 });
+	debug_shader_layout.shader_input_group.push_back(
+		{ "TEXCOORD",shader_layout::shader_input::INPUT_ELEMENT_SIZE_R32G32 });
+	debug_shader_layout.shader_input_group.push_back(
+		{ "TANGENT",shader_layout::shader_input::INPUT_ELEMENT_SIZE_R32G32B32 });
+
 	//debug_pass->gpu_shader_layout
 
-	//pass_factory_instance.add_mesh(debug_pass,);
+	pass_factory_instance.add_mesh(debug_pass, debug_mesh);
 
 	//pass_factory_instance.add_shader_resource(debug_pass, );
 
-	//pass_factory_instance.set_shader_layout(debug_pass,);
+	pass_factory_instance.set_shader_layout(debug_pass, debug_shader_layout);
+
+	debug_pass->is_output = true;
 
 	//添加渲染目标
 	pass_factory_instance.add_render_target(debug_pass, debug_texture_rt);
 	//添加渲染目标
 	pass_factory_instance.add_render_target(debug_pass, debug_texture_ds);
 
+	//执行渲染
+	render_system_instance->update_gpu_memory();
+
+	render_system_instance->draw_pass(debug_pass);
+
+
 	
+}
+
+
+void set_screen_vertex_index(cpu_mesh* in_cpu_mesh)
+{
+	auto debug_vertex_ptr = in_cpu_mesh->vertex_ptr->get_data();
+	debug_vertex_ptr[0].position = s_float3( -1.0f,1.0f, 0.0f);
+	debug_vertex_ptr[1].position = s_float3(1.0f, 1.0f, 0.0f);
+	debug_vertex_ptr[2].position = s_float3(-1.0f, -1.0f, 0.0f);
+	debug_vertex_ptr[3].position = s_float3(1.0f, -1.0f, 0.0f);
+
+	debug_vertex_ptr[0].texC = s_float2(0.0f, 0.0f);
+	debug_vertex_ptr[1].texC = s_float2(1.0f, 0.0f);
+	debug_vertex_ptr[2].texC = s_float2(0.0f, 1.0f);
+	debug_vertex_ptr[3].texC = s_float2(1.0f, 1.0f);
+
+	auto debug_index_ptr = in_cpu_mesh->index_ptr->get_data();
+
+	debug_index_ptr[0] = 0;
+	debug_index_ptr[1] = 1;
+	debug_index_ptr[2] = 2;
+	debug_index_ptr[3] = 1;
+	debug_index_ptr[4] = 3;
+	debug_index_ptr[5] = 2;
 }

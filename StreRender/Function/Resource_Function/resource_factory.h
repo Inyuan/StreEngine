@@ -29,16 +29,13 @@ struct custom_manager :public s_custom_manager<t_cpu_res_type>
 	}
 	virtual void update_gpu(t_cpu_res_type* in_cpu_data) override
 	{
-		
-
-		memcpy(&(sr_ptr->mapped_data[0]), in_cpu_data->get_data(), memory_size);
 
 		dx_function sr_functor = [in_cpu_data](s_directx_render* in_render)
 		{
 			gpu_shader_resource* sr_ptr = in_cpu_data->gpu_sr_ptr;
 
-			in_render->update_gpu_resource(sr_ptr, in_cpu_data->get_data(),0,sr_ptr->element_count);
-		}
+			in_render->update_gpu_resource(sr_ptr, in_cpu_data->get_data(), 0, sr_ptr->element_count);
+		};
 		dx_shader_resource_command.command_queue.push(sr_functor);
 
 	}

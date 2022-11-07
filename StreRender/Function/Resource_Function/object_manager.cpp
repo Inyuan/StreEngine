@@ -17,25 +17,31 @@
 
 cpu_mesh* mesh_manager::create_resource()
 {
-    return new cpu_mesh();
+    auto instance = new cpu_mesh();
+    generate_unique_identifier<cpu_mesh>(instance->uid);
+    return instance;
 }
 
 void mesh_manager::dx_allocate_gpu_resource(cpu_mesh* in_cpu_data)
 {
     typedef gpu_shader_resource::SHADER_RESOURCE_TYPE GPU_SR_TYPE;
 
+    if(in_cpu_data->vertex_ptr)
     custom_manager<cpu_vertex>().dx_allocate_gpu_resource(
         in_cpu_data->vertex_ptr,
         GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
 
+    if (in_cpu_data->index_ptr)
     custom_manager<cpu_index>().dx_allocate_gpu_resource(
         in_cpu_data->index_ptr,
         GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
 
+    if (in_cpu_data->material_ptr)
     custom_manager<cpu_material>().dx_allocate_gpu_resource(
         in_cpu_data->material_ptr,
         GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH);
 
+    if (in_cpu_data->object_constant_ptr)
     custom_manager<cpu_object_constant>().dx_allocate_gpu_resource(
         in_cpu_data->object_constant_ptr,
         GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER);

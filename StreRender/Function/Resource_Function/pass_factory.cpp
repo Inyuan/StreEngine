@@ -1,3 +1,8 @@
+#ifdef  DLL_GRAPHICS_API
+#else
+#define DLL_GRAPHICS_API _declspec(dllexport)
+#endif
+
 #include "stre_render.h"
 #include "Function/Render_Function/render_system.h"
 #include "Core/Memory/s_memory.h"
@@ -88,7 +93,7 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 
 		//根签名
 		{
-			in_out_pass->gpu_pass = in_render->allocate_pass();
+			in_out_pass->gpu_pass_ptr = in_render->allocate_pass();
 			//...把已有的release
 			{
 				UINT input_cb_number = 0;
@@ -120,7 +125,7 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 
 				in_render->create_rootsignature(
 					rootSigDesc,
-					in_out_pass->gpu_pass);
+					in_out_pass->gpu_pass_ptr);
 			}
 		}
 
@@ -144,7 +149,7 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 
 			in_render->create_pso(
 				in_out_pass->gpu_shader_layout,
-				in_out_pass->gpu_pass,
+				in_out_pass->gpu_pass_ptr,
 				rt_number,
 				false);
 		}

@@ -44,6 +44,7 @@ void render_system<t_render>::draw_pass(const s_pass* in_pass)
 
 void render_system<directx_render>::update_gpu_memory()
 {
+
 	while (!dx_pass_command.command_queue.empty())
 	{
 		auto& update_function = dx_pass_command.command_queue.front();
@@ -53,6 +54,7 @@ void render_system<directx_render>::update_gpu_memory()
 		dx_pass_command.command_queue.pop();
 	}
 
+
 	while (!dx_shader_resource_command.command_queue.empty())
 	{
 		auto& update_function = dx_shader_resource_command.command_queue.front();
@@ -61,6 +63,7 @@ void render_system<directx_render>::update_gpu_memory()
 
 		dx_shader_resource_command.command_queue.pop();
 	}
+
 }
 
 
@@ -80,7 +83,7 @@ void render_system<directx_render>::init(HINSTANCE in_instance, UINT in_width, U
 
 	renderer = new directx_render();
 
-	renderer->init(render_window->get_hwnd());
+	renderer->init(render_window->get_hwnd(), in_width, in_height);
 }
 
 

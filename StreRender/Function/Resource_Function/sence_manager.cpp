@@ -2,7 +2,9 @@
 
 cpu_sence* sence_manager::create_resource()
 {
-	return new cpu_sence();
+	auto instance = new cpu_sence();
+	generate_unique_identifier<cpu_sence>(instance->uid);
+	return instance;
 }
 
 

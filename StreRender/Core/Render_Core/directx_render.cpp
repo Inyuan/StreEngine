@@ -522,7 +522,7 @@ void directx_render::update_gpu_resource(
 		//if (update_frame_res->fence != 0 && dx_fence->GetCompletedValue() < update_frame_res->fence)
 		if (dx_fence->GetCompletedValue() < update_frame_res->fence)
 		{
-			HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+			HANDLE eventHandle = CreateEventEx(nullptr, NULL, false, EVENT_ALL_ACCESS);
 			ThrowIfFailed(dx_fence->SetEventOnCompletion(update_frame_res->fence, eventHandle));
 			WaitForSingleObject(eventHandle, INFINITE);
 			CloseHandle(eventHandle);
@@ -920,7 +920,7 @@ void directx_render::flush_command_queue()
 	// Wait until the GPU has completed commands up to this fence point.
 	if (dx_fence->GetCompletedValue() < current_fence)
 	{
-		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+		HANDLE eventHandle = CreateEventEx(nullptr, NULL, false, EVENT_ALL_ACCESS);
 
 		// Fire event when GPU hits current fence.  
 		ThrowIfFailed(dx_fence->SetEventOnCompletion(current_fence, eventHandle));
@@ -1341,10 +1341,6 @@ void directx_render::init(HWND in_main_wnd, UINT in_width, UINT in_height)
 			dx_swap_chain.GetAddressOf()));
 	}
 
-	//确保交换链构建完成
-	excute_command_list();
-	flush_command_queue();
-
 	ScreenViewportResize(in_width, in_height);
 
 	//descriptor size
@@ -1367,9 +1363,11 @@ void directx_render::init(HWND in_main_wnd, UINT in_width, UINT in_height)
 			package_textures(rt_group, swap_chain_buffer_heap[i]);
 		}
 	}
-	//确保交换缓存和深度图构建完成
-	excute_command_list();
-	flush_command_queue();
+
+
+	//RESIZE 确保交换缓存和深度图构建完成
+	//excute_command_list();
+	//flush_command_queue();
 }
 
 

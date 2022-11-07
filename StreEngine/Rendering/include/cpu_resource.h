@@ -92,6 +92,7 @@ struct cpu_resource
 
 	gpu_shader_resource* gpu_sr_ptr;
 	//定义类型
+
 };
 
 

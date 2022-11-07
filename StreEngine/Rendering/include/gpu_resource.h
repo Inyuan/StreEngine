@@ -24,20 +24,17 @@ struct gpu_shader_resource
 		//跟随mesh子物体顺序读取的CBV group ex:material
 		SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH,
 		SHADER_RESOURCE_TYPE_TEXTURE, //SRV
-		SHADER_RESOURCE_TYPE_TEXTURE_GROUP, //TABLE
+		SHADER_RESOURCE_TYPE_TEXTURE_GROUP, //TABLE //贴图组类型必须再用package_textures才能构建
 		SHADER_RESOURCE_TYPE_RENDER_TARGET, //SRV
-		SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP, // TABLE
-		SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL, // DSV
-		SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP
+		SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP, // TABLE //贴图组类型必须再用package_textures才能构建
+		SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL, // DSV 
+		SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP //贴图组类型必须再用package_textures才能构建
 	} shader_resource_type;
 
 
 	uint32_t register_index = 0; //使用的寄存器序号
 
 	std::string name;
-	const bool can_update = false;
-	//只有上传堆有效
-	unsigned char* mapped_data = nullptr;
 
 	uint32_t element_size = 0;
 	uint32_t element_count = 0;
@@ -117,10 +114,10 @@ public:
 	//??? 关切到着色器的名字
 	s_uid uid;
 
-
+	bool is_output = false;
 
 	//不同渲染器对应不同的gpu pass内容
-	gpu_pass* gpu_pass = nullptr;
+	gpu_pass* gpu_pass_ptr = nullptr;
 
 	shader_layout gpu_shader_layout;
 

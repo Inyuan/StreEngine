@@ -1,3 +1,4 @@
+#pragma once
 #include <queue>
 #include <functional>
 #include "stre_render_api.h"

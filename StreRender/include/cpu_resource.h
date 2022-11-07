@@ -92,6 +92,8 @@ struct cpu_resource
 
 	gpu_shader_resource* gpu_sr_ptr;
 	//定义类型
+
+	//??? 需要提供运算符重载 比如[]
 };
 
 
