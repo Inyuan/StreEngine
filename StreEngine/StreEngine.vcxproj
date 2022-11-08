@@ -112,6 +112,16 @@
       <AdditionalLibraryDirectories>$(ProjectDir)Rendering\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>StreRender.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy Shaders $(TargetPath)\..\Shaders
+copy StreRender.dll $(TargetPath)\..
+copy libfbxsdk.dll $(TargetPath)\..</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>del  $(TargetPath)\..\Shaders\ 
+del $(TargetPath)\..\StreRender.dll 
+del  $(TargetPath)\..\libfbxsdk.dll </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -136,7 +146,9 @@
     <ClCompile Include="debug_main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Shader\debug_pass.hlsl" />
+    <FxCompile Include="Shaders\debug_pass.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

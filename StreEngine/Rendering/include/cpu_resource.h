@@ -93,6 +93,7 @@ struct cpu_resource
 	gpu_shader_resource* gpu_sr_ptr;
 	//定义类型
 
+	//??? 需要提供运算符重载 比如[]
 };
 
 
@@ -121,9 +122,6 @@ template<
 	t_object_constant* object_constant_ptr;
 	t_material* material_ptr;
 	std::map<std::string, t_texture*> texture_ptr;
-
-	std::vector<UINT> index_offset;
-
 };
 
 

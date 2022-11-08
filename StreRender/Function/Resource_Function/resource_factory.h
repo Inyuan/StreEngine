@@ -4,6 +4,13 @@
 #include "gpu_resource.h"
 #include "Function/Render_Function/render_functor.h"
 #include "Core/Math/stre_math.h"
+
+extern function_command<dx_function> dx_pass_command;
+
+extern function_command<dx_function> dx_shader_resource_command;
+
+
+
 template<typename t_cpu_res_type>
 struct custom_manager :public s_custom_manager<t_cpu_res_type>
 {
@@ -47,22 +54,34 @@ struct custom_manager :public s_custom_manager<t_cpu_res_type>
 		{
 			//构建描述符
 			in_cpu_data->gpu_sr_ptr = in_render->allocate_shader_resource(in_sr_type);
-			//构建内存
-			if (in_cpu_data->can_update)
+			
+			switch (in_sr_type)
 			{
-				in_render->allocate_default_resource(
-					in_cpu_data->gpu_sr_ptr,
-					in_cpu_data->get_element_size(),
-					in_cpu_data->get_element_count(),
-					in_cpu_data->data);
+				//自定义内存手动申请空间
+			case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
+			case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP:
+			case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH:
+				//构建内存
+				if (in_cpu_data->can_update)
+				{
+					in_render->allocate_default_resource(
+						in_cpu_data->gpu_sr_ptr,
+						in_cpu_data->get_element_size(),
+						in_cpu_data->get_element_count(),
+						in_cpu_data->data);
+				}
+				else
+				{
+					in_render->allocate_upload_resource(
+						in_cpu_data->gpu_sr_ptr,
+						in_cpu_data->get_element_size(),
+						in_cpu_data->get_element_count());
+				}
+			default:
+				break;
 			}
-			else
-			{
-				in_render->allocate_upload_resource(
-					in_cpu_data->gpu_sr_ptr,
-					in_cpu_data->get_element_size(),
-					in_cpu_data->get_element_count());
-			}
+			
+
 		};
 
 		dx_shader_resource_command.command_queue.push(sr_functor);
@@ -133,10 +152,31 @@ public:
 		custom_manager<cpu_texture>().update_gpu(in_cpu_data);
 	}
 
+	//??? 贴图的导入还没写
 	virtual void dx_allocate_gpu_resource(cpu_texture* in_cpu_data,
 		gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type) override
 	{
 		custom_manager<cpu_texture>().dx_allocate_gpu_resource(in_cpu_data, in_sr_type);
+	}
+
+	virtual void package_textures(
+		std::vector<cpu_texture*> in_texture_group,
+		cpu_texture* in_out_table) override
+	{
+
+
+		dx_function sr_functor = [in_texture_group, in_out_table](s_directx_render* in_render)
+		{
+			std::vector<gpu_shader_resource*> package_group;
+
+			for (auto it : in_texture_group)
+			{
+				package_group.push_back(it->gpu_sr_ptr);
+			}
+
+			in_render->package_textures(package_group, in_out_table->gpu_sr_ptr);
+		};
+		dx_shader_resource_command.command_queue.push(sr_functor);
 	}
 
 };

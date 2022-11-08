@@ -67,6 +67,17 @@ cpu_mesh* mesh_manager::load_resource(wchar_t* in_path)
 
 void mesh_manager::update_gpu(cpu_mesh* in_cpu_data)
 {
+    if (in_cpu_data->vertex_ptr)
+        custom_manager<cpu_vertex>().update_gpu(in_cpu_data->vertex_ptr);
+
+    if (in_cpu_data->index_ptr)
+        custom_manager<cpu_index>().update_gpu(in_cpu_data->index_ptr);
+
+    if (in_cpu_data->material_ptr)
+        custom_manager<cpu_material>().update_gpu(in_cpu_data->material_ptr);
+
+    if (in_cpu_data->object_constant_ptr)
+        custom_manager<cpu_object_constant>().update_gpu(in_cpu_data->object_constant_ptr);
 
 }
 
@@ -266,14 +277,14 @@ cpu_mesh* mesh_manager::load_fbx(wchar_t* in_path)
         out_resource->index_ptr = custom_manager<cpu_index>().create_resource((int)polygonCount * PolygonType);
         out_resource->material_ptr = custom_manager<cpu_material>().create_resource(material_size);
         out_resource->object_constant_ptr = custom_manager<cpu_object_constant>().create_resource(material_size);
-        out_resource->index_offset.assign(material_size,0);
+        out_resource->mesh_element_index_count.assign(material_size,0);
         //贴图得自己更新了
         //out_resource->texture_ptr.assign();
     }
 
     auto vertices = out_resource->vertex_ptr->get_data();
     auto indices = out_resource->index_ptr->get_data();
-    auto indeices_offset = out_resource->index_offset;
+    auto indeices_offset = out_resource->mesh_element_index_count;
     auto object_constant = out_resource->object_constant_ptr->get_data();
     s_float3 vMin = object_constant->object_bound_box.min_position;
     s_float3 vMax = object_constant->object_bound_box.max_position;
@@ -348,6 +359,7 @@ cpu_mesh* mesh_manager::load_fbx(wchar_t* in_path)
     }
     int current_material_id = 0;
     int IndeicesCount = 0;
+    int frontCount = 0;
     int materialCount = 0;
     for (int polygon = 0; polygon < polygonCount; polygon++) //each polygon
     {
@@ -446,14 +458,15 @@ cpu_mesh* mesh_manager::load_fbx(wchar_t* in_path)
             {
                 current_material_id = pMaterialIndices->GetAt(polygon);
 
-                indeices_offset[materialCount] = IndeicesCount;
+                indeices_offset[materialCount] = IndeicesCount - frontCount;
+                frontCount = IndeicesCount;
                 materialCount++;
             }
             IndeicesCount++;
         }
     }
     materialCount++;
-    indeices_offset[materialCount] = IndeicesCount;
+    indeices_offset[materialCount] = IndeicesCount - frontCount;
 
     //包围盒需要再建？？？
     //XMStoreFloat3(&bounds.Center, 0.5f * (vMin + vMax));

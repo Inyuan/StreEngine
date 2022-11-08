@@ -16,6 +16,4 @@ public:
 	std::queue<t_function> command_queue;
 };
 
-static function_command<dx_function> dx_pass_command;
 
-static function_command<dx_function> dx_shader_resource_command;

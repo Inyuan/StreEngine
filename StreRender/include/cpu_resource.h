@@ -122,9 +122,6 @@ template<
 	t_object_constant* object_constant_ptr;
 	t_material* material_ptr;
 	std::map<std::string, t_texture*> texture_ptr;
-
-	std::vector<UINT> index_offset;
-
 };
 
 

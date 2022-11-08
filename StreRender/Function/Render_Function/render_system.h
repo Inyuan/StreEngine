@@ -4,7 +4,6 @@
 #define DLL_GRAPHICS_API _declspec(dllexport)
 #endif
 #include "Core/Render_Core/directx_render.h"
-#include "render_functor.h"
 #include "gpu_resource.h"
 
 //策略模式 选择渲染策略
@@ -29,16 +28,18 @@ protected:
 
 public:
 
-	void draw_pass(const s_pass* in_pass);
+	virtual void draw_pass(s_pass* in_pass) override;
 
 	//遍历所有刷新数
-	void update_gpu_memory();
+	virtual void update_gpu_memory() override;
 
+	virtual void execute_command() override;
 
 private:
-	void init(HINSTANCE in_instance, UINT in_width, UINT in_height);
+	virtual void init(HINSTANCE in_instance, UINT in_width, UINT in_height) override;
 
-	void over() {};
+	virtual void over() override  {};
 };
+
 
 

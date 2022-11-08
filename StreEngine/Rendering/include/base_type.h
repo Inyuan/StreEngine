@@ -122,5 +122,5 @@ struct s_vertex
 };
 
 
-typedef uint32_t s_index;
+typedef uint16_t s_index;
 typedef char s_texture;

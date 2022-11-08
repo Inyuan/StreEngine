@@ -88,12 +88,16 @@ public:
 
     struct directx_sr_render_target_group : public directx_resource
     {
+        //用于刷新状态
+        std::vector<directx_sr_render_target*> rt_group;
         UINT rt_number = 0;
         ComPtr<ID3D12DescriptorHeap> rtv_heap = nullptr;
     };
 
     struct directx_sr_depth_stencil_group : public directx_shader_resource
     {
+        //用于刷新状态
+        directx_sr_render_target* ds_ptr;
         ComPtr<ID3D12DescriptorHeap> dsv_heap = nullptr;
     };
 
@@ -126,7 +130,6 @@ public:
         std::vector<D3D12_INPUT_ELEMENT_DESC> input_layout;
     };
 
-
 protected:
 
 
@@ -140,8 +143,8 @@ protected:
 
     Microsoft::WRL::ComPtr<IDXGISwapChain> dx_swap_chain;
 
-    gpu_shader_resource* swap_chain_buffer[SWAP_CHAIN_BUFFER_COUNT];
-    gpu_shader_resource* swap_chain_buffer_heap[SWAP_CHAIN_BUFFER_COUNT];
+    directx_sr_render_target swap_chain_buffer[SWAP_CHAIN_BUFFER_COUNT];
+    directx_sr_render_target_group swap_chain_buffer_heap[SWAP_CHAIN_BUFFER_COUNT];
     UINT current_back_buffer = 0;
     UINT64 current_fence = 0;
     UINT current_frame = 0;
@@ -149,9 +152,14 @@ protected:
 
 
 private:
+    
+    
+    
     void set_render_target(
-        const std::map < std::string, const gpu_shader_resource*>& in_gpu_res_group,
-        bool is_final_output);
+        const std::map < std::string,gpu_shader_resource*>& in_gpu_res_group,
+        bool is_final_output,
+        directx_sr_render_target_group** render_targets_ptr,
+        directx_sr_depth_stencil_group** depth_stencil_ptr);
 
     void load_resource(const std::map < std::string, const gpu_shader_resource*>& in_gpu_res_group);
 
@@ -162,11 +170,11 @@ public:
 
     void over() {};
 
-
-
-    void draw_pass(const s_pass* in_pass);
+    void draw_pass(s_pass* in_pass);
 
     void excute_command_list();
+
+    void reset_command_allocator();
 
     void switch_swap_chain();
 
@@ -196,7 +204,7 @@ public:
         void* in_cpu_data) override;
 
     virtual void package_textures(
-        std::vector<const gpu_shader_resource*>& in_texture_group,
+        std::vector<gpu_shader_resource*>& in_texture_group,
         gpu_shader_resource* in_out_table) override;
 
     virtual void load_rootparpameter(
@@ -255,12 +263,12 @@ private:
 
 
     void create_descriptor_heap(
-        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> in_out_descheap,
+        ComPtr<ID3D12DescriptorHeap>& in_out_descheap,
         DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
         UINT in_desc_number);
     
     void create_gpu_memory(
-        ComPtr<ID3D12Resource> in_out_resource,
+        ComPtr<ID3D12Resource>& in_out_resource,
         CD3DX12_HEAP_PROPERTIES in_heap_properties,
         CD3DX12_RESOURCE_DESC in_rescource_desc,
         D3D12_RESOURCE_STATES in_resource_states = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ,
@@ -268,7 +276,7 @@ private:
 
 
     void switch_gpu_memory_state(
-        ComPtr<ID3D12Resource> in_out_resource,
+        ComPtr<ID3D12Resource>& in_out_resource,
         D3D12_RESOURCE_STATES in_old_resource_states,
         D3D12_RESOURCE_STATES in_new_resource_states);
 
@@ -290,7 +298,7 @@ private:
 
     void create_rootsignature(
         CD3DX12_ROOT_SIGNATURE_DESC& in_rootsig_desc,
-        ComPtr<ID3D12RootSignature> in_out_rootsignature);
+        ComPtr<ID3D12RootSignature>& in_out_rootsignature);
 
     ID3DBlob* complie_shader(
         const std::wstring& filename,
@@ -300,7 +308,7 @@ private:
 
     void create_pso(
         D3D12_GRAPHICS_PIPELINE_STATE_DESC& in_pso_desc,
-        ComPtr<ID3D12PipelineState> in_pso);
+        ComPtr<ID3D12PipelineState>& in_pso);
     
     void switch_gpu_resource_state(
         directx_shader_resource* in_gpu_res_elem,

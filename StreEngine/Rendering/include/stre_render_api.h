@@ -33,7 +33,7 @@ public:
 		void* in_cpu_data) = 0;
 
 	virtual void package_textures(
-		std::vector<const gpu_shader_resource*>& in_texture_group,
+		std::vector<gpu_shader_resource*>& in_texture_group,
 		gpu_shader_resource* in_out_table) = 0;
 
 	virtual void load_rootparpameter(

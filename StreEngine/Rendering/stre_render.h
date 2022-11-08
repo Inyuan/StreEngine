@@ -10,7 +10,6 @@
 #endif
 
 
-
 ///rendering type
 //渲染器
 
@@ -21,10 +20,12 @@ class s_render_system
 {
 public:
 
-	virtual void draw_pass(const s_pass* in_pass) = 0;
+	virtual void draw_pass(s_pass* in_pass) = 0;
 
 	//遍历所有刷新数
 	virtual void update_gpu_memory() = 0;
+
+	virtual void execute_command() = 0;
 
 	virtual void init(HINSTANCE in_instance, UINT in_width, UINT in_height) = 0;
 
@@ -93,7 +94,9 @@ public:
 struct s_texture_manager : public s_custom_manager<cpu_texture>
 {
 public:
-
+	virtual void package_textures(
+		std::vector<cpu_texture*> in_texture_group,
+		cpu_texture* in_out_table) = 0;
 };
 
 
@@ -140,6 +143,10 @@ public:
 	s_custom_manager<t_cpu_res_type>* create_manager();
 
 	s_material_manager* create_material_manager();
+
+	s_custom_manager<cpu_vertex>* create_vertex_manager();
+
+	s_custom_manager<cpu_index>* create_index_manager();
 
 	s_texture_manager* create_texture_manager();
 

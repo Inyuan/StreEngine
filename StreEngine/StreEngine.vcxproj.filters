@@ -4,7 +4,7 @@
     <Filter Include="Rendering">
       <UniqueIdentifier>{32a5f65a-9a27-462f-9558-ff696491dd49}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shader">
+    <Filter Include="Shaders">
       <UniqueIdentifier>{b5c2e769-1402-4a25-adcd-f43da92acad3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -17,8 +17,8 @@
     <ClCompile Include="debug_main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Shader\debug_pass.hlsl">
-      <Filter>Shader</Filter>
+    <FxCompile Include="Shaders\debug_pass.hlsl">
+      <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

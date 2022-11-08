@@ -6,17 +6,20 @@
 #include "stre_render.h"
 #include "Function/Render_Function/render_system.h"
 #include "Core/Memory/s_memory.h"
-
+#include "Core/Math/stre_math.h"
+#include "Function/Render_Function/render_functor.h"
 //创建pass
 
-s_memory_allocater_register pass_allocater("pass_allocater");
+extern function_command<dx_function> dx_pass_command;
+
+extern function_command<dx_function> dx_shader_resource_command;
+
 
 s_pass* pass_factory::create_pass()
 {
-	auto pass_allocater = memory_allocater_group["pass_allocater"];
-
-	///return pass_allocater->allocate<s_pass>();
-	return new s_pass();
+	auto instance = new s_pass();
+	generate_unique_identifier<s_pass>(instance->uid);
+	return instance;
 }
 
 void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
@@ -136,11 +139,6 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 			UINT rt_number = 0;
 			for (auto it : in_out_pass->gpu_rt_texture_ptr)
 			{
-				if (it.second->shader_resource_type == GPU_SR_TYPE::SHADER_RESOURCE_TYPE_RENDER_TARGET)
-				{
-					rt_number = 1;
-					break;
-				}
 				if (it.second->shader_resource_type == GPU_SR_TYPE::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP)
 				{
 					rt_number = it.second->element_count;
@@ -165,14 +163,23 @@ void pass_factory::add_mesh(
 	const cpu_mesh*  in_mesh)
 {
 	s_pass::gpu_mesh_resource g_mesh;
+	if(in_mesh->vertex_ptr)
 	g_mesh.vertex = in_mesh->vertex_ptr->gpu_sr_ptr;
+
+	if (in_mesh->index_ptr)
 	g_mesh.index = in_mesh->index_ptr->gpu_sr_ptr;
 
+	if (in_mesh->object_constant_ptr)
 	g_mesh.gpu_mesh_resource_ptr[in_mesh->object_constant_ptr->uid.name] = (in_mesh->object_constant_ptr->gpu_sr_ptr);
+	if (in_mesh->material_ptr)
 	g_mesh.gpu_mesh_resource_ptr[in_mesh->material_ptr->uid.name] = (in_mesh->material_ptr->gpu_sr_ptr);
-	for (auto it : in_mesh->texture_ptr)
+	
+	if (!in_mesh->texture_ptr.empty())
 	{
-		g_mesh.gpu_mesh_resource_ptr[it.second->uid.name] = (it.second->gpu_sr_ptr);
+		for (auto it : in_mesh->texture_ptr)
+		{
+			g_mesh.gpu_mesh_resource_ptr[it.second->uid.name] = (it.second->gpu_sr_ptr);
+		}
 	}
 	//装填子mesh
 	UINT index_offset = 0;

@@ -7,6 +7,11 @@
 #include "render_system.h"
 #include "Core/Render_Core/directx_render.h"
 #include "Core/Memory/s_memory.h"
+#include "render_functor.h"
+
+function_command<dx_function> dx_pass_command;
+
+function_command<dx_function> dx_shader_resource_command;
 
 
 template<>
@@ -17,7 +22,7 @@ s_render_system* render_factory::create_render_system<s_directx_render>()
 
 
 template<typename t_render>
-void render_system<t_render>::draw_pass(const s_pass* in_pass)
+void render_system<t_render>::draw_pass(s_pass* in_pass)
 {
 	renderer->draw_pass(in_pass);
 }
@@ -86,6 +91,15 @@ void render_system<directx_render>::init(HINSTANCE in_instance, UINT in_width, U
 	renderer->init(render_window->get_hwnd(), in_width, in_height);
 }
 
+
+void render_system<directx_render>::execute_command()
+{
+	renderer->excute_command_list();
+
+	renderer->switch_swap_chain();
+
+	renderer->reset_command_allocator();
+}
 
 
 

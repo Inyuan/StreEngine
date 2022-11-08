@@ -31,5 +31,14 @@ s_sence_manager* resource_manager_factory::create_sence_manager()
 	return new sence_manager();
 } 
 
+s_custom_manager<cpu_vertex>* resource_manager_factory::create_vertex_manager()
+{
+	return new custom_manager<cpu_vertex>;
+}
+
+s_custom_manager<cpu_index>* resource_manager_factory::create_index_manager()
+{
+	return new custom_manager<cpu_index>;
+}
 
 
