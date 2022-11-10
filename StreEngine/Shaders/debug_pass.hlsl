@@ -23,7 +23,7 @@ vs_out  VS(vs_in vIn)
 float4 PS(vs_out pIn) : SV_TARGET
 {
 
-    float4 rescolor = float4(1,0,0,0);
+    float4 rescolor = float4(pIn.texcoord,0,0);
 
     return rescolor;
 }

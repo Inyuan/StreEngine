@@ -161,7 +161,7 @@ void directx_render::create_pso(
 
 		CD3DX12_RASTERIZER_DESC RastDesc(D3D12_DEFAULT);
 		RastDesc.CullMode = D3D12_CULL_MODE_NONE;
-
+		RastDesc.DepthClipEnable = false;
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC PsoDesc;
 		ZeroMemory(&PsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 		PsoDesc.InputLayout = { pass->input_layout.data(), (UINT)pass->input_layout.size() };
@@ -169,6 +169,7 @@ void directx_render::create_pso(
 		PsoDesc.RasterizerState = RastDesc;
 		PsoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 		PsoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+		PsoDesc.DepthStencilState.DepthEnable = false;
 		PsoDesc.SampleMask = UINT_MAX;
 		PsoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		PsoDesc.SampleDesc.Count = MSAAX4_STATE ? 4 : 1;

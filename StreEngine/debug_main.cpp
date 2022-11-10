@@ -6,7 +6,6 @@ void set_screen_vertex_index(cpu_mesh * in_cpu_mesh);
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
 {
-
 	//Debug
 	wchar_t* path = new wchar_t[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, path);
@@ -102,7 +101,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 		render_system_instance->update_gpu_memory();
 
 		render_system_instance->draw_pass(debug_pass);
-
 
 		//Ö´ÐÐäÖÈ¾
 		render_system_instance->execute_command();
