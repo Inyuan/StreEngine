@@ -133,8 +133,8 @@ template<
 {
 	s_uid uid;
 
-	std::vector < t_light*> light_ptr;
-	std::vector < t_camera*> camera_ptr;
+	std::vector < t_light*> light_group;
+	std::vector < t_camera*> camera_group;
 	t_sence_constant* sence_constant;
 };
 

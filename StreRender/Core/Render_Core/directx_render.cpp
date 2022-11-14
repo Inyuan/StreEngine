@@ -74,9 +74,7 @@ void directx_render::create_rootsignature(
 
 void directx_render::create_pso(
 	shader_layout in_shader_layout,
-	gpu_pass* in_gpu_pass,
-	UINT in_rt_number,
-	bool is_translate)
+	gpu_pass* in_gpu_pass)
 {
 	typedef shader_layout::SHADER_TYPE SHADER_TYPE;
 	typedef shader_layout::shader_input::INPUT_ELEMENT_SIZE INPUT_ELEMENT_SIZE;
@@ -154,14 +152,15 @@ void directx_render::create_pso(
 	}
 
 	{
-
+		//TODO TRANSLATE & DEPTH
 		auto pass = static_cast<directx_pass*>(in_gpu_pass);
 
-		auto rt_number = in_rt_number;
+		auto rt_number = in_gpu_pass->rt_number;
 
 		CD3DX12_RASTERIZER_DESC RastDesc(D3D12_DEFAULT);
 		RastDesc.CullMode = D3D12_CULL_MODE_NONE;
-		RastDesc.DepthClipEnable = false;
+		RastDesc.DepthClipEnable = in_gpu_pass->is_depth_check;//???
+
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC PsoDesc;
 		ZeroMemory(&PsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 		PsoDesc.InputLayout = { pass->input_layout.data(), (UINT)pass->input_layout.size() };
@@ -169,7 +168,8 @@ void directx_render::create_pso(
 		PsoDesc.RasterizerState = RastDesc;
 		PsoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 		PsoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-		PsoDesc.DepthStencilState.DepthEnable = false;
+		PsoDesc.DepthStencilState.DepthEnable = in_gpu_pass->is_depth_check;//???
+
 		PsoDesc.SampleMask = UINT_MAX;
 		PsoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		PsoDesc.SampleDesc.Count = MSAAX4_STATE ? 4 : 1;

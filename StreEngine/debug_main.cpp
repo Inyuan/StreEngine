@@ -43,8 +43,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
 	auto debug_mesh = mesh_manager_instance->create_resource();
 
-	auto vertex_manager_instance = res_m_fy.create_vertex_manager();
-	auto index_manager_instance = res_m_fy.create_index_manager();
+	auto vertex_manager_instance = res_m_fy.create_manager<cpu_vertex>();
+	auto index_manager_instance = res_m_fy.create_manager<cpu_index>();
 
 	debug_mesh->vertex_ptr = vertex_manager_instance->create_resource(4);
 	debug_mesh->index_ptr = index_manager_instance->create_resource(6);
@@ -92,8 +92,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
 	pass_factory_instance.dx_allocate_gpu_pass(debug_pass);
 
-
-	//Ö´ĞĞäÖÈ¾
+	//Ë¢ĞÂ
 	render_system_instance->update_gpu_memory();
 
 	while (1)

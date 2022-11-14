@@ -46,9 +46,7 @@ public:
 
 	virtual void create_pso(
 		shader_layout in_shader_layout,
-		gpu_pass* in_gpu_pass,
-		UINT in_rt_number,
-		bool is_translate = false) = 0;
+		gpu_pass* in_gpu_pass) = 0;
 
 
 	/// <summary>

@@ -130,7 +130,7 @@ public:
 
 	virtual void update_gpu(cpu_sence* in_cpu_data) = 0;
 
-	//virtual void dx_allocate_gpu_resource(cpu_mesh* in_cpu_data) = 0;
+	virtual void dx_allocate_gpu_resource(cpu_sence* in_cpu_data) = 0;
 };
 
 /// <summary>
@@ -141,12 +141,22 @@ class DLL_GRAPHICS_API resource_manager_factory
 public:
 	template<typename t_cpu_res_type>
 	s_custom_manager<t_cpu_res_type>* create_manager();
+	
+	//需要显示定义模板，否则不会编译到库中
+	template<>
+	s_custom_manager<cpu_vertex>* create_manager();
 
+	template<>
+	s_custom_manager<cpu_index>* create_manager();
+
+	template<>
+	s_custom_manager<cpu_camera>* create_manager();
+
+	template<>
+	s_custom_manager<cpu_light>* create_manager();
+
+	//有特殊函数的就要独立编写
 	s_material_manager* create_material_manager();
-
-	s_custom_manager<cpu_vertex>* create_vertex_manager();
-
-	s_custom_manager<cpu_index>* create_index_manager();
 
 	s_texture_manager* create_texture_manager();
 

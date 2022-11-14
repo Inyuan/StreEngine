@@ -145,11 +145,13 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 				}
 			}
 
+			in_out_pass->gpu_pass_ptr->is_translate = in_out_pass->is_translate;
+			in_out_pass->gpu_pass_ptr->is_depth_check = in_out_pass->is_depth_check;
+			in_out_pass->gpu_pass_ptr->is_output = in_out_pass->is_output;
+			in_out_pass->gpu_pass_ptr->rt_number = rt_number;
 			in_render->create_pso(
 				in_out_pass->gpu_shader_layout,
-				in_out_pass->gpu_pass_ptr,
-				rt_number,
-				false);
+				in_out_pass->gpu_pass_ptr);
 		}
 
 	};

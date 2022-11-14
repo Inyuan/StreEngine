@@ -210,5 +210,6 @@ public:
 
 	virtual void update_gpu(cpu_sence* in_cpu_data) override;
 
+	virtual void dx_allocate_gpu_resource(cpu_sence* in_cpu_data) override;
 };
 

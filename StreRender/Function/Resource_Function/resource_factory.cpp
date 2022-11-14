@@ -31,14 +31,23 @@ s_sence_manager* resource_manager_factory::create_sence_manager()
 	return new sence_manager();
 } 
 
-s_custom_manager<cpu_vertex>* resource_manager_factory::create_vertex_manager()
+template<>
+s_custom_manager<cpu_vertex>* resource_manager_factory::create_manager<cpu_vertex>()
 {
 	return new custom_manager<cpu_vertex>;
 }
 
-s_custom_manager<cpu_index>* resource_manager_factory::create_index_manager()
+template<>
+s_custom_manager<cpu_index>* resource_manager_factory::create_manager<cpu_index>()
 {
 	return new custom_manager<cpu_index>;
 }
+
+template<>
+s_custom_manager<cpu_camera>* resource_manager_factory::create_manager<cpu_camera>()
+{
+	return new custom_manager<cpu_camera>;
+}
+
 
 
