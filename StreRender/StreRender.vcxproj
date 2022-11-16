@@ -170,7 +170,13 @@
 copy $(TargetPath) ..\StreEngine 
 copy stre_render.h ..\StreEngine\Rendering 
 copy libfbxsdk.dll ..\StreEngine 
-copy include ..\StreEngine\Rendering\include </Command>
+copy include ..\StreEngine\Rendering\include 
+
+copy $(TargetPath)\..\StreRender.lib ..\StreEditor\Rendering\lib 
+copy $(TargetPath) ..\StreEditor
+copy stre_render.h ..\StreEditor\Rendering 
+copy libfbxsdk.dll ..\StreEditor
+copy include ..\StreEditor\Rendering\include </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

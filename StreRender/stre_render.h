@@ -118,7 +118,7 @@ public:
 };
 
 /// <summary>
-/// 默认场景控制器
+/// 默认场景控制器  可以拆散，作为自定义资源输入pass
 /// </summary>
 /// <returns></returns>
 struct s_sence_manager
@@ -186,36 +186,36 @@ public:
 	void dx_allocate_gpu_pass(s_pass* in_out_pass);
 	//??? 差刷新pass函数
 
-	void add_mesh(
+	bool add_mesh(
 		s_pass* in_out_pass,
 		const cpu_mesh* in_mesh);
 
 	//cpu_resource
 	template<class t_cpu_resource>
-	void add_shader_resource(
+	bool add_shader_resource(
 		s_pass* in_out_pass,
 		const t_cpu_resource* in_gpu_sr);
 
-	void add_render_target(
+	bool add_render_target(
 		s_pass* in_out_pass,
 		const cpu_texture* in_gpu_rt);
 
-	void remove_mesh(
+	bool remove_mesh(
 		s_pass* in_out_pass,
 		const cpu_mesh* in_mesh);
 
 	template<class t_cpu_resource>
-	void remove_shader_resource(
+	bool remove_shader_resource(
 		s_pass* in_out_pass,
 		const t_cpu_resource* in_gpu_sr);
 
 
-	void remove_render_target(
+	bool remove_render_target(
 		s_pass* in_out_pass,
 		const cpu_texture* in_gpu_rt);
 
 
-	void set_shader_layout(
+	bool set_shader_layout(
 		s_pass* in_out_pass,
 		const shader_layout in_shade_layout);
 };

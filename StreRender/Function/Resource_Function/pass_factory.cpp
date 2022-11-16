@@ -160,7 +160,7 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 }
 
 
-void pass_factory::add_mesh(
+bool pass_factory::add_mesh(
 	s_pass* in_out_pass, 
 	const cpu_mesh*  in_mesh)
 {
@@ -196,80 +196,64 @@ void pass_factory::add_mesh(
 	}
 
 	in_out_pass->gpu_mesh[in_mesh->uid.name] = g_mesh;
-
-
-	//可以喊别的线程做
-	//auto labdma = [in_out_pass, in_mesh](
-	//	s_pass* in_out_pass,
-	//	const cpu_mesh* in_mesh)
-	//{
-		//s_pass::mesh_resource g_mesh;
-		//g_mesh.gpu_vertex_layout.vertex = in_mesh->vertex_ptr->gpu_sr_ptr;
-		//g_mesh.gpu_vertex_layout.index = in_mesh->index_ptr->gpu_sr_ptr;
-		//g_mesh.gpu_mesh_resource_ptr[in_mesh->object_constant_ptr->uid.name] = (in_mesh->object_constant_ptr->gpu_sr_ptr);
-		//g_mesh.gpu_mesh_resource_ptr[in_mesh->material_ptr->uid.name] = (in_mesh->material_ptr->gpu_sr_ptr);
-		//for (int i = 0; i < in_mesh->texture_ptr.size(); i++)
-		//{
-		//	g_mesh.gpu_mesh_resource_ptr[in_mesh->texture_ptr[i]->uid.name] = (in_mesh->texture_ptr[i]->gpu_sr_ptr);
-		//}
-		//in_out_pass->gpu_mesh[in_mesh->uid.name] = g_mesh;
-		//...
-	//};
-	//render_command<t_render>::command_queue.push(labdma);
+	return true;
 }
 
 template<class t_cpu_resource>
-void pass_factory::add_shader_resource(
+bool pass_factory::add_shader_resource(
 	s_pass* in_out_pass,
 	const t_cpu_resource* in_sr)
 {
-	in_out_pass->gpu_pass_resource_ptr[in_sr->uid.name] = in_sr->gpu_sr_ptr;
-
-	//可以喊别的线程做
-	//auto labdma = [
-	//	in_out_pass, 
-	//		in_sr->uid,
-	//		in_sr->gpu_sr_ptr](
-	//	s_pass* in_out_pass,
-	//	const s_uid in_uid,
-	//	const gpu_shader_resource* in_gpu_sr)
+	//限制条件
+	//if (in_gpu_rt->gpu_sr_ptr->shader_resource_type != )
 	//{
-	// 		//...
-	//};
-	//render_command<t_render>::command_queue.push(labdma);
+	//	return false;
+	//}
+
+	in_out_pass->gpu_pass_resource_ptr[in_sr->uid.name] = in_sr->gpu_sr_ptr;
+	return true;
 }
 
-void pass_factory::add_render_target(
+bool pass_factory::add_render_target(
 	s_pass* in_out_pass,
 	const cpu_texture* in_gpu_rt)
 {
+	if (in_gpu_rt->gpu_sr_ptr->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP
+		&& in_gpu_rt->gpu_sr_ptr->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP)
+	{
+		return false;
+	}
 	in_out_pass->gpu_rt_texture_ptr[in_gpu_rt->uid.name] = in_gpu_rt->gpu_sr_ptr;
+	return true;
 }
 
-void pass_factory::remove_mesh(
+bool pass_factory::remove_mesh(
 	s_pass* in_out_pass,
 	const cpu_mesh* in_mesh)
 {
 	in_out_pass->gpu_mesh.erase(in_mesh->uid.name);
+	return true;
 }
 template<class t_cpu_resource>
-void pass_factory::remove_shader_resource(
+bool pass_factory::remove_shader_resource(
 	s_pass* in_out_pass,
 	const t_cpu_resource* in_sr)
 {
 	in_out_pass->gpu_pass_resource_ptr.erase(in_sr->uid.name);
 }
 
-void pass_factory::remove_render_target(
+bool pass_factory::remove_render_target(
 	s_pass* in_out_pass,
 	const cpu_texture* in_gpu_rt)
 {
 	in_out_pass->gpu_rt_texture_ptr.erase(in_gpu_rt->uid.name);
+	return true;
 }
 
-void pass_factory::set_shader_layout(
+bool pass_factory::set_shader_layout(
 	s_pass* in_out_pass,
 	const shader_layout in_shade_layout)
 {
 	in_out_pass->gpu_shader_layout = in_shade_layout;
+	return true;
 }

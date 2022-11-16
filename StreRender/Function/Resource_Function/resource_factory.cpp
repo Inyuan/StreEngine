@@ -49,5 +49,11 @@ s_custom_manager<cpu_camera>* resource_manager_factory::create_manager<cpu_camer
 	return new custom_manager<cpu_camera>;
 }
 
+template<>
+s_custom_manager<cpu_light>* resource_manager_factory::create_manager<cpu_light>()
+{
+	return new custom_manager<cpu_light>;
+}
+
 
 
