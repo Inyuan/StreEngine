@@ -7,6 +7,12 @@ public:
 	virtual void execute() override;
 };
 
+class s_create_texture_group_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+
 class s_create_mesh_command : public s_command
 {
 public:
@@ -25,10 +31,20 @@ public:
 	virtual void execute() override;
 };
 
-class s_create_shader_commd : public s_command
+class s_create_shader_command : public s_command
 {
 public:
 	virtual void execute() override;
 };
 
+class s_package_texture_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
 
+class s_draw_command : public s_command
+{
+public:
+	virtual void execute() override;
+};

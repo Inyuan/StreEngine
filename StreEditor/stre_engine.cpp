@@ -4,14 +4,15 @@
 void set_screen_vertex_index(cpu_mesh* in_cpu_mesh);
 
 void stre_engine::render_system_init(
-	HINSTANCE in_instance, 
+	HWND in_HWND,
 	UINT in_width, 
 	UINT in_height)
 {
 	render_system_instance = render_factory().create_render_system<s_directx_render>();
-	render_system_instance->init(in_instance, in_width, in_height);
+	render_system_instance->init_in_HWND(in_HWND, in_width, in_height);
 }
 
+//多线程的这个位置要等
 void stre_engine::update_gpu_memory()
 {
 	render_system_instance->update_gpu_memory();
@@ -27,7 +28,11 @@ void stre_engine::execute_command()
 	render_system_instance->execute_command();
 }
 
-
+bool stre_engine::allocate_pass(s_pass* in_out_pass)
+{
+	pass_fy->dx_allocate_gpu_pass(in_out_pass);
+	return true;
+}
 
 
 
@@ -57,28 +62,31 @@ cpu_mesh* stre_engine::create_viewport_mesh()
 s_pass* stre_engine::create_pass()
 {
 	auto pass_ptr = pass_fy->create_pass();
-
 	return pass_ptr;
 }
 
 
 bool stre_engine::pass_add_render_target(s_pass* in_out_pass, cpu_texture* in_texture)
 {
+	update_gpu_memory();//多线程的这个位置要等
 	return pass_fy->add_render_target(in_out_pass, in_texture);
 }
 
 bool stre_engine::pass_add_mesh(s_pass* in_out_pass, cpu_mesh* in_mesh)
 {
+	update_gpu_memory();//多线程的这个位置要等
 	return pass_fy->add_mesh(in_out_pass, in_mesh);
 }
 
 bool stre_engine::pass_set_shader_layout(s_pass* in_out_pass, shader_layout& in_shader_layout)
 {
+	update_gpu_memory();//多线程的这个位置要等
 	return pass_fy->set_shader_layout(in_out_pass, in_shader_layout);
 }
 
 void stre_engine::package_textures(std::vector<cpu_texture*> in_textures, cpu_texture* in_out_package_container)
 {
+	update_gpu_memory();//多线程的这个位置要等
 	texture_manager->package_textures(in_textures,in_out_package_container);
 }
 

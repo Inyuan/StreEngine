@@ -67,7 +67,7 @@ protected:
 
 public:
 
-	void render_system_init(HINSTANCE in_instance, UINT in_width, UINT in_height);
+	void render_system_init(HWND in_HWND, UINT in_width, UINT in_height);
 
 	void update_gpu_memory();
 
@@ -91,7 +91,7 @@ public:
 
 	void package_textures(std::vector<cpu_texture*> in_textures, cpu_texture* in_out_package_container);
 
-
+	bool allocate_pass(s_pass* in_out_pass);
 
 
 	//È±·¦ÊÍ·Å»òÉ¾³ýº¯Êý

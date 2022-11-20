@@ -791,18 +791,35 @@ void directx_render::set_render_target(
 	if (output_rt_size > 0)
 	{
 
-
-		dx_command_list->OMSetRenderTargets(output_rt_size,
-			&rtv_descs,
-			true,
-			&dsv_desc);
+		if (*depth_stencil_ptr)
+		{
+			dx_command_list->OMSetRenderTargets(output_rt_size,
+				&rtv_descs,
+				true,
+				&dsv_desc);
+		}
+		else
+		{
+			dx_command_list->OMSetRenderTargets(0,
+				nullptr,
+				true,
+				nullptr);
+		}
 	}
 	else if(output_ds_size > 0)
 	{
+		if (*depth_stencil_ptr)
 		dx_command_list->OMSetRenderTargets(0,
 			nullptr,
 			true,
 			&dsv_desc);
+		else
+		{
+			dx_command_list->OMSetRenderTargets(0,
+				nullptr,
+				true,
+				nullptr);
+		}
 	}
 }
 

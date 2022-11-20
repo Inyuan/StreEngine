@@ -36,7 +36,9 @@ public:
 	virtual void execute_command() override;
 
 private:
-	virtual void init(HINSTANCE in_instance, UINT in_width, UINT in_height) override;
+	virtual void init_in_HWND(HWND in_HWND, UINT in_width, UINT in_height) override;
+
+	virtual void init_new_window(HINSTANCE in_instance, UINT in_width, UINT in_height) override;
 
 	virtual void over() override  {};
 };
