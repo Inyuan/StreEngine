@@ -248,7 +248,7 @@ void directx_render::create_pso(
 /// </summary>
 /// <param name="in_shader_res_type"></param>
 /// <returns></returns>
-gpu_shader_resource* directx_render::allocate_shader_resource(gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type)
+std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type)
 {
 	//auto gpu_shader_res_allocater = memory_allocater_group["gpu_shader_res_allocater"];
 	switch (in_shader_res_type)
@@ -256,15 +256,14 @@ gpu_shader_resource* directx_render::allocate_shader_resource(gpu_shader_resourc
 		//结构体 CBV
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
 	{
-		directx_frame_resource* frame_res = new directx_frame_resource();
+		std::shared_ptr<directx_frame_resource> frame_res(new directx_frame_resource());
 		frame_res->shader_resource_type = in_shader_res_type;
 		for (int i = 0; i < FRAME_BUFFER_COUNT; i++)
 		{
-			frame_res->frame_resource_group[i] = new directx_sr_custom_buffer();
-			directx_sr_custom_buffer* gpu_ptr = (directx_sr_custom_buffer*)(frame_res->frame_resource_group[i]);
+			frame_res->frame_resource_group[i] = std::make_shared<directx_sr_custom_buffer>();
 			//分配空间时才提供CSV描述符
 		}
-		return frame_res;
+		return std::dynamic_pointer_cast<gpu_shader_resource>(frame_res);
 	}
 	break;
 
@@ -272,25 +271,24 @@ gpu_shader_resource* directx_render::allocate_shader_resource(gpu_shader_resourc
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH:
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP:
 	{
-		directx_frame_resource* frame_res = new directx_frame_resource();
+		std::shared_ptr<directx_frame_resource> frame_res( new directx_frame_resource());
 		frame_res->shader_resource_type = in_shader_res_type;
 		for (int i = 0; i < FRAME_BUFFER_COUNT; i++)
 		{
-			frame_res->frame_resource_group[i] = new directx_sr_custom_buffer_group();
-			directx_sr_custom_buffer_group* gpu_ptr = (directx_sr_custom_buffer_group*)(frame_res->frame_resource_group[i]);
+			frame_res->frame_resource_group[i] = std::make_shared <directx_sr_custom_buffer_group>();
 			//分配空间时才提供CSV描述符
 		}
-		return frame_res;
+		return std::dynamic_pointer_cast<gpu_shader_resource>(frame_res);;
 	}
 	break;
 
 	//贴图 SRV
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE:
 	{
-		directx_texture_resource* texture_res = new directx_texture_resource();
+		std::shared_ptr<directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
-		texture_res->resource = new directx_sr_texture();
-		directx_sr_texture* gpu_ptr = (directx_sr_texture*)(texture_res->resource);
+		texture_res->resource = std::make_shared <directx_sr_texture>();
+		std::shared_ptr<directx_sr_texture> gpu_ptr = std::static_pointer_cast<directx_sr_texture>(texture_res->resource);
 
 		//不应该让外面控制精度吗？？？
 		gpu_ptr->dx_format = back_buffer_format;
@@ -300,26 +298,26 @@ gpu_shader_resource* directx_render::allocate_shader_resource(gpu_shader_resourc
 			DIRECTX_RESOURCE_DESC_TYPE::DX_SRV,
 			gpu_ptr);
 
-		return texture_res;
+		return std::dynamic_pointer_cast<gpu_shader_resource>(texture_res);
 	}
 	break;
-	//堆 TABLE
+	//贴图堆
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
 	{
-		directx_texture_resource* texture_res = new directx_texture_resource();
+		std::shared_ptr < directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
-		texture_res->resource = new directx_sr_texture_group();
-		directx_sr_texture_group* gpu_ptr = (directx_sr_texture_group*)(texture_res->resource);
-		return texture_res;
+		texture_res->resource = std::make_shared<directx_sr_texture_group>();
+
+		return std::dynamic_pointer_cast<gpu_shader_resource>(texture_res);
 	}
 	break;
 	//RT
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET:
 	{
-		directx_texture_resource* texture_res = new directx_texture_resource();
+		std::shared_ptr < directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
-		texture_res->resource = new directx_sr_render_target();
-		directx_sr_render_target* gpu_ptr = (directx_sr_render_target*)(texture_res->resource);
+		texture_res->resource = std::make_shared<directx_sr_render_target>();
+		std::shared_ptr < directx_sr_render_target> gpu_ptr = std::static_pointer_cast<directx_sr_render_target>(texture_res->resource);
 
 		gpu_ptr->dx_format = back_buffer_format;
 		create_gpu_texture(gpu_ptr, in_shader_res_type);
@@ -331,25 +329,27 @@ gpu_shader_resource* directx_render::allocate_shader_resource(gpu_shader_resourc
 		create_descriptor(
 			DIRECTX_RESOURCE_DESC_TYPE::DX_RTV,
 			gpu_ptr);
-		return texture_res;
+
+		return std::dynamic_pointer_cast<gpu_shader_resource>(texture_res);
 	}
 	break;
+	//RT堆
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP:
 	{
-		directx_texture_resource* texture_res = new directx_texture_resource();
+		std::shared_ptr<directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
-		texture_res->resource = new directx_sr_render_target_group();
-		directx_sr_render_target_group* gpu_ptr = (directx_sr_render_target_group*)(texture_res->resource);
-		return texture_res;
+		texture_res->resource = std::make_shared<directx_sr_render_target_group>();
+
+		return std::dynamic_pointer_cast<gpu_shader_resource>(texture_res);
 	}
 	break;
 	//Depth
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL:
 	{
-		directx_texture_resource* texture_res = new directx_texture_resource();
+		std::shared_ptr < directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
-		texture_res->resource = new directx_sr_depth_stencil();
-		directx_sr_depth_stencil* gpu_ptr = (directx_sr_depth_stencil*)(texture_res->resource);
+		texture_res->resource = std::make_shared <directx_sr_depth_stencil>();
+		std::shared_ptr < directx_sr_depth_stencil> gpu_ptr = std::static_pointer_cast<directx_sr_depth_stencil>(texture_res->resource);
 
 		gpu_ptr->dx_format = depth_stencil_format;
 		create_gpu_texture(gpu_ptr, in_shader_res_type);
@@ -361,16 +361,16 @@ gpu_shader_resource* directx_render::allocate_shader_resource(gpu_shader_resourc
 		create_descriptor(
 			DIRECTX_RESOURCE_DESC_TYPE::DX_DSV,
 			gpu_ptr);
-		return texture_res;
+		return std::dynamic_pointer_cast<gpu_shader_resource>(texture_res);
 	}
+	//Depth堆
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP:
 	{
-		directx_texture_resource* texture_res = new directx_texture_resource();
+		std::shared_ptr < directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
-		texture_res->resource = new directx_sr_depth_stencil_group();
-		directx_sr_depth_stencil_group* gpu_ptr = (directx_sr_depth_stencil_group*)(texture_res->resource);
+		texture_res->resource = std::make_shared<directx_sr_depth_stencil_group>();
 
-		return texture_res;
+		return std::dynamic_pointer_cast<gpu_shader_resource>(texture_res);
 	}
 	break;
 	}
@@ -378,16 +378,16 @@ gpu_shader_resource* directx_render::allocate_shader_resource(gpu_shader_resourc
 }
 
 void directx_render::allocate_default_resource(
-	gpu_shader_resource* in_res,
+	std::shared_ptr<gpu_shader_resource> in_res,
 	UINT in_elem_size,
 	UINT in_number,
 	void* in_cpu_data)
 {
-	directx_frame_resource* frame_res = static_cast<directx_frame_resource*>(in_res);
+	std::shared_ptr<directx_frame_resource> frame_res = std::static_pointer_cast<directx_frame_resource>(in_res);
 
 	for (int i = 0; i < FRAME_BUFFER_COUNT; i++)
 	{
-		auto in_res_elem = static_cast<directx_shader_resource*>(frame_res->frame_resource_group[i]);
+		auto in_res_elem = std::static_pointer_cast<directx_shader_resource>(frame_res->frame_resource_group[i]);
 		UINT memory_size = in_elem_size * in_number;
 		frame_res->element_size = in_elem_size;
 		frame_res->element_count = in_number;
@@ -452,16 +452,16 @@ void directx_render::allocate_default_resource(
 
 //只有自定义能用
 void directx_render::allocate_upload_resource(
-	gpu_shader_resource* in_res,
+	std::shared_ptr<gpu_shader_resource> in_res,
 	UINT in_elem_size,
 	UINT in_number)
 {
-	directx_frame_resource* frame_res = static_cast<directx_frame_resource*>(in_res);
+	std::shared_ptr < directx_frame_resource> frame_res = std::static_pointer_cast<directx_frame_resource>(in_res);
 
 	for (int i = 0; i < FRAME_BUFFER_COUNT; i++)
 	{
 
-		auto in_res_elem = static_cast<directx_sr_custom_buffer*>(frame_res->frame_resource_group[i]);
+		auto in_res_elem = std::static_pointer_cast<directx_sr_custom_buffer>(frame_res->frame_resource_group[i]);
 		UINT memory_size = in_elem_size * in_number;
 		frame_res->element_size = in_elem_size;
 		frame_res->element_count = in_number;
@@ -494,7 +494,7 @@ void directx_render::allocate_upload_resource(
 /// <param name="in_update_element_index">刷新元素起始位置</param>
 /// <param name="int_update_element_count">刷新元素个数</param>
 void directx_render::update_gpu_resource(
-	gpu_shader_resource* in_out_gpu_res,
+	std::shared_ptr<gpu_shader_resource> in_out_gpu_res,
 	const void* in_data, 
 	UINT in_update_element_index,
 	size_t int_update_element_count)
@@ -506,7 +506,7 @@ void directx_render::update_gpu_resource(
 	{
 		return;
 	}
-		directx_frame_resource* frame_res = static_cast<directx_frame_resource*>(in_out_gpu_res);
+	std::shared_ptr<directx_frame_resource> frame_res = std::static_pointer_cast<directx_frame_resource>(in_out_gpu_res);
 
 	//要将所有帧资源刷新
 	//先刷新不是current_frame，最后刷新current_frame位置
@@ -529,7 +529,7 @@ void directx_render::update_gpu_resource(
 		update_frame_res->fence = current_fence;
 
 		//刷新...
-		directx_sr_custom_buffer* gpu_res = static_cast<directx_sr_custom_buffer*>(update_frame_res);
+		auto gpu_res = std::static_pointer_cast<directx_sr_custom_buffer>(update_frame_res);
 
 		memcpy(&(gpu_res->mapped_data[in_update_element_index]), in_data, in_out_gpu_res->element_size * int_update_element_count);
 
@@ -540,17 +540,17 @@ void directx_render::update_gpu_resource(
 
 //注意 渲染目标 和 贴图 深度图等的匹配
 void directx_render::package_textures(
-	std::vector<gpu_shader_resource*>& in_texture_group, 
-	gpu_shader_resource* in_out_table)
+	std::vector<std::shared_ptr<gpu_shader_resource>>& in_texture_group,
+	std::shared_ptr<gpu_shader_resource> in_out_table)
 {
 
-	directx_texture_resource* texture_res = static_cast<directx_texture_resource*>(in_out_table);
+	auto texture_res = std::static_pointer_cast<directx_texture_resource>(in_out_table);
 	
 	switch (in_out_table->shader_resource_type)
 	{
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
 	{
-		auto gpu_table = static_cast<directx_sr_texture_group*>(texture_res->resource);
+		auto gpu_table = std::static_pointer_cast<directx_sr_texture_group>(texture_res->resource);
 		if (gpu_table->srv_heap)
 		{
 			gpu_table->srv_heap->Release();
@@ -567,9 +567,9 @@ void directx_render::package_textures(
 
 		for (int i = 0; i < in_texture_group.size(); i++)
 		{
-			const directx_texture_resource* each_res = static_cast< const directx_texture_resource*>(in_texture_group[i]);
+			const directx_texture_resource* each_res = static_cast< const directx_texture_resource*>(in_texture_group[i].get());
 
-			auto gpu_texture = static_cast<const directx_sr_texture*>(each_res->resource);
+			auto gpu_texture = static_cast<const directx_sr_texture*>(each_res->resource.get());
 
 			load_descriptor_into_heap(
 				DIRECTX_RESOURCE_DESC_TYPE::DX_SRV, // ???
@@ -584,7 +584,7 @@ void directx_render::package_textures(
 	break;
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP:
 	{
-		auto gpu_table = static_cast<directx_sr_render_target_group*>(texture_res->resource);
+		auto gpu_table = std::static_pointer_cast<directx_sr_render_target_group>(texture_res->resource);
 		if (gpu_table->rtv_heap)
 		{
 			gpu_table->rtv_heap->Release();
@@ -601,11 +601,11 @@ void directx_render::package_textures(
 		gpu_table->rt_number = in_texture_group.size();
 		for (int i = 0; i < in_texture_group.size(); i++)
 		{
-			directx_texture_resource* each_res = static_cast<directx_texture_resource*>(in_texture_group[i]);
+			auto each_res = std::static_pointer_cast<directx_texture_resource>(in_texture_group[i]);
 			
-			gpu_table->rt_group.push_back(static_cast<directx_shader_resource*>(each_res->resource));
+			gpu_table->rt_group.push_back(std::static_pointer_cast<directx_shader_resource>(each_res->resource));
 
-			auto gpu_texture = static_cast<const directx_sr_render_target*>(each_res->resource);
+			auto gpu_texture = static_cast<const directx_sr_render_target*>(each_res->resource.get());
 
 			load_descriptor_into_heap(
 				DIRECTX_RESOURCE_DESC_TYPE::DX_RTV,
@@ -620,7 +620,7 @@ void directx_render::package_textures(
 	break;
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP:
 	{
-		auto gpu_table = static_cast<directx_sr_depth_stencil_group*>(texture_res->resource);
+		auto gpu_table = std::static_pointer_cast<directx_sr_depth_stencil_group>(texture_res->resource);
 		if (gpu_table->dsv_heap)
 		{
 			gpu_table->dsv_heap->Release();
@@ -637,9 +637,9 @@ void directx_render::package_textures(
 		//！！！！！！一般只有一张！！！！！！
 		for (int i = 0; i < in_texture_group.size(); i++)
 		{
-			directx_texture_resource* each_res = static_cast<directx_texture_resource*>(in_texture_group[i]);
-			gpu_table->ds_ptr = static_cast<directx_shader_resource*>(each_res->resource);
-			auto gpu_texture = static_cast<const directx_sr_depth_stencil*>(each_res->resource);
+			auto each_res = std::static_pointer_cast<directx_texture_resource>(in_texture_group[i]);
+			gpu_table->ds_ptr = std::static_pointer_cast<directx_shader_resource>(each_res->resource);
+			auto gpu_texture = static_cast<const directx_sr_depth_stencil*>(each_res->resource.get());
 
 			load_descriptor_into_heap(
 				DIRECTX_RESOURCE_DESC_TYPE::DX_DSV,
@@ -685,10 +685,10 @@ void directx_render::draw_pass(s_pass* in_pass)
 
 	load_resource(in_pass->gpu_pass_resource_ptr);
 
-	directx_sr_render_target_group* render_targets_ptr = nullptr;
-	directx_sr_depth_stencil_group* depth_stencil_ptr = nullptr;
+	std::shared_ptr<directx_sr_render_target_group> render_targets_ptr = nullptr;
+	std::shared_ptr < directx_sr_depth_stencil_group> depth_stencil_ptr = nullptr;
 
-	set_render_target(in_pass->gpu_rt_texture_ptr, in_pass->is_output, &render_targets_ptr, &depth_stencil_ptr);
+	set_render_target(in_pass->gpu_rt_texture_ptr, in_pass->is_output, render_targets_ptr, depth_stencil_ptr);
 
 	for (auto gpu_mesh : in_pass->gpu_mesh)
 	{
@@ -715,10 +715,10 @@ void directx_render::draw_pass(s_pass* in_pass)
 }
 
 void directx_render::set_render_target(
-	const std::map <std::string, gpu_shader_resource*>& in_gpu_res_group,
+	const std::map <std::string, std::shared_ptr < gpu_shader_resource>>& in_gpu_res_group,
 	bool is_final_output,
-	directx_sr_render_target_group** render_targets_ptr,
-	directx_sr_depth_stencil_group** depth_stencil_ptr)
+	std::shared_ptr < directx_sr_render_target_group>& render_targets_ptr,
+	std::shared_ptr < directx_sr_depth_stencil_group>& depth_stencil_ptr)
 {
 	for (auto gpu_res : in_gpu_res_group)
 	{
@@ -732,8 +732,8 @@ void directx_render::set_render_target(
 			//	//已经有渲染目标了！
 			//}
 
-			directx_texture_resource* texture_res = static_cast<directx_texture_resource*>(gpu_res.second);
-			*render_targets_ptr = static_cast<directx_sr_render_target_group*>(texture_res->resource);
+			std::shared_ptr<directx_texture_resource> texture_res = std::static_pointer_cast<directx_texture_resource>(gpu_res.second);
+			render_targets_ptr = std::static_pointer_cast<directx_sr_render_target_group>(texture_res->resource);
 
 		}
 		break;
@@ -741,8 +741,8 @@ void directx_render::set_render_target(
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP:
 		{
 
-			directx_texture_resource* texture_res = static_cast<directx_texture_resource*>(gpu_res.second);
-			*depth_stencil_ptr = static_cast<directx_sr_depth_stencil_group*>(texture_res->resource);
+			std::shared_ptr<directx_texture_resource> texture_res = std::static_pointer_cast<directx_texture_resource>(gpu_res.second);
+			depth_stencil_ptr = std::static_pointer_cast<directx_sr_depth_stencil_group>(texture_res->resource);
 
 			break;
 		}
@@ -750,17 +750,17 @@ void directx_render::set_render_target(
 	}
 	if (is_final_output)
 	{
-		*render_targets_ptr = static_cast<directx_sr_render_target_group*>(&swap_chain_buffer_heap[current_back_buffer]);
+		render_targets_ptr = std::static_pointer_cast<directx_sr_render_target_group>(swap_chain_buffer_heap[current_back_buffer]);
 	}
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtv_descs;
 	D3D12_CPU_DESCRIPTOR_HANDLE dsv_desc;
 	UINT output_rt_size = 0;
 	UINT output_ds_size = 0;
-	if (*render_targets_ptr)
+	if (render_targets_ptr.get())
 	{
-		rtv_descs = (*render_targets_ptr)->rtv_heap.Get()->GetCPUDescriptorHandleForHeapStart();
-		output_rt_size = (*render_targets_ptr)->rt_number;
+		rtv_descs = render_targets_ptr->rtv_heap.Get()->GetCPUDescriptorHandleForHeapStart();
+		output_rt_size = render_targets_ptr->rt_number;
 
 		auto handle_c = CD3DX12_CPU_DESCRIPTOR_HANDLE(
 			rtv_descs,
@@ -770,7 +770,7 @@ void directx_render::set_render_target(
 
 		int i = 0;
 		//转换RT状态
-		for (auto it : (*render_targets_ptr)->rt_group)
+		for (auto it : render_targets_ptr->rt_group)
 		{
 			float clearValue[] = { 0.0f, 0.0f, 1.0f, 0.0f };
 			dx_command_list->ClearRenderTargetView(handle_c, clearValue,0,nullptr);
@@ -780,18 +780,18 @@ void directx_render::set_render_target(
 			i++;
 		}
 	}
-	if (*depth_stencil_ptr)
+	if (depth_stencil_ptr.get())
 	{
 		output_ds_size = 1;
-		dsv_desc = (*depth_stencil_ptr)->dsv_heap.Get()->GetCPUDescriptorHandleForHeapStart();
+		dsv_desc = depth_stencil_ptr->dsv_heap.Get()->GetCPUDescriptorHandleForHeapStart();
 		//转换DS状态
-		switch_gpu_resource_state((*depth_stencil_ptr)->ds_ptr, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		switch_gpu_resource_state(depth_stencil_ptr->ds_ptr, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	}
 
 	if (output_rt_size > 0)
 	{
 
-		if (*depth_stencil_ptr)
+		if (depth_stencil_ptr.get())
 		{
 			dx_command_list->OMSetRenderTargets(output_rt_size,
 				&rtv_descs,
@@ -808,7 +808,7 @@ void directx_render::set_render_target(
 	}
 	else if(output_ds_size > 0)
 	{
-		if (*depth_stencil_ptr)
+		if (depth_stencil_ptr.get())
 		dx_command_list->OMSetRenderTargets(0,
 			nullptr,
 			true,
@@ -840,7 +840,7 @@ void directx_render::load_resource(
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
 		{
 			const directx_frame_resource* frame_res = static_cast<const directx_frame_resource*>(gpu_res.second);
-			auto* gpu_sr = static_cast<const directx_sr_custom_buffer*>(get_current_frame_resource(frame_res));
+			auto gpu_sr = static_cast<const directx_sr_custom_buffer*>(get_current_frame_resource(frame_res));
 			dx_command_list->
 				SetGraphicsRootConstantBufferView(
 					gpu_res.second->register_index,
@@ -852,7 +852,7 @@ void directx_render::load_resource(
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP:
 		{
 			const directx_frame_resource* frame_res = static_cast<const directx_frame_resource*>(gpu_res.second);
-			auto* gpu_sr = static_cast<const directx_sr_custom_buffer_group*>(get_current_frame_resource(frame_res));
+			auto gpu_sr = static_cast<const directx_sr_custom_buffer_group*>(get_current_frame_resource(frame_res));
 			dx_command_list->
 				SetGraphicsRootShaderResourceView(
 					gpu_res.second->register_index,
@@ -864,7 +864,7 @@ void directx_render::load_resource(
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE:
 		{
 			const directx_texture_resource* texture_res = static_cast<const directx_texture_resource*>(gpu_res.second);
-			auto* gpu_sr = static_cast<const directx_sr_texture*>(texture_res->resource);
+			auto gpu_sr = static_cast<const directx_sr_texture*>(texture_res->resource.get());
 			dx_command_list->
 				SetGraphicsRootShaderResourceView(
 					gpu_res.second->register_index,
@@ -875,7 +875,7 @@ void directx_render::load_resource(
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
 		{
 			const directx_texture_resource* texture_res = static_cast<const directx_texture_resource*>(gpu_res.second);
-			auto* gpu_sr = static_cast<const directx_sr_texture_group*>(texture_res->resource);
+			auto gpu_sr = static_cast<const directx_sr_texture_group*>(texture_res->resource.get());
 			ID3D12DescriptorHeap* descriptorHeaps[] = { gpu_sr->srv_heap.Get() };
 			dx_command_list->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 			dx_command_list->SetGraphicsRootDescriptorTable(gpu_res.second->register_index, gpu_sr->srv_heap->GetGPUDescriptorHandleForHeapStart());
@@ -1024,17 +1024,19 @@ const directx_render::directx_resource* directx_render::get_current_frame_resour
 {
 	const directx_frame_resource* frame_res = static_cast<const directx_render::directx_frame_resource*>(in_gpu_sr);
 	frame_res->frame_resource_group[current_frame]->fence = current_fence;
-	return frame_res->frame_resource_group[current_frame];
+	return frame_res->frame_resource_group[current_frame].get();
 }
 
 //获取当前内存，并刷新栅栏值表示正在被使用
 const directx_render::directx_resource* directx_render::get_current_frame_resource(const directx_frame_resource* in_gpu_sr)
 {
 	in_gpu_sr->frame_resource_group[current_frame]->fence = current_fence;
-	return in_gpu_sr->frame_resource_group[current_frame];
+	return in_gpu_sr->frame_resource_group[current_frame].get();
 }
 
-void directx_render::create_gpu_texture(directx_resource* in_out_gpu_texture, gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type)
+void directx_render::create_gpu_texture(
+	std::shared_ptr<directx_resource> in_out_gpu_texture, 
+	gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type)
 {
 	CD3DX12_RESOURCE_DESC resourceDesc;
 	ZeroMemory(&resourceDesc, sizeof(resourceDesc));
@@ -1051,7 +1053,7 @@ void directx_render::create_gpu_texture(directx_resource* in_out_gpu_texture, gp
 
 	if (in_shader_res_type == gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET)
 	{
-		auto gpu_texture = static_cast<directx_sr_render_target*>(in_out_gpu_texture);
+		auto gpu_texture = std::static_pointer_cast<directx_sr_render_target>(in_out_gpu_texture);
 
 		resourceDesc.Format = gpu_texture->dx_format;
 		resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
@@ -1074,7 +1076,7 @@ void directx_render::create_gpu_texture(directx_resource* in_out_gpu_texture, gp
 	}
 	else if (in_shader_res_type == gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL)
 	{
-		auto gpu_texture = static_cast<directx_sr_depth_stencil*>(in_out_gpu_texture);
+		auto gpu_texture = std::static_pointer_cast<directx_sr_depth_stencil>(in_out_gpu_texture);
 
 		resourceDesc.Format = gpu_texture->dx_format;
 		resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
@@ -1153,7 +1155,7 @@ void directx_render::create_gpu_memory(
 }
 
 void directx_render::switch_gpu_resource_state(
-	directx_shader_resource* in_gpu_res_elem,
+	std::shared_ptr<directx_shader_resource> in_gpu_res_elem,
 	D3D12_RESOURCE_STATES in_new_resource_states)
 {
 	if (in_gpu_res_elem->dx_current_state != in_new_resource_states)
@@ -1190,7 +1192,7 @@ void directx_render::switch_gpu_memory_state(
 /// <param name="in_memory_size">只在CSV有效</param>
 void directx_render::create_descriptor(
 	DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
-	directx_shader_resource* in_gpu_res_elem,
+	std::shared_ptr<directx_shader_resource> in_gpu_res_elem,
 	UINT in_memory_size)
 {
 
@@ -1441,16 +1443,19 @@ void directx_render::init(HWND in_main_wnd, UINT in_width, UINT in_height)
 	{
 		for (int i = 0; i < SWAP_CHAIN_BUFFER_COUNT; i++)
 		{
+			swap_chain_buffer[i] = std::make_shared<directx_sr_render_target>();
+			swap_chain_buffer_heap[i] = std::make_shared<directx_sr_render_target_group>();
+
 			create_descriptor_heap(
-				swap_chain_buffer_heap[i].rtv_heap,
+				swap_chain_buffer_heap[i]->rtv_heap,
 				DIRECTX_RESOURCE_DESC_TYPE::DX_RTV,
 				(UINT)1);
-			CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(swap_chain_buffer_heap[i].rtv_heap->GetCPUDescriptorHandleForHeapStart());
+			CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(swap_chain_buffer_heap[i]->rtv_heap->GetCPUDescriptorHandleForHeapStart());
 			
-			ThrowIfFailed(dx_swap_chain->GetBuffer(i, IID_PPV_ARGS(&swap_chain_buffer[i].dx_resource)));
-			dx_device->CreateRenderTargetView(swap_chain_buffer[i].dx_resource.Get(), nullptr, rtvHeapHandle);
-			swap_chain_buffer_heap[i].rt_group.push_back(&swap_chain_buffer[i]);
-			swap_chain_buffer_heap[i].rt_number = 1;
+			ThrowIfFailed(dx_swap_chain->GetBuffer(i, IID_PPV_ARGS(&swap_chain_buffer[i]->dx_resource)));
+			dx_device->CreateRenderTargetView(swap_chain_buffer[i]->dx_resource.Get(), nullptr, rtvHeapHandle);
+			swap_chain_buffer_heap[i]->rt_group.push_back(swap_chain_buffer[i]);
+			swap_chain_buffer_heap[i]->rt_number = 1;
 		}
 	}
 

@@ -45,14 +45,16 @@ public:
         UINT64 fence = 0;
     };
 
+    //自定义资源 包括顶点 索引 mat 等常刷新的数据，以多帧资源形式存在
     struct directx_frame_resource : public gpu_shader_resource
     {
-        directx_resource* frame_resource_group[FRAME_BUFFER_COUNT];
+        std::shared_ptr<directx_resource> frame_resource_group[FRAME_BUFFER_COUNT];
     };
 
+    //贴图类型数据，单图 多图 ，只有一份的存在
     struct directx_texture_resource : public gpu_shader_resource
     {
-        directx_resource* resource;
+        std::shared_ptr <directx_resource> resource;
     };
 
     struct directx_shader_resource : public directx_resource
@@ -74,6 +76,7 @@ public:
 
     struct directx_sr_custom_buffer : public directx_shader_resource
     {
+        //???
         unsigned char* mapped_data = nullptr;
     };
     typedef directx_sr_custom_buffer directx_sr_custom_buffer_group;//srv
@@ -89,7 +92,7 @@ public:
     struct directx_sr_render_target_group : public directx_resource
     {
         //用于刷新状态
-        std::vector<directx_sr_render_target*> rt_group;
+        std::vector< std::shared_ptr<directx_sr_render_target>> rt_group;
         UINT rt_number = 0;
         ComPtr<ID3D12DescriptorHeap> rtv_heap = nullptr;
     };
@@ -97,7 +100,7 @@ public:
     struct directx_sr_depth_stencil_group : public directx_shader_resource
     {
         //用于刷新状态
-        directx_sr_render_target* ds_ptr;
+        std::shared_ptr < directx_sr_render_target> ds_ptr;
         ComPtr<ID3D12DescriptorHeap> dsv_heap = nullptr;
     };
 
@@ -143,8 +146,8 @@ protected:
 
     Microsoft::WRL::ComPtr<IDXGISwapChain> dx_swap_chain;
 
-    directx_sr_render_target swap_chain_buffer[SWAP_CHAIN_BUFFER_COUNT];
-    directx_sr_render_target_group swap_chain_buffer_heap[SWAP_CHAIN_BUFFER_COUNT];
+    std::shared_ptr < directx_sr_render_target> swap_chain_buffer[SWAP_CHAIN_BUFFER_COUNT];
+    std::shared_ptr < directx_sr_render_target_group> swap_chain_buffer_heap[SWAP_CHAIN_BUFFER_COUNT];
     UINT current_back_buffer = 0;
     UINT64 current_fence = 0;
     UINT current_frame = 0;
@@ -156,10 +159,10 @@ private:
     
     
     void set_render_target(
-        const std::map < std::string,gpu_shader_resource*>& in_gpu_res_group,
+        const std::map < std::string, std::shared_ptr<gpu_shader_resource>>& in_gpu_res_group,
         bool is_final_output,
-        directx_sr_render_target_group** render_targets_ptr,
-        directx_sr_depth_stencil_group** depth_stencil_ptr);
+        std::shared_ptr < directx_sr_render_target_group>& render_targets_ptr,
+        std::shared_ptr < directx_sr_depth_stencil_group>& depth_stencil_ptr);
 
     void load_resource(const std::map < std::string, const gpu_shader_resource*>& in_gpu_res_group);
 
@@ -183,29 +186,29 @@ public:
 
     virtual gpu_pass* allocate_pass() override;
 
-    virtual gpu_shader_resource* allocate_shader_resource(
+    virtual std::shared_ptr<gpu_shader_resource> allocate_shader_resource(
         gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type) override;
 
     virtual void update_gpu_resource(
-        gpu_shader_resource* in_out_gpu_res, 
+        std::shared_ptr<gpu_shader_resource> in_out_gpu_res,
         const void* in_data,
         UINT in_update_element_index,
         size_t int_update_element_count) override;
 
     virtual void allocate_upload_resource(
-        gpu_shader_resource* in_res_elem,
+        std::shared_ptr<gpu_shader_resource> in_res_elem,
         UINT in_elem_size,
         UINT in_number) override;
 
     virtual void allocate_default_resource(
-        gpu_shader_resource* in_res_elem,
+        std::shared_ptr<gpu_shader_resource> in_res_elem,
         UINT in_elem_size,
         UINT in_number,
         void* in_cpu_data) override;
 
     virtual void package_textures(
-        std::vector<gpu_shader_resource*>& in_texture_group,
-        gpu_shader_resource* in_out_table) override;
+        std::vector<std::shared_ptr<gpu_shader_resource>>& in_texture_group,
+        std::shared_ptr<gpu_shader_resource> in_out_table) override;
 
     virtual void load_rootparpameter(
         std::vector<CD3DX12_ROOT_PARAMETER> & in_out_root_parameter,
@@ -256,7 +259,7 @@ private:
     const directx_resource* get_current_frame_resource(const directx_frame_resource* in_gpu_sr);
 
     //构建RT 和DS
-    void create_gpu_texture(directx_resource* in_out_gpu_texture,
+    void create_gpu_texture(std::shared_ptr < directx_resource> in_out_gpu_texture,
         gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type);
 
 
@@ -291,7 +294,7 @@ private:
 
     void create_descriptor(
         DIRECTX_RESOURCE_DESC_TYPE in_texture_desc_type,
-        directx_shader_resource* in_gpu_res_elem,
+        std::shared_ptr < directx_shader_resource> in_gpu_res_elem,
         UINT in_memory_size = 0);
 
     void create_rootsignature(
@@ -309,7 +312,7 @@ private:
         ComPtr<ID3D12PipelineState>& in_pso);
     
     void switch_gpu_resource_state(
-        directx_shader_resource* in_gpu_res_elem,
+        std::shared_ptr < directx_shader_resource> in_gpu_res_elem,
         D3D12_RESOURCE_STATES in_new_resource_states);
 
     void screen_vertexs_and_indexes_input();

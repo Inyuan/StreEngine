@@ -2,6 +2,7 @@
 #include "base_type.h"
 #include <vector>
 #include <string>
+#include <memory>
 #include <map>
 //多线程开锁最小单位
 
@@ -150,5 +151,5 @@ public:
 	//SRV资源组 buffer texture
 	std::map < std::string, const gpu_shader_resource*> gpu_pass_resource_ptr;
 	//输出资源 
-	std::map < std::string,gpu_shader_resource*> gpu_rt_texture_ptr;
+	std::map < std::string, std::shared_ptr<gpu_shader_resource>> gpu_rt_texture_ptr;
 };

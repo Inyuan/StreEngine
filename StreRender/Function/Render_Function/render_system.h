@@ -20,6 +20,8 @@ protected:
 	render_system& operator=(const render_system&) {};
 	~render_system()
 	{
+		delete(render_window);
+		delete(renderer);
 		over();
 	};
 protected:

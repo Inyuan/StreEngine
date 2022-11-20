@@ -39,7 +39,7 @@ struct custom_manager :public s_custom_manager<t_cpu_res_type>
 
 		dx_function sr_functor = [in_cpu_data](s_directx_render* in_render)
 		{
-			gpu_shader_resource* sr_ptr = in_cpu_data->gpu_sr_ptr;
+			std::shared_ptr<gpu_shader_resource> sr_ptr = in_cpu_data->gpu_sr_ptr;
 
 			in_render->update_gpu_resource(sr_ptr, in_cpu_data->get_data(), 0, sr_ptr->element_count);
 		};
@@ -167,7 +167,7 @@ public:
 
 		dx_function sr_functor = [in_texture_group, in_out_table](s_directx_render* in_render)
 		{
-			std::vector<gpu_shader_resource*> package_group;
+			std::vector<std::shared_ptr<gpu_shader_resource>> package_group;
 
 			for (auto it : in_texture_group)
 			{

@@ -166,21 +166,21 @@ bool pass_factory::add_mesh(
 {
 	s_pass::gpu_mesh_resource g_mesh;
 	if(in_mesh->vertex_ptr)
-	g_mesh.vertex = in_mesh->vertex_ptr->gpu_sr_ptr;
+	g_mesh.vertex = in_mesh->vertex_ptr->gpu_sr_ptr.get();
 
 	if (in_mesh->index_ptr)
-	g_mesh.index = in_mesh->index_ptr->gpu_sr_ptr;
+	g_mesh.index = in_mesh->index_ptr->gpu_sr_ptr.get();
 
 	if (in_mesh->object_constant_ptr)
-	g_mesh.gpu_mesh_resource_ptr[in_mesh->object_constant_ptr->uid.name] = (in_mesh->object_constant_ptr->gpu_sr_ptr);
+	g_mesh.gpu_mesh_resource_ptr[in_mesh->object_constant_ptr->uid.name] = (in_mesh->object_constant_ptr->gpu_sr_ptr.get());
 	if (in_mesh->material_ptr)
-	g_mesh.gpu_mesh_resource_ptr[in_mesh->material_ptr->uid.name] = (in_mesh->material_ptr->gpu_sr_ptr);
+	g_mesh.gpu_mesh_resource_ptr[in_mesh->material_ptr->uid.name] = (in_mesh->material_ptr->gpu_sr_ptr.get());
 	
 	if (!in_mesh->texture_ptr.empty())
 	{
 		for (auto it : in_mesh->texture_ptr)
 		{
-			g_mesh.gpu_mesh_resource_ptr[it.second->uid.name] = (it.second->gpu_sr_ptr);
+			g_mesh.gpu_mesh_resource_ptr[it.second->uid.name] = (it.second->gpu_sr_ptr.get());
 		}
 	}
 	//×°Ìî×Ómesh

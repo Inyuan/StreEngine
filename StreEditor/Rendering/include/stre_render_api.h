@@ -18,23 +18,23 @@ class s_directx_render
 public:
 	virtual gpu_pass* allocate_pass() = 0;
 
-	virtual gpu_shader_resource* allocate_shader_resource(
+	virtual std::shared_ptr<gpu_shader_resource> allocate_shader_resource(
 		gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type) = 0;
 
 	virtual void allocate_upload_resource(
-		gpu_shader_resource* in_res_elem,
+		std::shared_ptr<gpu_shader_resource> in_res_elem,
 		UINT in_elem_size,
 		UINT in_number) = 0;
 
 	virtual void allocate_default_resource(
-		gpu_shader_resource* in_res_elem,
+		std::shared_ptr<gpu_shader_resource> in_res_elem,
 		UINT in_elem_size,
 		UINT in_number,
 		void* in_cpu_data) = 0;
 
 	virtual void package_textures(
-		std::vector<gpu_shader_resource*>& in_texture_group,
-		gpu_shader_resource* in_out_table) = 0;
+		std::vector<std::shared_ptr<gpu_shader_resource>>& in_texture_group,
+		std::shared_ptr<gpu_shader_resource> in_out_table) = 0;
 
 	virtual void load_rootparpameter(
 		std::vector<CD3DX12_ROOT_PARAMETER>& in_out_root_parameter,
@@ -58,7 +58,7 @@ public:
 	/// <param name="in_update_element_index">刷新元素起始位置</param>
 	/// <param name="int_update_element_count">刷新元素个数</param>
 	virtual void update_gpu_resource(
-		gpu_shader_resource* in_out_gpu_res,
+		std::shared_ptr<gpu_shader_resource> in_out_gpu_res,
 		const void* in_data,
 		UINT in_update_element_index,
 		size_t int_update_element_count) = 0;

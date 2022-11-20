@@ -14,7 +14,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	//¹¹½¨äÖÈ¾Æ÷
 	auto render_system_instance = render_factory().create_render_system<s_directx_render>();
 
-	render_system_instance->init(hInstance,800,600);
+	render_system_instance->init_new_window(hInstance,800,600);
 	
 	resource_manager_factory res_m_fy;
 
