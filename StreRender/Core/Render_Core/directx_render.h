@@ -131,6 +131,11 @@ public:
         ComPtr<ID3D12PipelineState> pso;
 
         std::vector<D3D12_INPUT_ELEMENT_DESC> input_layout;
+
+        virtual ~directx_pass() 
+        {
+
+        }
     };
 
 protected:

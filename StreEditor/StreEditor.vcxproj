@@ -66,6 +66,11 @@
       <AdditionalLibraryDirectories>G:\project\StreEngine\StreEditor\Rendering\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>StreRender.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy Shaders $(TargetPath)\..\Shaders
+copy StreRender.dll $(TargetPath)\..
+copy libfbxsdk.dll $(TargetPath)\..</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
     <ClCompile>

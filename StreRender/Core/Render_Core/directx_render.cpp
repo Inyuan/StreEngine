@@ -17,14 +17,8 @@
 ************************************************************
 */
 
-
-s_memory_allocater_register gpu_pass_allocater("gpu_pass_allocater");
-
 gpu_pass* directx_render::allocate_pass()
 {
-	auto pass_allocater = memory_allocater_group["gpu_pass_allocater"];
-
-	//return pass_allocater->allocate<directx_render::directx_pass>();
 	return new directx_render::directx_pass();
 }
 
@@ -801,7 +795,7 @@ void directx_render::set_render_target(
 		else
 		{
 			dx_command_list->OMSetRenderTargets(0,
-				nullptr,
+				&rtv_descs,
 				true,
 				nullptr);
 		}

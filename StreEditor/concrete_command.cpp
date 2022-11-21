@@ -13,7 +13,7 @@ void s_create_texture_command::execute()
 	//构建实例
 	//DEBUG
 	gpu_shader_resource::SHADER_RESOURCE_TYPE debug;
-	debug = gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET;
+	debug = gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL;
 	auto texture_ptr = stre_engine::get_instance()->create_texture(debug);
 
 	//DEBUG
@@ -25,7 +25,7 @@ void s_create_texture_command::execute()
 void s_create_texture_group_command::execute()
 {
 	//构建实例
-	auto t_group = stre_engine::get_instance()->create_texture(gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP);
+	auto t_group = stre_engine::get_instance()->create_texture(gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP);
 
 
 	//构造蓝图组件
@@ -76,6 +76,7 @@ void s_create_pass_command::execute()
 	auto pass_ptr = stre_engine::get_instance()->create_pass();
 	pass_ptr->is_output = true;
 	pass_ptr->is_depth_check = false;
+	pass_ptr->is_translate = false;
 	//构造蓝图组件
 	//!!！应该是树状指针!!!执行有优先次序
 	pipeline_window_widget_ptr->
@@ -168,6 +169,8 @@ void s_connect_resource_command::execute()
 			s_pass* p_ptr = reinterpret_cast<s_pass*>(connect_port2.ptr);
 
 			connect_success = stre_engine::get_instance()->pass_set_shader_layout(p_ptr, *s_ptr);
+
+			stre_engine::get_instance()->allocate_pass(p_ptr);
 		}
 		break;
 		}
@@ -198,9 +201,9 @@ void s_connect_resource_command::execute()
 
 	if (connect_success)
 	{
-		QPoint start;
+		QPoint start = QPoint(0,0);
 		
-		QPoint end;
+		QPoint end = QPoint(0, 0);
 
 		start = select_connect_port[0]->mapToGlobal(QPoint(0, 0));
 		start = pipeline_window_widget_ptr->mapFromGlobal(start);
@@ -215,7 +218,7 @@ void s_connect_resource_command::execute()
 
 		pipeline_window_widget_ptr
 			->connect_curve_group.push_back(
-				connect_data(
+				new connect_data(
 					select_connect_port[0],
 					select_connect_port[1],
 					curve_ptr));
@@ -232,30 +235,17 @@ void s_package_texture_command::execute()
 
 void s_draw_command::execute()
 {
-	//DEBUG
-	static int debug_count = 0;
-	if (debug_count <= 1)
+
+	//!!！应该是树状指针
+
+	auto pass_group = pipeline_window_widget_ptr->pass_comp_group;
+	for (int i = 0; i < pass_group.size(); i++)
 	{
+		stre_engine::get_instance()->update_gpu_memory();
 
-		//!!！应该是树状指针
-
-		auto pass_group = pipeline_window_widget_ptr->pass_comp_group;
-		for (int i = 0; i < pass_group.size(); i++)
-		{
-			stre_engine::get_instance()->allocate_pass(pass_group[i]->pass_instance);
-			
-			stre_engine::get_instance()->update_gpu_memory();
-			
-			stre_engine::get_instance()->draw_pass(pass_group[i]->pass_instance);
+		stre_engine::get_instance()->draw_pass(pass_group[i]->pass_instance);
 		
-			
-		}
-		stre_engine::get_instance()->execute_command();
-
-
-		debug_count++;
 	}
-
-
+	stre_engine::get_instance()->execute_command();
 
 }

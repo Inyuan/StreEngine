@@ -20,6 +20,10 @@ void stre_engine::update_gpu_memory()
 
 void stre_engine::draw_pass(s_pass* in_pass)
 {
+	if (!in_pass->gpu_pass_ptr)
+	{
+		return;
+	}
 	render_system_instance->draw_pass(in_pass);
 }
 

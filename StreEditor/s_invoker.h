@@ -37,6 +37,14 @@ struct connect_data
 		port1(in_port1),
 		port2(in_port2),
 		curve(in_curve) {};
+
+	~connect_data()
+	{
+		if (curve) delete(curve);
+		curve = nullptr;
+		port1 = nullptr;
+		port2 = nullptr;
+	}
 };
 
 class pipeline_window_invoker : public QWidget
@@ -47,15 +55,30 @@ public:
 	vector<mesh_component_invoker*> mesh_comp_group;
 	vector<shader_component_invoker*> shader_comp_group;
 
-	vector<connect_data> connect_curve_group;
+	vector<connect_data*> connect_curve_group;
 
 public:
-	pipeline_window_invoker(QWidget* in_parent,
-		s_command* in_create_pass_cmd,
-		s_command* in_create_texture_group_cmd,
-		s_command* in_create_mesh_cmd,
-		s_command* in_create_shader_cmd);
+	pipeline_window_invoker(QWidget* in_parentd);
 	
+	~pipeline_window_invoker()
+	{
+		//QT会自己释放子组件， 无需在析构中手动释放子组件
+		for (auto it : connect_curve_group)
+		{
+			if (it) delete(it);
+			it = nullptr;
+		}
+
+		if (create_pass_cmd) delete(create_pass_cmd);
+		if (create_texture_group_cmd) delete(create_texture_group_cmd);
+		if (create_mesh_cmd) delete(create_mesh_cmd);
+		if (create_shader_cmd) delete(create_shader_cmd);
+
+		create_pass_cmd = nullptr;
+		create_texture_group_cmd = nullptr;
+		create_mesh_cmd = nullptr;
+		create_shader_cmd = nullptr;
+	}
 
 protected:
 	pipeline_window_invoker() {};
@@ -91,6 +114,14 @@ public:
 		QWidget* in_parent,
 		s_pass* in_pass_ptr);
 
+	~pass_component_invoker()
+	{
+		//QT会自己释放子组件， 无需在析构中手动释放子组件
+		if (pass_instance) delete(pass_instance);
+		pass_instance = nullptr;
+	}
+
+
 	s_pass* pass_instance = nullptr;
 
 protected:
@@ -110,6 +141,14 @@ class mesh_component_invoker : public component_invoker
 public:
 	mesh_component_invoker(QWidget* in_parent,
 		cpu_mesh* in_mesh_ptr);
+
+	~mesh_component_invoker()
+	{
+		//QT会自己释放子组件， 无需在析构中手动释放子组件
+		if (mesh_instance) delete(mesh_instance);
+		mesh_instance = nullptr;
+	}
+
 protected:
 	mesh_component_invoker() = delete;
 
@@ -124,6 +163,12 @@ class texture_element_invoker : public QWidget
 public:
 	texture_element_invoker(cpu_texture* in_texture_ptr,int in_height,QWidget* in_parent);
 
+	~texture_element_invoker()
+	{
+		//QT会自己释放子组件， 无需在析构中手动释放子组件
+		if (texture_instance) delete(texture_instance);
+		texture_instance = nullptr;
+	}
 
 	cpu_texture* texture_instance = nullptr;
 protected:
@@ -146,6 +191,18 @@ public:
 
 	void add_element(cpu_texture* in_texture_ptr);
 
+	~texture_component_invoker()
+	{
+		//QT会自己释放子组件， 无需在析构中手动释放子组件
+		if (texture_instance) delete(texture_instance);
+		texture_instance = nullptr;
+
+		if (create_texture_cmd) delete(create_texture_cmd);
+		create_texture_cmd = nullptr;
+	}
+
+public:
+
 	vector<texture_element_invoker*> textures_group;
 	cpu_texture* texture_instance = nullptr;
 protected:
@@ -154,15 +211,10 @@ protected:
 
 	texture_component_invoker() = delete;
 
-	
-
 	connect_port* input_port = nullptr;
 	connect_port* output_port = nullptr;
 
-
-	
 	QMenu* right_click_menu = nullptr;
-	
 	QPushButton* add_texture_button = nullptr;
 	
 	s_command* create_texture_cmd = nullptr;
@@ -172,6 +224,13 @@ class shader_component_invoker : public component_invoker
 {
 public:
 	shader_component_invoker(QWidget* in_parent, const shader_layout& in_shader_layout);
+
+	~shader_component_invoker()
+	{
+		//QT会自己释放子组件，无需在析构中手动释放子组件
+
+	}
+
 protected:
 	shader_component_invoker() = delete;
 	connect_port* output_port = nullptr;
@@ -216,6 +275,12 @@ struct port_information
 		port_type(in_port_type),
 		ptr(in_ptr),
 		port_index(in_port_index) {};
+
+	~port_information()
+	{
+
+	}
+
 };
 
 class connect_port : public QRadioButton
@@ -225,7 +290,12 @@ public:
 	connect_port(QWidget* in_parent, 
 		port_information in_port_inf);
 
-	curve_tool* curve_ptr = nullptr;
+	~connect_port()
+	{
+		if (connect_res_cmd) delete(connect_res_cmd);
+		connect_res_cmd = nullptr;
+	}
+
 protected:
 	s_command* connect_res_cmd = nullptr;
 
@@ -268,7 +338,13 @@ private:
 class view_port_invoker : public QWidget
 {
 public:
-	view_port_invoker(QWidget* in_parent,s_command* in_draw_cmd);
+	view_port_invoker(QWidget* in_parent);
+
+	~view_port_invoker()
+	{
+		if(draw_cmd) delete(draw_cmd);
+		draw_cmd = nullptr;
+	}
 
 private:
 	virtual void paintEvent(QPaintEvent*);

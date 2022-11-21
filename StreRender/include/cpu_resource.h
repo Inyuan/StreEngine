@@ -91,6 +91,14 @@ struct cpu_resource
 	cpu_resource(bool in_can_update = false) : can_update(in_can_update) {}
 
 	std::shared_ptr<gpu_shader_resource> gpu_sr_ptr;
+	
+	~cpu_resource()
+	{
+		if(data)free(data);
+		data = nullptr;
+	}
+	
+	
 	//定义类型
 
 	//??? 需要提供运算符重载 比如[]

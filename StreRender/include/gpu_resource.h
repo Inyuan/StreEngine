@@ -53,6 +53,11 @@ struct gpu_pass
 	bool is_translate = false;
 	bool is_depth_check = false;
 	UINT rt_number = 0;
+
+	virtual ~gpu_pass()
+	{
+
+	}
 };
 
 /// <summary>
@@ -152,4 +157,10 @@ public:
 	std::map < std::string, const gpu_shader_resource*> gpu_pass_resource_ptr;
 	//Êä³ö×ÊÔ´ 
 	std::map < std::string, std::shared_ptr<gpu_shader_resource>> gpu_rt_texture_ptr;
+
+	~s_pass()
+	{
+		if (gpu_pass_ptr)delete(gpu_pass_ptr);
+		gpu_pass_ptr = nullptr;
+	}
 };

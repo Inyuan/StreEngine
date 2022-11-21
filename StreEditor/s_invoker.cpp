@@ -12,16 +12,14 @@
 pipeline_window_invoker* pipeline_window_widget_ptr = nullptr;
 
 pipeline_window_invoker::pipeline_window_invoker(
-	QWidget* in_parent,
-	s_command* in_create_pass_cmd,
-	s_command* in_create_texture_group_cmd,
-	s_command* in_create_mesh_cmd,
-	s_command* in_create_shader_cmd): QWidget(in_parent),
-	create_pass_cmd(in_create_pass_cmd),
-	create_texture_group_cmd(in_create_texture_group_cmd),
-	create_mesh_cmd(in_create_mesh_cmd),
-	create_shader_cmd(in_create_shader_cmd)
+	QWidget* in_parent): QWidget(in_parent)
+
 {
+	create_pass_cmd = new s_create_pass_command();
+	create_texture_group_cmd = new s_create_texture_group_command();
+	create_mesh_cmd = new s_create_mesh_command();
+	create_shader_cmd = new s_create_shader_command();
+	
 	pipeline_window_widget_ptr = this;
 	right_click_menu = new QMenu(in_parent);
 
@@ -78,7 +76,7 @@ void pipeline_window_invoker::paintEvent(QPaintEvent*)
 
 		for (int i = 0; i < connect_curve_group.size(); i++)
 		{
-			p.drawPath(connect_curve_group[i].curve->get_curve());
+			p.drawPath(connect_curve_group[i]->curve->get_curve());
 		}
 	}
 
@@ -487,12 +485,10 @@ void curve_tool::update()
 *
 *********************************************/
 
-view_port_invoker::view_port_invoker(
-	QWidget* in_parent,
-	s_command* in_draw_cmd):
-	draw_cmd(in_draw_cmd),
-	QWidget(in_parent)
+view_port_invoker::view_port_invoker(QWidget* in_parent):QWidget(in_parent)
 {
+	draw_cmd = new s_draw_command();
+
 	setObjectName("rendering_view_widget");
 	setGeometry(QRect(570, 10, 341, 281));
 }

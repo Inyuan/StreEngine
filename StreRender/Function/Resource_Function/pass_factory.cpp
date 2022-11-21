@@ -27,6 +27,8 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 	dx_function pass_functor = [in_out_pass](s_directx_render* in_render)
 	{
 
+		in_out_pass->gpu_pass_ptr = in_render->allocate_pass();
+
 			//????
 			const CD3DX12_STATIC_SAMPLER_DESC pointWrap(
 				0, // shaderRegister
@@ -96,7 +98,7 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 
 		//根签名
 		{
-			in_out_pass->gpu_pass_ptr = in_render->allocate_pass();
+			
 			//...把已有的release
 			{
 				UINT input_cb_number = 0;
