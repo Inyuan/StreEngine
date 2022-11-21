@@ -1,11 +1,15 @@
 #pragma once
 #include "s_command.h"
 
+//具体命令
+
+//创建贴图
 class s_create_texture_command : public s_command
 {
 public:
 	virtual void execute() override;
 };
+
 
 class s_create_texture_group_command : public s_command
 {
@@ -13,6 +17,7 @@ public:
 	virtual void execute() override;
 };
 
+//创建物体
 class s_create_mesh_command : public s_command
 {
 public:

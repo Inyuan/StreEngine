@@ -1,5 +1,6 @@
 #include "stre_engine.h"
 
+//用库的功能再封装成功能函数
 
 void set_screen_vertex_index(cpu_mesh* in_cpu_mesh);
 

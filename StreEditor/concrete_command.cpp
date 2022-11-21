@@ -8,6 +8,7 @@ extern int pipeline_w_mouse_position_y;
 extern pipeline_window_invoker* pipeline_window_widget_ptr;
 extern texture_component_invoker* current_texture_component_ptr;
 
+//创建贴图 组件
 void s_create_texture_command::execute()
 {
 	//构建实例
@@ -33,10 +34,13 @@ void s_create_texture_group_command::execute()
 	pipeline_window_widget_ptr->texture_comp_group.back()->show();
 }
 
+//创建物体 创建CPU资源 + 组件本体
 void s_create_mesh_command::execute()
 {
+
 	//构建实例
 	auto mesh_ptr = stre_engine::get_instance()->create_viewport_mesh();
+
 
 	//构造蓝图组件
 	pipeline_window_widget_ptr->mesh_comp_group.push_back(new mesh_component_invoker(pipeline_window_widget_ptr, mesh_ptr));

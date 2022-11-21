@@ -26,6 +26,7 @@
 #define FRAME_BUFFER_COUNT SWAP_CHAIN_BUFFER_COUNT
 
 using Microsoft::WRL::ComPtr;
+// WRL
 
 enum DIRECTX_RESOURCE_DESC_TYPE
 {
@@ -67,6 +68,7 @@ public:
         D3D12_UNORDERED_ACCESS_VIEW_DESC dx_uav;
         D3D12_RESOURCE_STATES dx_current_state = D3D12_RESOURCE_STATE_GENERIC_READ;
         DXGI_FORMAT dx_format;
+
     };
 
 
