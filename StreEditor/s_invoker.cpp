@@ -178,7 +178,32 @@ mesh_component_invoker::mesh_component_invoker(
 *
 *********************************************/
 
+//全局映射表
+//s_pass uid ->pass_component 
+std::map<std::string, pass_component_invoker*> pass_component_map;
+
+
+
 //TODO 编译着色器暴露资源接口
+
+void pass_component_invoker::update_res_port(vector<connect_port*>& in_res_port_group)
+{
+	//删除原有的槽
+	for (auto it : input_res_port_group)
+	{
+		it->deleteLater();
+	}
+	int height = 10;
+	//加入新的槽
+	for (auto it : in_res_port_group)
+	{
+		it->setText(it->objectName());
+		it->setGeometry(QRect(10, height, 150, 20));
+		it->show();
+		input_res_port_group.push_back(it);
+		height += 20;
+	}
+}
 
 pass_component_invoker::pass_component_invoker(
 	QWidget* in_parent,
@@ -186,7 +211,8 @@ pass_component_invoker::pass_component_invoker(
 	component_invoker(in_parent),
 	pass_instance(in_pass_ptr)
 {
-	//
+	//添加进映射表
+	pass_component_map[in_pass_ptr->uid.name] = this;
 
 	//构建组件
 	setObjectName("pass_component");

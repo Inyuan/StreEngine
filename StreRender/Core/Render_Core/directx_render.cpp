@@ -22,16 +22,16 @@ gpu_pass* directx_render::allocate_pass()
 	return new directx_render::directx_pass();
 }
 
-void directx_render::load_rootparpameter(
+void load_rootparpameter(
 	std::vector<CD3DX12_ROOT_PARAMETER>& in_out_root_parameter, 
-	const gpu_shader_resource* in_gpu_sr)
+	const gpu_pass::pass_resource& in_pass_res)
 {
-	switch (in_gpu_sr->shader_resource_type)
+	switch (in_pass_res.type)
 	{
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
 	{
 		CD3DX12_ROOT_PARAMETER r_p;
-		r_p.InitAsConstantBufferView(in_gpu_sr->register_index);
+		r_p.InitAsConstantBufferView(in_pass_res.bind_point);
 		in_out_root_parameter.push_back(r_p);
 	}
 		break;
@@ -39,14 +39,14 @@ void directx_render::load_rootparpameter(
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE:
 	{
 		CD3DX12_ROOT_PARAMETER r_p;
-		r_p.InitAsShaderResourceView(in_gpu_sr->register_index);
+		r_p.InitAsShaderResourceView(in_pass_res.bind_point);
 		in_out_root_parameter.push_back(r_p);
 	}
 		break;
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
 	{
 		CD3DX12_DESCRIPTOR_RANGE texTable;
-		texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, in_gpu_sr->element_count, in_gpu_sr->register_index);
+		texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, /*in_gpu_sr->element_count*/ 20, in_pass_res.bind_point);
 		CD3DX12_ROOT_PARAMETER texture_rp;
 		texture_rp.InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 		in_out_root_parameter.push_back(texture_rp);
@@ -57,93 +57,103 @@ void directx_render::load_rootparpameter(
 	}
 }
 
-void directx_render::create_rootsignature(
-	CD3DX12_ROOT_SIGNATURE_DESC& in_rootsig_desc,
-	gpu_pass* in_gpu_pass)
+void directx_render::create_rootsignature(gpu_pass* in_gpu_pass)
 {
+	//DEBUG
+
+			//????
+	const CD3DX12_STATIC_SAMPLER_DESC pointWrap(
+		0, // shaderRegister
+		D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW*/
+
+	const CD3DX12_STATIC_SAMPLER_DESC pointClamp(
+		1, // shaderRegister
+		D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+
+	const CD3DX12_STATIC_SAMPLER_DESC linearWrap(
+		2, // shaderRegister
+		D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
+
+	const CD3DX12_STATIC_SAMPLER_DESC linearClamp(
+		3, // shaderRegister
+		D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+
+	const CD3DX12_STATIC_SAMPLER_DESC anisotropicWrap(
+		4, // shaderRegister
+		D3D12_FILTER_ANISOTROPIC, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressW
+		0.0f,                             // mipLODBias
+		8);                               // maxAnisotropy
+
+	const CD3DX12_STATIC_SAMPLER_DESC anisotropicClamp(
+		5, // shaderRegister
+		D3D12_FILTER_ANISOTROPIC, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressW
+		0.0f,                              // mipLODBias
+		8);                                // maxAnisotropy
+
+	const CD3DX12_STATIC_SAMPLER_DESC shadow(
+		6, // shaderRegister
+		D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressW
+		0.0f,                               // mipLODBias
+		16,                                 // maxAnisotropy
+		D3D12_COMPARISON_FUNC_LESS_EQUAL,
+		D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
+
+	std::array<const CD3DX12_STATIC_SAMPLER_DESC, 7Ui64> smaples_group = {
+		pointWrap, pointClamp,
+		linearWrap, linearClamp,
+		anisotropicWrap, anisotropicClamp,
+		shadow
+	};
+
+	//按照
+	UINT input_cb_number = 0;
+	UINT input_texture_number = 0;
+	std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameter;
+
+	//用反射得到的数据自动构建根签名
+	for (auto it : in_gpu_pass->pass_res_group)
+	{
+		load_rootparpameter(slotRootParameter,it);
+	}
+
+	auto staticSamplers = smaples_group;
+
+	CD3DX12_ROOT_SIGNATURE_DESC rootsig_desc((UINT)slotRootParameter.size(), slotRootParameter.data(),
+		(UINT)staticSamplers.size(), staticSamplers.data(),
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
 	create_rootsignature(
-		in_rootsig_desc,
+		rootsig_desc,
 		static_cast<directx_pass*>(in_gpu_pass)->rootsignature);
 }
 
 void directx_render::create_pso(
-	shader_layout in_shader_layout,
+	shader_layout& in_shader_layout,
 	gpu_pass* in_gpu_pass)
 {
 	typedef shader_layout::SHADER_TYPE SHADER_TYPE;
 	typedef shader_layout::shader_input::INPUT_ELEMENT_SIZE INPUT_ELEMENT_SIZE;
-	auto& shader_layout = in_shader_layout;
-	auto pass = static_cast<directx_pass*>(in_gpu_pass);
-
-	if (in_shader_layout.shader_vaild[SHADER_TYPE::VS])
-	{
-		pass->shader_group[std::string(pass->uid.name) + "VS"]
-			= complie_shader(
-				shader_layout.shader_path[SHADER_TYPE::VS],
-				nullptr, "VS", "vs_5_1");
-	}
-	if (in_shader_layout.shader_vaild[SHADER_TYPE::DS])
-	{
-		pass->shader_group[std::string(pass->uid.name) + "DS"]
-			= complie_shader(
-				shader_layout.shader_path[SHADER_TYPE::DS],
-				nullptr, "DS", "ds_5_1");
-	}
-	if (in_shader_layout.shader_vaild[SHADER_TYPE::HS])
-	{
-		pass->shader_group[std::string(pass->uid.name) + "HS"]
-			= complie_shader(
-				shader_layout.shader_path[SHADER_TYPE::HS],
-				nullptr, "HS", "hs_5_1");
-	}
-	if (in_shader_layout.shader_vaild[SHADER_TYPE::GS])
-	{
-		pass->shader_group[std::string(pass->uid.name) + "GS"]
-			= complie_shader(
-				shader_layout.shader_path[SHADER_TYPE::GS],
-				nullptr, "GS", "gs_5_1");
-	}
-	if (in_shader_layout.shader_vaild[SHADER_TYPE::PS])
-	{
-		pass->shader_group[std::string(pass->uid.name) + "PS"]
-			= complie_shader(
-				shader_layout.shader_path[SHADER_TYPE::PS],
-				nullptr, "PS", "ps_5_1");
-	}
-
-	UINT elem_size_offset = 0;
-	for (int i = 0; i < shader_layout.shader_input_group.size();i++)
-	{
-		auto& it = shader_layout.shader_input_group[i];
-		D3D12_INPUT_ELEMENT_DESC input_elem_desc;
-
-		DXGI_FORMAT input_elem_format = DXGI_FORMAT_UNKNOWN;
-		UINT offset = 0;
-		switch (it.size)
-		{
-		case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32:
-			input_elem_format = DXGI_FORMAT_R32_FLOAT;
-			offset = 4;
-			break;
-		case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32:
-			input_elem_format = DXGI_FORMAT_R32G32_FLOAT;
-			offset = 8;
-			break;
-		case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32B32:
-			input_elem_format = DXGI_FORMAT_R32G32B32_FLOAT;
-			offset = 12;
-			break;
-		case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32B32A32:
-			input_elem_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-			offset = 16;
-			break;
-		}
-		input_elem_desc = { it.name.c_str(), 0, input_elem_format, 0, elem_size_offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-
-		pass->input_layout.push_back(input_elem_desc);
-
-		elem_size_offset += offset;
-	}
 
 	{
 		//TODO TRANSLATE & DEPTH
@@ -224,6 +234,95 @@ void directx_render::create_pso(
 			PsoDesc,
 			pass->pso);
 	}
+}
+
+void directx_render::complie_shader(
+	shader_layout& in_shader_layout,
+	gpu_pass* in_gpu_pass)
+{
+	typedef shader_layout::SHADER_TYPE SHADER_TYPE;
+	typedef shader_layout::shader_input::INPUT_ELEMENT_SIZE INPUT_ELEMENT_SIZE;
+	auto& shader_layout = in_shader_layout;
+	auto pass = static_cast<directx_pass*>(in_gpu_pass);
+
+	if (in_shader_layout.shader_vaild[SHADER_TYPE::VS])
+	{
+		pass->shader_group[std::string(pass->uid.name) + "VS"]
+			= complie_shader(
+				shader_layout.shader_path[SHADER_TYPE::VS],
+				nullptr, "VS", "vs_5_1");
+	}
+	if (in_shader_layout.shader_vaild[SHADER_TYPE::DS])
+	{
+		pass->shader_group[std::string(pass->uid.name) + "DS"]
+			= complie_shader(
+				shader_layout.shader_path[SHADER_TYPE::DS],
+				nullptr, "DS", "ds_5_1");
+	}
+	if (in_shader_layout.shader_vaild[SHADER_TYPE::HS])
+	{
+		pass->shader_group[std::string(pass->uid.name) + "HS"]
+			= complie_shader(
+				shader_layout.shader_path[SHADER_TYPE::HS],
+				nullptr, "HS", "hs_5_1");
+	}
+	if (in_shader_layout.shader_vaild[SHADER_TYPE::GS])
+	{
+		pass->shader_group[std::string(pass->uid.name) + "GS"]
+			= complie_shader(
+				shader_layout.shader_path[SHADER_TYPE::GS],
+				nullptr, "GS", "gs_5_1");
+	}
+	if (in_shader_layout.shader_vaild[SHADER_TYPE::PS])
+	{
+		pass->shader_group[std::string(pass->uid.name) + "PS"]
+			= complie_shader(
+				shader_layout.shader_path[SHADER_TYPE::PS],
+				nullptr, "PS", "ps_5_1");
+	}
+
+	UINT elem_size_offset = 0;
+	for (int i = 0; i < shader_layout.shader_input_group.size(); i++)
+	{
+		auto& it = shader_layout.shader_input_group[i];
+		D3D12_INPUT_ELEMENT_DESC input_elem_desc;
+
+		DXGI_FORMAT input_elem_format = DXGI_FORMAT_UNKNOWN;
+		UINT offset = 0;
+		switch (it.size)
+		{
+		case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32:
+			input_elem_format = DXGI_FORMAT_R32_FLOAT;
+			offset = 4;
+			break;
+		case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32:
+			input_elem_format = DXGI_FORMAT_R32G32_FLOAT;
+			offset = 8;
+			break;
+		case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32B32:
+			input_elem_format = DXGI_FORMAT_R32G32B32_FLOAT;
+			offset = 12;
+			break;
+		case INPUT_ELEMENT_SIZE::INPUT_ELEMENT_SIZE_R32G32B32A32:
+			input_elem_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			offset = 16;
+			break;
+		}
+		input_elem_desc = { it.name.c_str(), 0, input_elem_format, 0, elem_size_offset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+
+		pass->input_layout.push_back(input_elem_desc);
+
+		elem_size_offset += offset;
+	}
+
+	
+	//反射获取输入资源
+
+	for (auto it : pass->shader_group)
+	{
+		reflect_shader(it.second, pass->pass_res_group);
+	}
+
 }
 
 /***
@@ -1323,6 +1422,63 @@ ID3DBlob* directx_render::complie_shader(
 	ThrowIfFailed(hr);
 
 	return byteCode;
+}
+
+void directx_render::reflect_shader(
+	ComPtr<ID3DBlob>& in_shader_data, 
+	std::vector<gpu_pass::pass_resource>& out_res_group)
+{
+	typedef gpu_shader_resource::SHADER_RESOURCE_TYPE SHADER_RES_TYPE;
+	//反射生成对应接口
+	ComPtr<ID3D12ShaderReflection> shader_reflector;
+	ThrowIfFailed(
+		D3DReflect(
+			in_shader_data->GetBufferPointer(), 
+			in_shader_data->GetBufferSize(), 
+			IID_ID3D12ShaderReflection, 
+			(void**)shader_reflector.GetAddressOf()));
+
+	D3D12_SHADER_DESC shader_desc;
+	ThrowIfFailed(shader_reflector->GetDesc(&shader_desc));
+
+	for (int i = 0; i < shader_desc.BoundResources; i++)
+	{
+		D3D12_SHADER_INPUT_BIND_DESC  resource_desc;
+		ThrowIfFailed(
+			shader_reflector->GetResourceBindingDesc(i, &resource_desc));
+
+		gpu_pass::pass_resource pass_res;
+
+		pass_res.name = resource_desc.Name;
+		pass_res.register_space = resource_desc.Space;
+		auto resourceType = resource_desc.Type;
+		pass_res.bind_point = resource_desc.BindPoint;
+
+		switch (resource_desc.Type)
+		{
+		case D3D_SIT_CBUFFER:
+		case D3D_SIT_STRUCTURED:
+			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER;
+			break;
+		case D3D_SIT_TEXTURE:
+			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_TEXTURE;
+			break;
+		case D3D_SIT_TBUFFER:
+			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_TEXTURE_GROUP;
+			break;
+		case D3D_SIT_SAMPLER:
+			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_SAMPLER;
+			break;
+		case D3D_SIT_UAV_RWTYPED:
+		case D3D_SIT_UAV_RWSTRUCTURED:
+			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_UNORDERED_BUFFER;
+			break;
+		default:
+			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_NONE;
+			break;
+		}
+		out_res_group.push_back(pass_res);
+	}
 }
 
 void directx_render::create_pso(

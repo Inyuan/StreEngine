@@ -7,6 +7,7 @@ extern int pipeline_w_mouse_position_y;
 
 extern pipeline_window_invoker* pipeline_window_widget_ptr;
 extern texture_component_invoker* current_texture_component_ptr;
+extern std::map<std::string, pass_component_invoker*> pass_component_map;
 
 //创建贴图 组件
 void s_create_texture_command::execute()
@@ -92,6 +93,51 @@ void s_create_pass_command::execute()
 	pipeline_window_widget_ptr->pass_comp_group.back()->show();
 }
 
+void reflect_pass_res_input(s_pass* in_pass)
+{
+	auto current_pass_component_ptr = pass_component_map[in_pass->uid.name];
+	if (!current_pass_component_ptr)
+	{
+		return;
+	}
+	
+	vector<connect_port*> res_port_group;
+
+	auto shader_res = current_pass_component_ptr->pass_instance->gpu_pass_ptr->pass_res_group;
+
+	for (auto it : shader_res)
+	{
+		auto res_port = new connect_port(
+			current_pass_component_ptr,
+			port_information(
+				port_information::PASS_RES_PORT_GROUP,
+				current_pass_component_ptr->pass_instance));
+
+		string res_t;
+		switch (it.type)
+		{
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
+			res_t = "b";
+			break;
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP:
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE:
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
+			res_t = "t";
+			break;
+		}
+
+		string res_port_name = it.name + " " + res_t + " " + std::to_string(it.bind_point) + " " + std::to_string(it.register_space);
+
+		res_port->setObjectName(res_port_name);
+		res_port->setAutoExclusive(false);
+
+		res_port_group.push_back(res_port);
+
+	}
+
+	current_pass_component_ptr->update_res_port(res_port_group);
+
+}
 
 extern connect_port* select_connect_port[2];
 
@@ -174,7 +220,11 @@ void s_connect_resource_command::execute()
 
 			connect_success = stre_engine::get_instance()->pass_set_shader_layout(p_ptr, *s_ptr);
 
+			//!!!即刻刷新
 			stre_engine::get_instance()->allocate_pass(p_ptr);
+
+			reflect_pass_res_input(p_ptr);
+
 		}
 		break;
 		}

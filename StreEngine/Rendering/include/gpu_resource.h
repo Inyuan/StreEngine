@@ -29,7 +29,11 @@ struct gpu_shader_resource
 		SHADER_RESOURCE_TYPE_RENDER_TARGET, //SRV
 		SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP, // TABLE //贴图组类型必须再用package_textures才能构建
 		SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL, // DSV 
-		SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP //贴图组类型必须再用package_textures才能构建
+		SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP, //贴图组类型必须再用package_textures才能构建
+		SHADER_RESOURCE_TYPE_SAMPLER,
+		SHADER_RESOURCE_TYPE_UNORDERED_BUFFER,
+		SHADER_RESOURCE_TYPE_NONE
+	
 	} shader_resource_type;
 
 	//使用的寄存器序号 ,和反射出来的接口自动连接？，并允许用户手动连接
@@ -53,6 +57,17 @@ struct gpu_pass
 	bool is_translate = false;
 	bool is_depth_check = false;
 	UINT rt_number = 0;
+
+	struct pass_resource
+	{
+		std::string name;
+		UINT bind_point = 0;
+		UINT register_space = 0;
+		gpu_shader_resource::SHADER_RESOURCE_TYPE type = gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER;
+
+	};
+
+	std::vector<pass_resource> pass_res_group;
 
 	virtual ~gpu_pass()
 	{

@@ -43,7 +43,6 @@
     <ClInclude Include="Core\Memory\s_memory.h" />
     <ClInclude Include="Core\Process\BProcess.h" />
     <ClInclude Include="Core\Render_Core\directx_render.h" />
-    <ClInclude Include="Core\Render_Core\directx_resource.h" />
     <ClInclude Include="Core\Window\s_window.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Function\Render_Function\render_functor.h" />

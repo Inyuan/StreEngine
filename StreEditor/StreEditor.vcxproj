@@ -117,6 +117,11 @@ copy libfbxsdk.dll $(TargetPath)\..</Command>
     <ClInclude Include="s_command.h" />
     <ClInclude Include="s_receiver.h" />
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shaders\debug_pass.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
     <Import Project="$(QtMsBuild)\qt.targets" />

@@ -36,18 +36,22 @@ public:
 		std::vector<std::shared_ptr<gpu_shader_resource>>& in_texture_group,
 		std::shared_ptr<gpu_shader_resource> in_out_table) = 0;
 
-	virtual void load_rootparpameter(
-		std::vector<CD3DX12_ROOT_PARAMETER>& in_out_root_parameter,
-		const gpu_shader_resource* in_gpu_sr) = 0;
+	//virtual void load_rootparpameter(
+	//	std::vector<CD3DX12_ROOT_PARAMETER>& in_out_root_parameter,
+	//	const gpu_shader_resource* in_gpu_sr) = 0;
 
-	virtual void create_rootsignature(
-		CD3DX12_ROOT_SIGNATURE_DESC& in_rootsig_desc,
-		gpu_pass* in_gpu_pass) = 0;
+	virtual void create_rootsignature(gpu_pass* in_gpu_pass) = 0;
 
 	virtual void create_pso(
-		shader_layout in_shader_layout,
+		shader_layout& in_shader_layout,
 		gpu_pass* in_gpu_pass) = 0;
 
+
+	//外部只提供路径
+	//自动反射提供输入接口和根签名参数
+	virtual void complie_shader(
+		shader_layout& in_shader_layout,
+		gpu_pass* in_gpu_pass) = 0;
 
 	/// <summary>
 	/// 刷新自定义资源

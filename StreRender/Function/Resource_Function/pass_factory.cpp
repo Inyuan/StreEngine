@@ -26,113 +26,54 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 {
 	dx_function pass_functor = [in_out_pass](s_directx_render* in_render)
 	{
+		if (in_out_pass->gpu_pass_ptr)
+		{
+			delete(in_out_pass->gpu_pass_ptr);
+			in_out_pass->gpu_pass_ptr = nullptr;
+		}
 
 		in_out_pass->gpu_pass_ptr = in_render->allocate_pass();
 
-			//????
-			const CD3DX12_STATIC_SAMPLER_DESC pointWrap(
-				0, // shaderRegister
-				D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
-				D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-				D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-				D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW*/
 
-			const CD3DX12_STATIC_SAMPLER_DESC pointClamp(
-				1, // shaderRegister
-				D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
-				D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-				D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-				D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
-
-			const CD3DX12_STATIC_SAMPLER_DESC linearWrap(
-				2, // shaderRegister
-				D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
-				D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-				D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-				D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
-
-			const CD3DX12_STATIC_SAMPLER_DESC linearClamp(
-				3, // shaderRegister
-				D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
-				D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-				D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-				D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
-
-			const CD3DX12_STATIC_SAMPLER_DESC anisotropicWrap(
-				4, // shaderRegister
-				D3D12_FILTER_ANISOTROPIC, // filter
-				D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-				D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-				D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressW
-				0.0f,                             // mipLODBias
-				8);                               // maxAnisotropy
-
-			const CD3DX12_STATIC_SAMPLER_DESC anisotropicClamp(
-				5, // shaderRegister
-				D3D12_FILTER_ANISOTROPIC, // filter
-				D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-				D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-				D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressW
-				0.0f,                              // mipLODBias
-				8);                                // maxAnisotropy
-
-			const CD3DX12_STATIC_SAMPLER_DESC shadow(
-				6, // shaderRegister
-				D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, // filter
-				D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressU
-				D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressV
-				D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressW
-				0.0f,                               // mipLODBias
-				16,                                 // maxAnisotropy
-				D3D12_COMPARISON_FUNC_LESS_EQUAL,
-				D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
-
-			std::array<const CD3DX12_STATIC_SAMPLER_DESC, 7Ui64> smaples_group = {
-				pointWrap, pointClamp,
-				linearWrap, linearClamp,
-				anisotropicWrap, anisotropicClamp,
-				shadow
-			};
-
-
+		//先编译着色器，获得反射数据
+		in_render->complie_shader(in_out_pass->gpu_shader_layout, in_out_pass->gpu_pass_ptr);
 
 		//根签名
 		{
-			
-			//...把已有的release
-			{
-				UINT input_cb_number = 0;
-				UINT input_texture_number = 0;
-				std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameter;
-
-				//只读取一个获取类型
-				for (auto it : in_out_pass->gpu_mesh)
-				{
-					for (auto itt : it.second.gpu_mesh_resource_ptr)
-					{
-						in_render->load_rootparpameter(slotRootParameter, itt.second);
-						break;
-					}
-					break;
-				}
-
-				for (auto it : in_out_pass->gpu_pass_resource_ptr)
-				{
-					in_render->load_rootparpameter(slotRootParameter, it.second);
-				}
-
-				auto staticSamplers = smaples_group;
-
-				// A root signature is an array of root parameters.
-				CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc((UINT)slotRootParameter.size(), slotRootParameter.data(),
-					(UINT)staticSamplers.size(), staticSamplers.data(),
-					D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-				in_render->create_rootsignature(
-					rootSigDesc,
-					in_out_pass->gpu_pass_ptr);
-			}
+		//	
+		//	//...把已有的release
+		//	{
+		//		UINT input_cb_number = 0;
+		//		UINT input_texture_number = 0;
+		//		std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameter;
+		//		//只读取一个获取类型
+		//		for (auto it : in_out_pass->gpu_mesh)
+		//		{
+		//			for (auto itt : it.second.gpu_mesh_resource_ptr)
+		//			{
+		//				in_render->load_rootparpameter(slotRootParameter, itt.second);
+		//				break;
+		//			}
+		//			break;
+		//		}
+		//		for (auto it : in_out_pass->gpu_pass_resource_ptr)
+		//		{
+		//			in_render->load_rootparpameter(slotRootParameter, it.second);
+		//		}
+		//		auto staticSamplers = smaples_group;
+		//		// A root signature is an array of root parameters.
+		//		CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc((UINT)slotRootParameter.size(), slotRootParameter.data(),
+		//			(UINT)staticSamplers.size(), staticSamplers.data(),
+		//			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		//		in_render->create_rootsignature(
+		//			rootSigDesc,
+		//			in_out_pass->gpu_pass_ptr);
+		//	}
 		}
+
+		in_render->create_rootsignature(in_out_pass->gpu_pass_ptr);
+
+
 
 		//着色器输入布局 +  PSO构建
 		{

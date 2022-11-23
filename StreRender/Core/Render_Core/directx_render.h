@@ -14,13 +14,14 @@
 #include <array>
 #include <unordered_map>
 #include "d3dx12.h"
+#include <d3d12shader.h>
 #include "stre_render_api.h"
 #include "Core/Window/s_window.h"
 
 #pragma comment(lib,"d3dcompiler.lib")
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
-
+#pragma comment(lib, "dxguid.lib")
 
 #define SWAP_CHAIN_BUFFER_COUNT 2
 #define FRAME_BUFFER_COUNT SWAP_CHAIN_BUFFER_COUNT
@@ -217,18 +218,19 @@ public:
         std::vector<std::shared_ptr<gpu_shader_resource>>& in_texture_group,
         std::shared_ptr<gpu_shader_resource> in_out_table) override;
 
-    virtual void load_rootparpameter(
-        std::vector<CD3DX12_ROOT_PARAMETER> & in_out_root_parameter,
-        const gpu_shader_resource* in_gpu_sr) override;
+    //virtual void load_rootparpameter(
+    //    std::vector<CD3DX12_ROOT_PARAMETER> & in_out_root_parameter,
+    //    const gpu_shader_resource* in_gpu_sr) override;
 
-    virtual void create_rootsignature(
-        CD3DX12_ROOT_SIGNATURE_DESC& in_rootsig_desc, 
+    virtual void create_rootsignature(gpu_pass* in_gpu_pass) override;
+
+    virtual void complie_shader(
+        shader_layout& in_shader_layout,
         gpu_pass* in_gpu_pass) override;
 
     virtual void create_pso(
-        shader_layout in_shader_layout,
+        shader_layout& in_shader_layout,
         gpu_pass* in_gpu_pass) override;
-
 
 
 private:
@@ -313,6 +315,8 @@ private:
         const D3D_SHADER_MACRO* defines,
         const std::string& entrypoint,
         const std::string& target);
+
+    void reflect_shader(ComPtr<ID3DBlob>&  in_shader_data, std::vector<gpu_pass::pass_resource>& out_res_group);
 
     void create_pso(
         D3D12_GRAPHICS_PIPELINE_STATE_DESC& in_pso_desc,

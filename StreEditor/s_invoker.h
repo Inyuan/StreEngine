@@ -124,6 +124,8 @@ public:
 
 	s_pass* pass_instance = nullptr;
 
+	void update_res_port(vector<connect_port*>& in_res_port_group);
+
 protected:
 	pass_component_invoker() = delete;
 	vector<connect_port*> input_res_port_group;

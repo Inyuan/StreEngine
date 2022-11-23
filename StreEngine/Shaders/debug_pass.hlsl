@@ -1,4 +1,18 @@
 
+struct db_struct
+{
+    float db_s_value;
+    float4x4 db_s_matrix;
+};
+
+//用了才会被反射捕捉到
+float value_debug : register(b1)
+float3 vector_debug : register(b2)
+Texture2D texture_debug_group[20] : register(t1);
+Texture2D texture_debug : register(t2);
+StructuredBuffer<db_struct> debugt_struct : register(t3)
+
+
 
 struct vs_in {
     float3 local_postion    : POSITION;
@@ -12,7 +26,7 @@ struct vs_out {
     float2 texcoord : TEXCOORD;
 };
 
-vs_out  VS(vs_in vIn)
+vs_out VS(vs_in vIn)
 {
     vs_out vOut;
     vOut.position = float4(vIn.local_postion,1.0f);

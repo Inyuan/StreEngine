@@ -92,9 +92,6 @@
     <ClInclude Include="framework.h">
       <Filter>Logic</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Render_Core\render_resource.h">
-      <Filter>Core\Render_Core</Filter>
-    </ClInclude>
     <ClInclude Include="Core\Render_Core\directx_render.h">
       <Filter>Core\Render_Core</Filter>
     </ClInclude>

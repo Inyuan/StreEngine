@@ -35,7 +35,10 @@ void stre_engine::execute_command()
 
 bool stre_engine::allocate_pass(s_pass* in_out_pass)
 {
+	update_gpu_memory();
 	pass_fy->dx_allocate_gpu_pass(in_out_pass);
+	update_gpu_memory();
+
 	return true;
 }
 
@@ -94,15 +97,6 @@ void stre_engine::package_textures(std::vector<cpu_texture*> in_textures, cpu_te
 	update_gpu_memory();//多线程的这个位置要等
 	texture_manager->package_textures(in_textures,in_out_package_container);
 }
-
-
-
-
-
-
-
-
-
 
 void set_screen_vertex_index(cpu_mesh* in_cpu_mesh)
 {
