@@ -26,6 +26,7 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 {
 	dx_function pass_functor = [in_out_pass](s_directx_render* in_render)
 	{
+		//删除旧的pass资源
 		if (in_out_pass->gpu_pass_ptr)
 		{
 			delete(in_out_pass->gpu_pass_ptr);
@@ -34,46 +35,23 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 
 		in_out_pass->gpu_pass_ptr = in_render->allocate_pass();
 
+		//检查着色器输入是否正确
+		bool valable = false;
+		for (auto it : in_out_pass->gpu_shader_layout.shader_vaild)
+		{
+			valable |= it;
+		}
+		if (!valable)
+		{
+			return;
+		}
 
+		//应该能弹出错误，但不影响程序继续运行
 		//先编译着色器，获得反射数据
 		in_render->complie_shader(in_out_pass->gpu_shader_layout, in_out_pass->gpu_pass_ptr);
 
 		//根签名
-		{
-		//	
-		//	//...把已有的release
-		//	{
-		//		UINT input_cb_number = 0;
-		//		UINT input_texture_number = 0;
-		//		std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameter;
-		//		//只读取一个获取类型
-		//		for (auto it : in_out_pass->gpu_mesh)
-		//		{
-		//			for (auto itt : it.second.gpu_mesh_resource_ptr)
-		//			{
-		//				in_render->load_rootparpameter(slotRootParameter, itt.second);
-		//				break;
-		//			}
-		//			break;
-		//		}
-		//		for (auto it : in_out_pass->gpu_pass_resource_ptr)
-		//		{
-		//			in_render->load_rootparpameter(slotRootParameter, it.second);
-		//		}
-		//		auto staticSamplers = smaples_group;
-		//		// A root signature is an array of root parameters.
-		//		CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc((UINT)slotRootParameter.size(), slotRootParameter.data(),
-		//			(UINT)staticSamplers.size(), staticSamplers.data(),
-		//			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-		//		in_render->create_rootsignature(
-		//			rootSigDesc,
-		//			in_out_pass->gpu_pass_ptr);
-		//	}
-		}
-
 		in_render->create_rootsignature(in_out_pass->gpu_pass_ptr);
-
-
 
 		//着色器输入布局 +  PSO构建
 		{
@@ -103,9 +81,7 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 }
 
 
-bool pass_factory::add_mesh(
-	s_pass* in_out_pass, 
-	const cpu_mesh*  in_mesh)
+bool pass_factory::add_mesh(s_pass* in_out_pass, const cpu_mesh* in_mesh)
 {
 	s_pass::gpu_mesh_resource g_mesh;
 	if(in_mesh->vertex_ptr)
@@ -143,9 +119,7 @@ bool pass_factory::add_mesh(
 }
 
 template<class t_cpu_resource>
-bool pass_factory::add_shader_resource(
-	s_pass* in_out_pass,
-	const t_cpu_resource* in_sr)
+bool pass_factory::add_shader_resource(s_pass* in_out_pass, const t_cpu_resource* in_sr)
 {
 	//限制条件
 	//if (in_gpu_rt->gpu_sr_ptr->shader_resource_type != )
@@ -153,13 +127,50 @@ bool pass_factory::add_shader_resource(
 	//	return false;
 	//}
 
-	in_out_pass->gpu_pass_resource_ptr[in_sr->uid.name] = in_sr->gpu_sr_ptr;
+	in_out_pass->gpu_pass_resource_ptr[in_sr->uid.name] = in_sr->gpu_sr_ptr.get();
 	return true;
 }
 
-bool pass_factory::add_render_target(
-	s_pass* in_out_pass,
-	const cpu_texture* in_gpu_rt)
+template<>
+bool pass_factory::add_shader_resource<cpu_texture>(s_pass* in_out_pass, const cpu_texture* in_sr)
+{
+	//限制条件
+	//if (in_gpu_rt->gpu_sr_ptr->shader_resource_type != )
+	//{
+	//	return false;
+	//}
+
+	in_out_pass->gpu_pass_resource_ptr[in_sr->uid.name] = in_sr->gpu_sr_ptr.get();
+	return true;
+}
+
+template<>
+bool pass_factory::add_shader_resource<cpu_camera>(s_pass* in_out_pass, const cpu_camera* in_sr)
+{
+	//限制条件
+	//if (in_gpu_rt->gpu_sr_ptr->shader_resource_type != )
+	//{
+	//	return false;
+	//}
+
+	in_out_pass->gpu_pass_resource_ptr[in_sr->uid.name] = in_sr->gpu_sr_ptr.get();
+	return true;
+}
+
+template<>
+bool pass_factory::add_shader_resource<cpu_light>(s_pass* in_out_pass, const cpu_light* in_sr)
+{
+	//限制条件
+	//if (in_gpu_rt->gpu_sr_ptr->shader_resource_type != )
+	//{
+	//	return false;
+	//}
+
+	in_out_pass->gpu_pass_resource_ptr[in_sr->uid.name] = in_sr->gpu_sr_ptr.get();
+	return true;
+}
+
+bool pass_factory::add_render_target(s_pass* in_out_pass, const cpu_texture* in_gpu_rt)
 {
 	if (in_gpu_rt->gpu_sr_ptr->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP
 		&& in_gpu_rt->gpu_sr_ptr->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP)
@@ -170,33 +181,57 @@ bool pass_factory::add_render_target(
 	return true;
 }
 
-bool pass_factory::remove_mesh(
-	s_pass* in_out_pass,
-	const cpu_mesh* in_mesh)
+bool pass_factory::remove_mesh(s_pass* in_out_pass, const cpu_mesh* in_mesh)
 {
 	in_out_pass->gpu_mesh.erase(in_mesh->uid.name);
 	return true;
 }
+
+
 template<class t_cpu_resource>
-bool pass_factory::remove_shader_resource(
-	s_pass* in_out_pass,
-	const t_cpu_resource* in_sr)
+bool pass_factory::remove_shader_resource(s_pass* in_out_pass, const t_cpu_resource* in_sr)
 {
 	in_out_pass->gpu_pass_resource_ptr.erase(in_sr->uid.name);
+	return true;
 }
 
-bool pass_factory::remove_render_target(
-	s_pass* in_out_pass,
-	const cpu_texture* in_gpu_rt)
+template<>
+bool pass_factory::remove_shader_resource<cpu_texture>(s_pass* in_out_pass, const cpu_texture* in_sr)
+{
+	in_out_pass->gpu_pass_resource_ptr.erase(in_sr->uid.name);
+	return true;
+}
+
+template<>
+bool pass_factory::remove_shader_resource<cpu_camera>(s_pass* in_out_pass, const cpu_camera* in_sr)
+{
+	in_out_pass->gpu_pass_resource_ptr.erase(in_sr->uid.name);
+	return true;
+}
+
+template<>
+bool pass_factory::remove_shader_resource<cpu_light>(s_pass* in_out_pass, const cpu_light* in_sr)
+{
+	in_out_pass->gpu_pass_resource_ptr.erase(in_sr->uid.name);
+	return true;
+}
+
+
+bool pass_factory::remove_render_target(s_pass* in_out_pass, const cpu_texture* in_gpu_rt)
 {
 	in_out_pass->gpu_rt_texture_ptr.erase(in_gpu_rt->uid.name);
 	return true;
 }
 
-bool pass_factory::set_shader_layout(
-	s_pass* in_out_pass,
-	const shader_layout in_shade_layout)
+bool pass_factory::set_shader_layout(s_pass* in_out_pass, const shader_layout in_shade_layout)
 {
 	in_out_pass->gpu_shader_layout = in_shade_layout;
 	return true;
 }
+
+bool pass_factory::remove_shader_layout(s_pass* in_out_pass)
+{
+	in_out_pass->gpu_shader_layout = shader_layout();
+}
+
+

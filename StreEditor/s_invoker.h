@@ -12,10 +12,12 @@
 #include <QPainter>
 #include <vector>
 #include <set>
+#include <list>
 #include "s_command.h"
 
 using std::set;
 using std::vector;
+using std::list;
 
 class connect_port;
 class curve_tool;
@@ -27,12 +29,12 @@ class shader_component_invoker;
 
 struct connect_data
 {
-	const connect_port* port1 = nullptr;
-	const connect_port* port2 = nullptr;
+	connect_port* port1 = nullptr;
+	connect_port* port2 = nullptr;
 	curve_tool* curve = nullptr;
 	connect_data(
-		const connect_port* in_port1,
-		const connect_port* in_port2,
+		connect_port* in_port1,
+		connect_port* in_port2,
 		curve_tool* in_curve) :
 		port1(in_port1),
 		port2(in_port2),
@@ -50,12 +52,13 @@ struct connect_data
 class pipeline_window_invoker : public QWidget
 {
 public:
-	vector<texture_component_invoker*> texture_comp_group;
-	vector<pass_component_invoker*> pass_comp_group;
-	vector<mesh_component_invoker*> mesh_comp_group;
-	vector<shader_component_invoker*> shader_comp_group;
+	//全局映射表
+	map<string, texture_component_invoker*> texture_comp_group;
+	map<string, pass_component_invoker*> pass_comp_group;
+	map<string, mesh_component_invoker*> mesh_comp_group;
+	map<string,shader_component_invoker*> shader_comp_group;
 
-	vector<connect_data*> connect_curve_group;
+	list<connect_data*> connect_curve_group;
 
 public:
 	pipeline_window_invoker(QWidget* in_parentd);
@@ -79,6 +82,8 @@ public:
 		create_mesh_cmd = nullptr;
 		create_shader_cmd = nullptr;
 	}
+
+	void reconnect();
 
 protected:
 	pipeline_window_invoker() {};
@@ -126,16 +131,20 @@ public:
 
 	void update_res_port(vector<connect_port*>& in_res_port_group);
 
-protected:
-	pass_component_invoker() = delete;
+
 	vector<connect_port*> input_res_port_group;
 	connect_port* mesh_port = nullptr;
 	connect_port* shader_port = nullptr;
 	connect_port* output_port = nullptr;
 
-
+protected:
+	pass_component_invoker() = delete;
+	
 
 	//...
+
+private:
+	virtual void keyPressEvent(QKeyEvent* in_event);
 };
 
 class mesh_component_invoker : public component_invoker
@@ -151,18 +160,25 @@ public:
 		mesh_instance = nullptr;
 	}
 
+	connect_port* output_port = nullptr;
+	cpu_mesh* mesh_instance = nullptr;
 protected:
 	mesh_component_invoker() = delete;
 
-	cpu_mesh* mesh_instance = nullptr;
+	
 
-	connect_port* output_port = nullptr;
+	
 
+private:
+	virtual void keyPressEvent(QKeyEvent* in_event);
 };
 
 class texture_element_invoker : public QWidget
 {
 public:
+
+	void set_height(int in_height);
+
 	texture_element_invoker(cpu_texture* in_texture_ptr,int in_height,QWidget* in_parent);
 
 	~texture_element_invoker()
@@ -173,13 +189,15 @@ public:
 	}
 
 	cpu_texture* texture_instance = nullptr;
+
 protected:
 	
 	QLabel* texture_name = nullptr;
 	connect_port* input_port = nullptr;
 	connect_port* output_port = nullptr;
 
-
+private:
+	virtual void keyPressEvent(QKeyEvent* in_event);
 };
 
 class texture_component_invoker : public component_invoker
@@ -193,6 +211,8 @@ public:
 
 	void add_element(cpu_texture* in_texture_ptr);
 
+	void remove_element(cpu_texture* in_texture_ptr);
+
 	~texture_component_invoker()
 	{
 		//QT会自己释放子组件， 无需在析构中手动释放子组件
@@ -201,25 +221,34 @@ public:
 
 		if (create_texture_cmd) delete(create_texture_cmd);
 		create_texture_cmd = nullptr;
+
+		if (reconnect_cmd) delete(reconnect_cmd);
+		reconnect_cmd = nullptr;
 	}
+private:
+	virtual void keyPressEvent(QKeyEvent* in_event);
 
 public:
 
 	vector<texture_element_invoker*> textures_group;
 	cpu_texture* texture_instance = nullptr;
+
+
+	connect_port* input_port = nullptr;
+	connect_port* output_port = nullptr;
+
 protected:
 
 	int element_stk_height = 41;
 
 	texture_component_invoker() = delete;
 
-	connect_port* input_port = nullptr;
-	connect_port* output_port = nullptr;
 
 	QMenu* right_click_menu = nullptr;
 	QPushButton* add_texture_button = nullptr;
 	
 	s_command* create_texture_cmd = nullptr;
+	s_command* reconnect_cmd = nullptr;
 };
 
 class shader_component_invoker : public component_invoker
@@ -233,11 +262,18 @@ public:
 
 	}
 
-protected:
-	shader_component_invoker() = delete;
 	connect_port* output_port = nullptr;
 
 	shader_layout shader_layout_instance;
+
+protected:
+	shader_component_invoker() = delete;
+	
+
+	
+
+private:
+	virtual void keyPressEvent(QKeyEvent* in_event);
 };
 
 
@@ -266,7 +302,7 @@ struct port_information
 
 	void* ptr =  nullptr;
 
-	int port_index = 0;
+	const int port_index = 0;
 
 	port_information() {};
 

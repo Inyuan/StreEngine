@@ -32,6 +32,7 @@ public:
 		UINT in_number,
 		void* in_cpu_data) = 0;
 
+	//会自动释放原有贴图堆，重新分配
 	virtual void package_textures(
 		std::vector<std::shared_ptr<gpu_shader_resource>>& in_texture_group,
 		std::shared_ptr<gpu_shader_resource> in_out_table) = 0;

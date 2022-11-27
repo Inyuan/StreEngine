@@ -9,7 +9,24 @@
 *
 *********************************************/
 
+//这个地方对多线程来说是噩梦
+//需要整理一下资源关系
+int pipeline_w_mouse_position_x = 0;
+int pipeline_w_mouse_position_y = 0;
+
 pipeline_window_invoker* pipeline_window_widget_ptr = nullptr;
+texture_component_invoker* texture_component_add_texture_ptr = nullptr;
+
+connect_port* select_connect_port[2] = { nullptr };
+connect_port* reconnect_port = nullptr;
+connect_port* disconnect_port = nullptr;
+bool disconnect_success = false;
+
+texture_element_invoker* texture_element_delete_ptr = nullptr;
+texture_component_invoker* texture_component_delete_ptr = nullptr;
+mesh_component_invoker* mesh_component_delete_ptr = nullptr;
+shader_component_invoker* shader_component_delete_ptr = nullptr;
+pass_component_invoker* pass_component_delete_ptr = nullptr;
 
 pipeline_window_invoker::pipeline_window_invoker(
 	QWidget* in_parent): QWidget(in_parent)
@@ -41,9 +58,10 @@ pipeline_window_invoker::pipeline_window_invoker(
 
 }
 
-int pipeline_w_mouse_position_x = 0;
-int pipeline_w_mouse_position_y = 0;
-
+/// <summary>
+/// 左键关闭菜单，右键菜单
+/// </summary>
+/// <param name="in_event"></param>
 void pipeline_window_invoker::mousePressEvent(QMouseEvent* in_event)
 {
 	if (in_event->button() == Qt::LeftButton)
@@ -52,7 +70,7 @@ void pipeline_window_invoker::mousePressEvent(QMouseEvent* in_event)
 	}
 	else if (in_event->button() == Qt::RightButton)
 	{
-		
+		right_click_menu->close();
 
 		QPoint mouse_pos = in_event->globalPos();
 		
@@ -63,6 +81,10 @@ void pipeline_window_invoker::mousePressEvent(QMouseEvent* in_event)
 	return QWidget::mousePressEvent(in_event);
 }
 
+/// <summary>
+/// 绘制曲线
+/// </summary>
+/// <param name=""></param>
 void pipeline_window_invoker::paintEvent(QPaintEvent*)
 {
 	//绘制连线
@@ -74,9 +96,9 @@ void pipeline_window_invoker::paintEvent(QPaintEvent*)
 
 		QPainter p(this);
 
-		for (int i = 0; i < connect_curve_group.size(); i++)
+		for (auto it : connect_curve_group)
 		{
-			p.drawPath(connect_curve_group[i]->curve->get_curve());
+			p.drawPath(it->curve->get_curve());
 		}
 	}
 
@@ -95,46 +117,53 @@ component_invoker::component_invoker(
 {
 };
 
-
+/// <summary>
+/// useless
+/// </summary>
+/// <param name="in_event"></param>
 void component_invoker::mousePressEvent(QMouseEvent* in_event)
 {
-	if (in_event->button() == Qt::LeftButton)
-	{
-		if (selected_components.find(this) != selected_components.end())
-		{
-			selected_components.erase(this);
-		}
-		else
-		{
-			selected_components.insert(this);
-		}
-	}
-	else if (in_event->button() == Qt::RightButton)
-	{
-		for (auto it : selected_components)
-		{
+	//if (in_event->button() == Qt::LeftButton)
+	//{
+	//	if (selected_components.find(this) != selected_components.end())
+	//	{
+	//		selected_components.erase(this);
+	//	}
+	//	else
+	//	{
+	//		selected_components.insert(this);
+	//	}
+	//}
+	//else if (in_event->button() == Qt::RightButton)
+	//{
+	//	for (auto it : selected_components)
+	//	{
 
-		}
-	}
+	//	}
+	//}
 	return QWidget::mousePressEvent(in_event);
 }
 
+/// <summary>
+/// useless
+/// </summary>
+/// <param name="in_event"></param>
 void component_invoker::mouseReleaseEvent(QMouseEvent* in_event)
 {
-	if (in_event->button() == Qt::LeftButton)
-	{
-		//QPoint mouse_pos = in_event->pos();
-		//setGeometry(
-		//	QRect(
-		//		mouse_pos.x(),
-		//		mouse_pos.y(),
-		//		geometry().width(), 
-		//		geometry().height()));
-	}
-	else if (in_event->button() == Qt::RightButton)
-	{
+	//if (in_event->button() == Qt::LeftButton)
+	//{
+	//	//QPoint mouse_pos = in_event->pos();
+	//	//setGeometry(
+	//	//	QRect(
+	//	//		mouse_pos.x(),
+	//	//		mouse_pos.y(),
+	//	//		geometry().width(), 
+	//	//		geometry().height()));
+	//}
+	//else if (in_event->button() == Qt::RightButton)
+	//{
 
-	}
+	//}
 	return QWidget::mousePressEvent(in_event);
 }
 
@@ -172,20 +201,31 @@ mesh_component_invoker::mesh_component_invoker(
 
 }
 
+/// <summary>
+/// delete删除组件
+/// </summary>
+/// <param name="in_event"></param>
+void mesh_component_invoker::keyPressEvent(QKeyEvent* in_event)
+{
+	if (in_event->key() == Qt::Key_Delete)
+	{
+		mesh_component_delete_ptr = this;
+		s_remove_mesh_command().execute();
+		mesh_component_delete_ptr = nullptr;
+	}
+	return QWidget::keyPressEvent(in_event);
+}
 
 /*********************************************
 * pass_component
 *
 *********************************************/
 
-//全局映射表
-//s_pass uid ->pass_component 
-std::map<std::string, pass_component_invoker*> pass_component_map;
 
-
-
-//TODO 编译着色器暴露资源接口
-
+/// <summary>
+/// 删除原有，更新 pass组件上的shader资源端口
+/// </summary>
+/// <param name="in_res_port_group"></param>
 void pass_component_invoker::update_res_port(vector<connect_port*>& in_res_port_group)
 {
 	//删除原有的槽
@@ -193,6 +233,7 @@ void pass_component_invoker::update_res_port(vector<connect_port*>& in_res_port_
 	{
 		it->deleteLater();
 	}
+	input_res_port_group.clear();
 	int height = 10;
 	//加入新的槽
 	for (auto it : in_res_port_group)
@@ -211,9 +252,6 @@ pass_component_invoker::pass_component_invoker(
 	component_invoker(in_parent),
 	pass_instance(in_pass_ptr)
 {
-	//添加进映射表
-	pass_component_map[in_pass_ptr->uid.name] = this;
-
 	//构建组件
 	setObjectName("pass_component");
 	setGeometry(QRect(pipeline_w_mouse_position_x, pipeline_w_mouse_position_y, 211, 131));
@@ -265,12 +303,25 @@ pass_component_invoker::pass_component_invoker(
 
 }
 
+/// <summary>
+/// delete 删除键
+/// </summary>
+/// <param name="in_event"></param>
+void pass_component_invoker::keyPressEvent(QKeyEvent* in_event)
+{
+	if (in_event->key() == Qt::Key_Delete)
+	{
+		pass_component_delete_ptr = this;
+		s_remove_pass_command().execute();
+		pass_component_delete_ptr = nullptr;
+	}
+	return QWidget::keyPressEvent(in_event);
+}
+
 /*********************************************
 * texture_component
 *
 *********************************************/
-
-texture_component_invoker* current_texture_component_ptr = nullptr;
 
 texture_element_invoker::texture_element_invoker(
 	cpu_texture* in_texture_ptr,
@@ -305,6 +356,29 @@ texture_element_invoker::texture_element_invoker(
 
 }
 
+/// <summary>
+/// 设置高度
+/// </summary>
+/// <param name="in_height"></param>
+void texture_element_invoker::set_height(int in_height)
+{
+	setGeometry(QRect(0, in_height, 121, 41));
+}
+
+/// <summary>
+/// delete删除组件
+/// </summary>
+/// <param name="in_event"></param>
+void texture_element_invoker::keyPressEvent(QKeyEvent* in_event)
+{
+	if (in_event->key() == Qt::Key_Delete)
+	{
+		texture_element_delete_ptr = this;
+		s_remove_texture_command().execute();
+		texture_element_delete_ptr = nullptr;
+	}
+	return QWidget::keyPressEvent(in_event);
+}
 
 texture_component_invoker::texture_component_invoker(
 	QWidget* in_parent,
@@ -323,6 +397,7 @@ texture_component_invoker::texture_component_invoker(
 	setTitle(QCoreApplication::translate("stre_editorClass", "texture", nullptr));
 
 	create_texture_cmd = new s_create_texture_command();
+	reconnect_cmd = new s_reconnect_resource_command();
 
 	//构建端口
 	input_port = new connect_port(this, port_information(port_information::TEXTURE_GROUP_INPUT, this));
@@ -359,6 +434,10 @@ texture_component_invoker::texture_component_invoker(
 
 }
 
+/// <summary>
+/// 添加贴图子组件
+/// </summary>
+/// <param name="in_texture_ptr"></param>
 void texture_component_invoker::add_element(cpu_texture* in_texture_ptr)
 {
 	textures_group.push_back(
@@ -372,13 +451,69 @@ void texture_component_invoker::add_element(cpu_texture* in_texture_ptr)
 	element_stk_height += 41;
 }
 
+/// <summary>
+/// 删除元素，并重新排序，重新连接接口
+/// </summary>
+/// <param name="in_texture_ptr"></param>
+void texture_component_invoker::remove_element(cpu_texture* in_texture_ptr)
+{
+	//删除目标组件
+	for (int i =0 ; i < textures_group.size();i++)
+	{
+		if (textures_group[i]->texture_instance->uid.name == in_texture_ptr->uid.name)
+		{
+			textures_group[i]->deleteLater();
+			textures_group.erase(textures_group.begin()+i);
+			break;
+		}
+	}
+
+	//重新排序
+	element_stk_height = 41;
+
+	for (int i = 0; i < textures_group.size(); i++)
+	{
+		textures_group[i]->set_height(element_stk_height);
+		textures_group[i]->show();
+		element_stk_height += 41;
+	}
+
+	//重新连接接口
+	reconnect_port = input_port;
+	reconnect_cmd->execute();
+
+	reconnect_port = output_port;
+	reconnect_cmd->execute();
+
+	reconnect_port = nullptr;
+}
+
+/// <summary>
+/// 添加贴图按键
+/// </summary>
 void texture_component_invoker::add_texture()
 {
-	current_texture_component_ptr = this;
+	texture_component_add_texture_ptr = this;
 
 	create_texture_cmd->execute();
 
-	current_texture_component_ptr = nullptr;
+	texture_component_add_texture_ptr = nullptr;
+}
+
+/// <summary>
+/// delete删除控件
+/// </summary>
+/// <param name="in_event"></param>
+void texture_component_invoker::keyPressEvent(QKeyEvent* in_event)
+{
+	if (in_event->key() == Qt::Key_Delete)
+	{
+		texture_component_delete_ptr = this;
+		s_remove_texture_group_command().execute();
+		texture_component_delete_ptr = nullptr;
+	
+	}
+	return QWidget::keyPressEvent(in_event);
 }
 
 /*********************************************
@@ -408,16 +543,25 @@ shader_component_invoker::shader_component_invoker(
 
 }
 
-
-
+/// <summary>
+/// delete删除控件
+/// </summary>
+/// <param name="in_event"></param>
+void shader_component_invoker::keyPressEvent(QKeyEvent* in_event)
+{
+	if (in_event->key() == Qt::Key_Delete)
+	{
+		shader_component_delete_ptr = this;
+		s_remove_shader_command().execute();
+		shader_component_delete_ptr = nullptr;
+	}
+	return QWidget::keyPressEvent(in_event);
+}
 
 /*********************************************
 * connect_port
 * 
 *********************************************/
-
-connect_port* select_connect_port[2] = { nullptr };
-
 int select_port_index = 0;
 
 connect_port::connect_port(
@@ -427,9 +571,12 @@ connect_port::connect_port(
 	port_inf(in_port_inf)
 {
 	connect_res_cmd = new s_connect_resource_command();
-
 }
 
+/// <summary>
+/// 选中一个，选中两个，判断能否连接，执行连接命令
+/// </summary>
+/// <param name="in_event"></param>
 void connect_port::mousePressEvent(QMouseEvent* in_event)
 {
 
@@ -469,6 +616,10 @@ void connect_port::mousePressEvent(QMouseEvent* in_event)
 	return;
 }
 
+/// <summary>
+/// useless
+/// </summary>
+/// <param name="in_event"></param>
 void connect_port::mouseReleaseEvent(QMouseEvent* in_event)
 {
 
@@ -484,19 +635,29 @@ curve_tool::curve_tool(QPoint in_start, QPoint in_end)
 
 	update();
 }
-
+/// <summary>
+/// 改变曲线起始点
+/// </summary>
+/// <param name="in_start"></param>
 void curve_tool::change_start(QPoint in_start)
 {
 	start = in_start;
 	update();
 }
 
+/// <summary>
+/// 改变曲线终点
+/// </summary>
+/// <param name="in_end"></param>
 void curve_tool::change_end(QPoint in_end)
 {
 	end = in_end;
 	update();
 }
 
+/// <summary>
+/// 刷新曲线
+/// </summary>
 void curve_tool::update()
 {
 
@@ -516,9 +677,13 @@ view_port_invoker::view_port_invoker(QWidget* in_parent):QWidget(in_parent)
 	draw_cmd = new s_draw_command();
 
 	setObjectName("rendering_view_widget");
-	setGeometry(QRect(570, 10, 341, 281));
+	setGeometry(QRect(1080, 10, 341, 281));
 }
 
+/// <summary>
+/// 输出端口刷新
+/// </summary>
+/// <param name="in_event"></param>
 void view_port_invoker::paintEvent(QPaintEvent* in_event)
 {
 	draw_cmd->execute();

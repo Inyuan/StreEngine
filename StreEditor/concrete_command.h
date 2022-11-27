@@ -36,13 +36,13 @@ public:
 	virtual void execute() override;
 };
 
-class s_create_shader_command : public s_command
+class s_reconnect_resource_command : public s_command
 {
 public:
 	virtual void execute() override;
 };
 
-class s_package_texture_command : public s_command
+class s_create_shader_command : public s_command
 {
 public:
 	virtual void execute() override;
@@ -53,3 +53,48 @@ class s_draw_command : public s_command
 public:
 	virtual void execute() override;
 };
+
+/***
+************************************************************
+*
+* Remove Function
+*
+************************************************************
+*/
+
+class s_disconnect_resource_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+
+class s_remove_texture_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+
+class s_remove_texture_group_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+
+class s_remove_mesh_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+
+class s_remove_shader_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+
+class s_remove_pass_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+

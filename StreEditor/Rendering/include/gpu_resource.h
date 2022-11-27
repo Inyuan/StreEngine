@@ -109,6 +109,9 @@ struct shader_layout
 		GS = 3,
 		PS = 4
 	};
+	
+	s_uid uid;
+
 	bool shader_vaild[5] = { false };
 	std::wstring shader_path[5];
 	std::vector<shader_input> shader_input_group;

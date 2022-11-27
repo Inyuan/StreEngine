@@ -15,7 +15,7 @@ stre_editor::stre_editor(QWidget *parent)
     pipeline_window_instance = new pipeline_window_invoker(this);
 
     pipeline_window_instance->setObjectName("pipeline_blue_print_widget");
-    pipeline_window_instance->setGeometry(QRect(10, 10, 551, 281));
+    pipeline_window_instance->setGeometry(QRect(10, 10, 1071, 511));
     
     view_port_instance->repaint();
 }

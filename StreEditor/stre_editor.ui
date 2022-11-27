@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>917</width>
-    <height>591</height>
+    <width>1416</width>
+    <height>811</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,10 +17,10 @@
    <widget class="QWidget" name="pipeline_blue_print_widget" native="true">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>250</y>
+      <x>540</x>
+      <y>520</y>
       <width>551</width>
-      <height>281</height>
+      <height>231</height>
      </rect>
     </property>
     <widget class="QGroupBox" name="pass_component">
@@ -30,7 +30,7 @@
      <property name="geometry">
       <rect>
        <x>210</x>
-       <y>40</y>
+       <y>10</y>
        <width>211</width>
        <height>131</height>
       </rect>
@@ -103,8 +103,8 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>400</x>
-       <y>190</y>
+       <x>340</x>
+       <y>160</y>
        <width>120</width>
        <height>51</height>
       </rect>
@@ -138,8 +138,8 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>0</x>
-       <y>40</y>
+       <x>10</x>
+       <y>10</y>
        <width>121</width>
        <height>211</height>
       </rect>
@@ -225,8 +225,8 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>250</x>
-       <y>200</y>
+       <x>150</x>
+       <y>150</y>
        <width>120</width>
        <height>51</height>
       </rect>
@@ -258,20 +258,20 @@
    <widget class="QWidget" name="component_blue_print_widget" native="true">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>300</y>
-      <width>551</width>
-      <height>221</height>
+      <x>0</x>
+      <y>520</y>
+      <width>531</width>
+      <height>231</height>
      </rect>
     </property>
    </widget>
    <widget class="QTabWidget" name="information_widget">
     <property name="geometry">
      <rect>
-      <x>570</x>
-      <y>300</y>
+      <x>1100</x>
+      <y>270</y>
       <width>321</width>
-      <height>221</height>
+      <height>481</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -281,17 +281,17 @@
      <attribute name="title">
       <string>other</string>
      </attribute>
-     <widget class="QWidget" name="rendering_view_widget" native="true">
-      <property name="geometry">
-       <rect>
-        <x>-10</x>
-        <y>-90</y>
-        <width>341</width>
-        <height>281</height>
-       </rect>
-      </property>
-     </widget>
     </widget>
+   </widget>
+   <widget class="QWidget" name="rendering_view_widget" native="true">
+    <property name="geometry">
+     <rect>
+      <x>1100</x>
+      <y>10</y>
+      <width>311</width>
+      <height>241</height>
+     </rect>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -299,7 +299,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>917</width>
+     <width>1416</width>
      <height>22</height>
     </rect>
    </property>

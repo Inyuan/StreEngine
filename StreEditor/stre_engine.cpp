@@ -42,8 +42,6 @@ bool stre_engine::allocate_pass(s_pass* in_out_pass)
 	return true;
 }
 
-
-
 cpu_texture* stre_engine::create_texture(gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type)
 {
 	auto texture_ptr = texture_manager->create_resource();
@@ -73,7 +71,6 @@ s_pass* stre_engine::create_pass()
 	return pass_ptr;
 }
 
-
 bool stre_engine::pass_add_render_target(s_pass* in_out_pass, cpu_texture* in_texture)
 {
 	update_gpu_memory();//多线程的这个位置要等
@@ -91,6 +88,20 @@ bool stre_engine::pass_set_shader_layout(s_pass* in_out_pass, shader_layout& in_
 	update_gpu_memory();//多线程的这个位置要等
 	return pass_fy->set_shader_layout(in_out_pass, in_shader_layout);
 }
+
+bool stre_engine::pass_remove_render_target(s_pass* in_out_pass, cpu_texture* in_texture)
+{
+	return pass_fy->remove_render_target(in_out_pass, in_texture);
+}
+bool stre_engine::pass_remove_mesh(s_pass* in_out_pass, cpu_mesh* in_mesh)
+{
+	return pass_fy->remove_mesh(in_out_pass, in_mesh);
+}
+bool stre_engine::pass_remove_shader_layout(s_pass* in_out_pass)
+{
+	return pass_fy->remove_shader_layout(in_out_pass);
+}
+
 
 void stre_engine::package_textures(std::vector<cpu_texture*> in_textures, cpu_texture* in_out_package_container)
 {

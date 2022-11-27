@@ -188,37 +188,43 @@ public:
 	void dx_allocate_gpu_pass(s_pass* in_out_pass);
 	//??? ²îË¢ĞÂpassº¯Êı
 
-	bool add_mesh(
-		s_pass* in_out_pass,
-		const cpu_mesh* in_mesh);
+	bool add_mesh(s_pass* in_out_pass, const cpu_mesh* in_mesh);
 
 	//cpu_resource
 	template<class t_cpu_resource>
-	bool add_shader_resource(
-		s_pass* in_out_pass,
-		const t_cpu_resource* in_gpu_sr);
+	bool add_shader_resource(s_pass* in_out_pass, const t_cpu_resource* in_sr);
 
-	bool add_render_target(
-		s_pass* in_out_pass,
-		const cpu_texture* in_gpu_rt);
+	template<>
+	bool add_shader_resource<cpu_texture>(s_pass* in_out_pass, const cpu_texture* in_sr);
 
-	bool remove_mesh(
-		s_pass* in_out_pass,
-		const cpu_mesh* in_mesh);
+	template<>
+	bool add_shader_resource<cpu_camera>(s_pass* in_out_pass, const cpu_camera* in_sr);
+
+	template<>
+	bool add_shader_resource<cpu_light>(s_pass* in_out_pass, const cpu_light* in_sr);
+
+	bool add_render_target(s_pass* in_out_pass, const cpu_texture* in_gpu_rt);
+
+	bool remove_mesh(s_pass* in_out_pass, const cpu_mesh* in_mesh);
 
 	template<class t_cpu_resource>
-	bool remove_shader_resource(
-		s_pass* in_out_pass,
-		const t_cpu_resource* in_gpu_sr);
+	bool remove_shader_resource(s_pass* in_out_pass, const t_cpu_resource* in_gpu_sr);
+
+	template<>
+	bool remove_shader_resource<cpu_texture>(s_pass* in_out_pass, const cpu_texture* in_sr);
+
+	template<>
+	bool remove_shader_resource<cpu_camera>(s_pass* in_out_pass, const cpu_camera* in_sr);
+
+	template<>
+	bool remove_shader_resource<cpu_light>(s_pass* in_out_pass, const cpu_light* in_sr);
 
 
-	bool remove_render_target(
-		s_pass* in_out_pass,
-		const cpu_texture* in_gpu_rt);
+	bool remove_render_target(s_pass* in_out_pass, const cpu_texture* in_gpu_rt);
 
+	bool set_shader_layout(s_pass* in_out_pass, const shader_layout in_shade_layout);
 
-	bool set_shader_layout(
-		s_pass* in_out_pass,
-		const shader_layout in_shade_layout);
+	bool remove_shader_layout(s_pass* in_out_pass);
 };
+
 

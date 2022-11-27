@@ -83,11 +83,30 @@ public:
 
 	s_pass* create_pass();
 
+	template<class t_cpu_resource>
+	bool pass_add_shader_resource(s_pass* in_out_pass,const t_cpu_resource * in_sr)
+	{
+		return pass_fy->add_shader_resource<t_cpu_resource>(in_out_pass, in_sr);
+	}
+
+	template<class t_cpu_resource>
+	bool pass_remove_shader_resource(s_pass* in_out_pass, const t_cpu_resource* in_sr)
+	{
+		return pass_fy->remove_shader_resource<t_cpu_resource>(in_out_pass, in_sr);
+	}
+
 	bool pass_add_render_target(s_pass* in_out_pass, cpu_texture* in_texture);
 
+	bool pass_remove_render_target(s_pass* in_out_pass, cpu_texture* in_texture);
+
 	bool pass_add_mesh(s_pass* in_out_pass, cpu_mesh* in_mesh);
+
+	bool pass_remove_mesh(s_pass* in_out_pass, cpu_mesh* in_mesh);
 	
 	bool pass_set_shader_layout(s_pass* in_out_pass, shader_layout& in_shader_layout);
+
+	bool pass_remove_shader_layout(s_pass* in_out_pass);
+
 
 	void package_textures(std::vector<cpu_texture*> in_textures, cpu_texture* in_out_package_container);
 
