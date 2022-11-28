@@ -636,6 +636,10 @@ void directx_render::package_textures(
 	std::vector<std::shared_ptr<gpu_shader_resource>>& in_texture_group,
 	std::shared_ptr<gpu_shader_resource> in_out_table)
 {
+	if (in_texture_group.empty() || !in_out_table.get())
+	{
+		return;
+	}
 
 	auto texture_res = std::static_pointer_cast<directx_texture_resource>(in_out_table);
 	
@@ -850,7 +854,7 @@ void directx_render::set_render_target(
 	D3D12_CPU_DESCRIPTOR_HANDLE dsv_desc;
 	UINT output_rt_size = 0;
 	UINT output_ds_size = 0;
-	if (render_targets_ptr.get())
+	if (render_targets_ptr.get() && render_targets_ptr->rtv_heap)
 	{
 		rtv_descs = render_targets_ptr->rtv_heap.Get()->GetCPUDescriptorHandleForHeapStart();
 		output_rt_size = render_targets_ptr->rt_number;
@@ -873,7 +877,7 @@ void directx_render::set_render_target(
 			i++;
 		}
 	}
-	if (depth_stencil_ptr.get())
+	if (depth_stencil_ptr.get() && depth_stencil_ptr->dsv_heap)
 	{
 		output_ds_size = 1;
 		dsv_desc = depth_stencil_ptr->dsv_heap.Get()->GetCPUDescriptorHandleForHeapStart();
@@ -884,7 +888,7 @@ void directx_render::set_render_target(
 	if (output_rt_size > 0)
 	{
 
-		if (depth_stencil_ptr.get())
+		if (depth_stencil_ptr.get() && depth_stencil_ptr->dsv_heap)
 		{
 			dx_command_list->OMSetRenderTargets(output_rt_size,
 				&rtv_descs,
@@ -901,7 +905,7 @@ void directx_render::set_render_target(
 	}
 	else if(output_ds_size > 0)
 	{
-		if (depth_stencil_ptr.get())
+		if (depth_stencil_ptr.get() && depth_stencil_ptr->dsv_heap)
 		dx_command_list->OMSetRenderTargets(0,
 			nullptr,
 			true,
@@ -1251,6 +1255,10 @@ void directx_render::switch_gpu_resource_state(
 	std::shared_ptr<directx_shader_resource> in_gpu_res_elem,
 	D3D12_RESOURCE_STATES in_new_resource_states)
 {
+	if(!in_gpu_res_elem.get())
+	{
+		return;
+	}
 	if (in_gpu_res_elem->dx_current_state != in_new_resource_states)
 	{
 		switch_gpu_memory_state(in_gpu_res_elem->dx_resource,

@@ -22,6 +22,33 @@ s_pass* pass_factory::create_pass()
 	return instance;
 }
 
+bool pass_factory::check_pass(s_pass* in_out_pass)
+{
+	if (!in_out_pass)
+	{
+		return false;
+	}
+	
+	if (!in_out_pass->gpu_pass_ptr)
+	{
+		return false;
+	}
+
+	//检查着色器输入是否正确
+	bool valable = false;
+	for (auto it : in_out_pass->gpu_shader_layout.shader_vaild)
+	{
+		valable |= it;
+	}
+	if (!valable)
+	{
+		return false;
+	}
+	
+	return true;
+
+}
+
 void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 {
 	dx_function pass_functor = [in_out_pass](s_directx_render* in_render)
@@ -35,13 +62,7 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 
 		in_out_pass->gpu_pass_ptr = in_render->allocate_pass();
 
-		//检查着色器输入是否正确
-		bool valable = false;
-		for (auto it : in_out_pass->gpu_shader_layout.shader_vaild)
-		{
-			valable |= it;
-		}
-		if (!valable)
+		if (!pass_factory().check_pass(in_out_pass))
 		{
 			return;
 		}
@@ -232,6 +253,7 @@ bool pass_factory::set_shader_layout(s_pass* in_out_pass, const shader_layout in
 bool pass_factory::remove_shader_layout(s_pass* in_out_pass)
 {
 	in_out_pass->gpu_shader_layout = shader_layout();
+	return true;
 }
 
 

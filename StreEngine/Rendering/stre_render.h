@@ -188,6 +188,8 @@ public:
 	void dx_allocate_gpu_pass(s_pass* in_out_pass);
 	//??? ²îË¢ĞÂpassº¯Êı
 
+	bool check_pass(s_pass* in_out_pass);
+
 	bool add_mesh(s_pass* in_out_pass, const cpu_mesh* in_mesh);
 
 	//cpu_resource
@@ -223,5 +225,8 @@ public:
 	bool remove_render_target(s_pass* in_out_pass, const cpu_texture* in_gpu_rt);
 
 	bool set_shader_layout(s_pass* in_out_pass, const shader_layout in_shade_layout);
+
+	bool remove_shader_layout(s_pass* in_out_pass);
 };
+
 

@@ -115,6 +115,7 @@ component_invoker::component_invoker(
 	QWidget* in_parent) :
 	QGroupBox(in_parent)
 {
+	setFocusPolicy(Qt::ClickFocus);
 };
 
 /// <summary>
@@ -448,6 +449,13 @@ void texture_component_invoker::add_element(cpu_texture* in_texture_ptr)
 
 	textures_group.back()->show();
 
+	//重新连接接口
+	reconnect_port = input_port;
+	reconnect_cmd->execute();
+
+	reconnect_port = output_port;
+	reconnect_cmd->execute();
+	reconnect_port = nullptr;
 	element_stk_height += 41;
 }
 
@@ -602,11 +610,15 @@ void connect_port::mousePressEvent(QMouseEvent* in_event)
 			select_port_index++;
 			connect_res_cmd->execute();
 		default:
+		{
+			if(select_connect_port[0])
 			select_connect_port[0]->setChecked(false);
+			if (select_connect_port[1])
 			select_connect_port[1]->setChecked(false);
 			select_connect_port[0] = nullptr;
 			select_connect_port[1] = nullptr;
 			select_port_index = 0;
+		}
 			break;
 		}
 	}

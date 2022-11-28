@@ -163,7 +163,10 @@ public:
 		std::vector<cpu_texture*> in_texture_group,
 		cpu_texture* in_out_table) override
 	{
-
+		if (in_texture_group.empty())
+		{
+			return;
+		}
 
 		dx_function sr_functor = [in_texture_group, in_out_table](s_directx_render* in_render)
 		{

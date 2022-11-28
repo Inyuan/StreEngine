@@ -112,7 +112,6 @@ public:
 
 	bool allocate_pass(s_pass* in_out_pass);
 
-
-	//È±·¦ÊÍ·Å»òÉ¾³ıº¯Êı
+	bool check_pass(s_pass* in_out_pass);
 
 };

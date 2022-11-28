@@ -35,11 +35,17 @@ void stre_engine::execute_command()
 
 bool stre_engine::allocate_pass(s_pass* in_out_pass)
 {
+
 	update_gpu_memory();
 	pass_fy->dx_allocate_gpu_pass(in_out_pass);
 	update_gpu_memory();
 
 	return true;
+}
+
+bool stre_engine::check_pass(s_pass* in_out_pass)
+{
+	return pass_fy->check_pass(in_out_pass);
 }
 
 cpu_texture* stre_engine::create_texture(gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type)

@@ -363,7 +363,7 @@ void s_reconnect_resource_command::execute()
 			select_connect_port[0] = (*it)->port1;
 			select_connect_port[1] = (*it)->port2;
 
-			pipeline_window_widget_ptr->connect_curve_group.erase(it);
+			it = pipeline_window_widget_ptr->connect_curve_group.erase(it);
 
 			s_connect_resource_command().execute();
 
@@ -385,6 +385,11 @@ void s_draw_command::execute()
 	auto pass_group = pipeline_window_widget_ptr->pass_comp_group;
 	for (auto it : pass_group)
 	{
+		if (!stre_engine::get_instance()->check_pass(it.second->pass_instance))
+		{
+			continue;
+		}
+
 		stre_engine::get_instance()->update_gpu_memory();
 
 		stre_engine::get_instance()->draw_pass(it.second->pass_instance);
@@ -529,7 +534,7 @@ void s_disconnect_resource_command::execute()
 			disconnect_success = remove_resource((*it)->port1, (*it)->port2);
 			if (disconnect_success)
 			{
-				pipeline_window_widget_ptr->connect_curve_group.erase(it);
+				it = pipeline_window_widget_ptr->connect_curve_group.erase(it);
 			}
 			else
 			{
@@ -541,6 +546,7 @@ void s_disconnect_resource_command::execute()
 			it++;
 		}
 	}
+	pipeline_window_widget_ptr->update();
 }
 
 /// <summary>

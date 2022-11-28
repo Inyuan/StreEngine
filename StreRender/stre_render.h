@@ -188,6 +188,8 @@ public:
 	void dx_allocate_gpu_pass(s_pass* in_out_pass);
 	//??? ²îË¢ĞÂpassº¯Êı
 
+	bool check_pass(s_pass* in_out_pass);
+
 	bool add_mesh(s_pass* in_out_pass, const cpu_mesh* in_mesh);
 
 	//cpu_resource
