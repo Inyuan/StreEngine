@@ -51,7 +51,7 @@ void mesh_manager::dx_allocate_gpu_resource(cpu_mesh* in_cpu_data)
     //    GPU_SR_TYPE::SHADER_RESOURCE_TYPE_TEXTURE_GROUP);
 }
 
-cpu_mesh* mesh_manager::load_resource(wchar_t* in_path)
+cpu_mesh* mesh_manager::load_resource(const wchar_t* in_path)
 {
     return nullptr;
 }
@@ -242,7 +242,7 @@ std::string GetFbxFile(std::wstring DirPath)
 
 //fbx½â°ü
 
-cpu_mesh* mesh_manager::load_fbx(wchar_t* in_path)
+cpu_mesh* mesh_manager::load_fbx(const wchar_t* in_path)
 {
     bool has_animation = false;
 

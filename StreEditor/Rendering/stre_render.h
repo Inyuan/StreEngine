@@ -110,11 +110,11 @@ struct s_mesh_manager
 public:
 	virtual cpu_mesh* create_resource() = 0;
 
-	virtual cpu_mesh* load_resource(wchar_t* in_path) = 0;
+	virtual cpu_mesh* load_resource(const wchar_t* in_path) = 0;
 
 	virtual void update_gpu(cpu_mesh* in_cpu_data) = 0;
 	//特殊的处理函数
-	virtual cpu_mesh* load_fbx(wchar_t* in_path) = 0;
+	virtual cpu_mesh* load_fbx(const wchar_t* in_path) = 0;
 
 	virtual void dx_allocate_gpu_resource(cpu_mesh* in_cpu_data) = 0;
 };

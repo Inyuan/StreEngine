@@ -73,6 +73,8 @@ struct s_sence_constant
 template<typename t_element>
 struct cpu_resource
 {
+	std::wstring path;
+
 	//??? 自动生成
 	s_uid uid;
 
@@ -123,6 +125,8 @@ template<
 	class t_object_constant = cpu_object_constant>
 	struct s_mesh
 {
+	std::wstring path;
+	bool is_view_mesh = false;
 	s_uid uid;
 	t_vertex* vertex_ptr;
 	t_index* index_ptr;
@@ -139,6 +143,8 @@ template<
 	class t_sence_constant = cpu_sence_constant>
 	struct s_sence
 {
+	std::wstring path;
+
 	s_uid uid;
 
 	std::vector < t_light*> light_group;

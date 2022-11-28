@@ -28,6 +28,8 @@ mesh_component_invoker* mesh_component_delete_ptr = nullptr;
 shader_component_invoker* shader_component_delete_ptr = nullptr;
 pass_component_invoker* pass_component_delete_ptr = nullptr;
 
+component_invoker* current_component_ptr = nullptr;
+
 pipeline_window_invoker::pipeline_window_invoker(
 	QWidget* in_parent): QWidget(in_parent)
 
@@ -38,7 +40,7 @@ pipeline_window_invoker::pipeline_window_invoker(
 	create_shader_cmd = new s_create_shader_command();
 	
 	pipeline_window_widget_ptr = this;
-	right_click_menu = new QMenu(in_parent);
+	right_click_menu = new QMenu(this);
 
 	QAction* create_pass_act = new QAction("create pass");
 	QAction* create_texture_group_act = new QAction("create texture group");
@@ -119,22 +121,16 @@ component_invoker::component_invoker(
 };
 
 /// <summary>
-/// useless
+/// 左键选中显示属性
 /// </summary>
 /// <param name="in_event"></param>
 void component_invoker::mousePressEvent(QMouseEvent* in_event)
 {
-	//if (in_event->button() == Qt::LeftButton)
-	//{
-	//	if (selected_components.find(this) != selected_components.end())
-	//	{
-	//		selected_components.erase(this);
-	//	}
-	//	else
-	//	{
-	//		selected_components.insert(this);
-	//	}
-	//}
+	if (in_event->button() == Qt::LeftButton)
+	{
+		current_component_ptr = this;
+		s_switch_property_widget_command().execute();
+	}
 	//else if (in_event->button() == Qt::RightButton)
 	//{
 	//	for (auto it : selected_components)
@@ -182,6 +178,7 @@ mesh_component_invoker::mesh_component_invoker(
 	component_invoker(in_parent),
 	mesh_instance(in_mesh_ptr)
 {
+	comp_type = COMPONENT_TYPE_MESH;
 	//构建组件
 	setObjectName("mesh_component");
 	setGeometry(QRect(pipeline_w_mouse_position_x, pipeline_w_mouse_position_y, 120, 51));
@@ -253,6 +250,7 @@ pass_component_invoker::pass_component_invoker(
 	component_invoker(in_parent),
 	pass_instance(in_pass_ptr)
 {
+	comp_type = COMPONENT_TYPE_PASS;
 	//构建组件
 	setObjectName("pass_component");
 	setGeometry(QRect(pipeline_w_mouse_position_x, pipeline_w_mouse_position_y, 211, 131));
@@ -329,8 +327,10 @@ texture_element_invoker::texture_element_invoker(
 	int in_height, 
 	QWidget* in_parent) :
 	texture_instance(in_texture_ptr),
-	QWidget(in_parent)
+	component_invoker(in_parent)
 {
+	comp_type = COMPONENT_TYPE_TEXTURE;
+
 	setObjectName("texture_element_widget");
 	setGeometry(QRect(0, in_height, 121, 41));
 
@@ -387,7 +387,7 @@ texture_component_invoker::texture_component_invoker(
 	texture_instance(in_texture_ptr),
 	component_invoker(in_parent)
 {
-
+	comp_type = COMPONENT_TYPE_TEXTURE_GROUP;
 	//构建组件
 	setObjectName("texture_group_component");
 	setGeometry(QRect(
@@ -535,6 +535,7 @@ shader_component_invoker::shader_component_invoker(
 	component_invoker(in_parent),
 	shader_layout_instance(in_shader_layout)
 {
+	comp_type = COMPONENT_TYPE_SHADER;
 	//构建组件
 	setObjectName("shader_component");
 	setGeometry(QRect(pipeline_w_mouse_position_x, pipeline_w_mouse_position_y, 120, 51));

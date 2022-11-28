@@ -81,6 +81,8 @@ public:
 
 	cpu_mesh* create_viewport_mesh();
 
+	cpu_mesh* create_mesh_from_fbx(std::wstring path);
+
 	s_pass* create_pass();
 
 	template<class t_cpu_resource>

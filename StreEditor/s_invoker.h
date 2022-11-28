@@ -27,6 +27,16 @@ class mesh_component_invoker;
 class pass_component_invoker;
 class shader_component_invoker;
 
+enum COMPONENT_TYPE
+{
+	COMPONENT_TYPE_MESH,
+	COMPONENT_TYPE_SHADER,
+	COMPONENT_TYPE_TEXTURE_GROUP,
+	COMPONENT_TYPE_TEXTURE,
+	COMPONENT_TYPE_PASS,
+	COMPONENT_TYPE_NONE
+};
+
 struct connect_data
 {
 	connect_port* port1 = nullptr;
@@ -103,6 +113,7 @@ private:
 class component_invoker : public QGroupBox
 {
 public:
+	COMPONENT_TYPE comp_type = COMPONENT_TYPE_NONE;
 	component_invoker(QWidget* in_parent);
 protected:
 	component_invoker() {  };
@@ -165,15 +176,11 @@ public:
 protected:
 	mesh_component_invoker() = delete;
 
-	
-
-	
-
 private:
 	virtual void keyPressEvent(QKeyEvent* in_event);
 };
 
-class texture_element_invoker : public QWidget
+class texture_element_invoker : public component_invoker
 {
 public:
 

@@ -11,6 +11,7 @@ public:
 };
 
 
+
 class s_create_texture_group_command : public s_command
 {
 public:
@@ -23,6 +24,19 @@ class s_create_mesh_command : public s_command
 public:
 	virtual void execute() override;
 };
+
+class s_change_mesh_data_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+
+class s_switch_property_widget_command : public s_command 
+{
+public:
+	virtual void execute() override;
+};
+
 
 class s_create_pass_command : public s_command
 {

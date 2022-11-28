@@ -61,7 +61,7 @@ cpu_texture* stre_engine::create_texture(gpu_shader_resource::SHADER_RESOURCE_TY
 cpu_mesh* stre_engine::create_viewport_mesh()
 {
 	auto mesh_ptr = mesh_manager->create_resource();
-
+	mesh_ptr->is_view_mesh = true;
 	mesh_ptr->vertex_ptr = vertex_manager->create_resource(4);
 	mesh_ptr->index_ptr = index_manager->create_resource(6);
 	set_screen_vertex_index(mesh_ptr);
@@ -69,6 +69,11 @@ cpu_mesh* stre_engine::create_viewport_mesh()
 	mesh_manager->dx_allocate_gpu_resource(mesh_ptr);
 	mesh_manager->update_gpu(mesh_ptr);
 	return mesh_ptr;
+}
+
+cpu_mesh* stre_engine::create_mesh_from_fbx(std::wstring path)
+{
+	return mesh_manager->load_fbx(path.c_str());
 }
 
 s_pass* stre_engine::create_pass()
@@ -143,4 +148,5 @@ void set_screen_vertex_index(cpu_mesh* in_cpu_mesh)
 	debug_index_ptr[5] = 3;
 
 	in_cpu_mesh->mesh_element_index_count.push_back(6);
+	
 }

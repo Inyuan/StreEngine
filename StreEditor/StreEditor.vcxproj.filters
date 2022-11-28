@@ -52,6 +52,9 @@
     <ClCompile Include="concrete_command.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="property_widget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="s_command.h">

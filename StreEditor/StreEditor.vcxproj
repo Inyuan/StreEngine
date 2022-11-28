@@ -99,6 +99,7 @@ copy libfbxsdk.dll $(TargetPath)\..</Command>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="property_widget.cpp" />
     <ClCompile Include="stre_engine.cpp" />
     <ClCompile Include="concrete_command.cpp" />
     <ClCompile Include="s_invoker.cpp" />

@@ -190,13 +190,13 @@ public:
 	virtual cpu_mesh* create_resource() override;
 
 	//??? È±¶ÁÈ¡×ÊÔ´
-	virtual cpu_mesh* load_resource(wchar_t* in_path) override;
+	virtual cpu_mesh* load_resource(const wchar_t* in_path) override;
 
 
 	virtual void update_gpu(cpu_mesh* in_cpu_data) override;
 
 
-	virtual cpu_mesh* load_fbx(wchar_t* in_path) override;
+	virtual cpu_mesh* load_fbx(const wchar_t* in_path) override;
 
 	virtual void dx_allocate_gpu_resource(cpu_mesh* in_cpu_data) override;
 };
