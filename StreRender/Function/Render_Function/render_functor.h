@@ -3,7 +3,7 @@
 #include <functional>
 #include "stre_render_api.h"
 
-typedef std::function<void(s_directx_render* in_render)>
+typedef std::function<bool(s_directx_render* in_render)>
 dx_function;
 
 

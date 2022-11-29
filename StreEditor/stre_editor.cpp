@@ -20,6 +20,9 @@ stre_editor::stre_editor(QWidget *parent)
     information_window_instance->setObjectName("information_widget");
     information_window_instance->setGeometry(QRect(1100, 270, 321, 481));
 
+    debug_output_window_instance = new debug_text_invoker(this);
+
+    s_switch_property_widget_command().execute();
     
     view_port_instance->repaint();
 }

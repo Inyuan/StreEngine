@@ -47,14 +47,14 @@ void render_system<t_render>::draw_pass(s_pass* in_pass)
 
 //遍历所有刷新数
 
-void render_system<directx_render>::update_gpu_memory()
+bool render_system<directx_render>::update_gpu_memory()
 {
-
+	bool execute_successed = true;
 	while (!dx_pass_command.command_queue.empty())
 	{
 		auto& update_function = dx_pass_command.command_queue.front();
 		//执行刷新函数
-		update_function.operator()(renderer);
+		execute_successed &= update_function.operator()(renderer);
 
 		dx_pass_command.command_queue.pop();
 	}
@@ -64,11 +64,11 @@ void render_system<directx_render>::update_gpu_memory()
 	{
 		auto& update_function = dx_shader_resource_command.command_queue.front();
 		//执行刷新函数
-		update_function.operator()(renderer);
+		execute_successed &= update_function.operator()(renderer);
 
 		dx_shader_resource_command.command_queue.pop();
 	}
-
+	return execute_successed;
 }
 
 void render_system<directx_render>::init_in_HWND(HWND in_HWND, UINT in_width, UINT in_height)

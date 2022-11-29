@@ -14,9 +14,9 @@ void stre_engine::render_system_init(
 }
 
 //多线程的这个位置要等
-void stre_engine::update_gpu_memory()
+bool stre_engine::update_gpu_memory()
 {
-	render_system_instance->update_gpu_memory();
+	return render_system_instance->update_gpu_memory();
 }
 
 void stre_engine::draw_pass(s_pass* in_pass)
@@ -35,11 +35,7 @@ void stre_engine::execute_command()
 
 bool stre_engine::allocate_pass(s_pass* in_out_pass)
 {
-
-	update_gpu_memory();
 	pass_fy->dx_allocate_gpu_pass(in_out_pass);
-	update_gpu_memory();
-
 	return true;
 }
 
@@ -84,19 +80,16 @@ s_pass* stre_engine::create_pass()
 
 bool stre_engine::pass_add_render_target(s_pass* in_out_pass, cpu_texture* in_texture)
 {
-	update_gpu_memory();//多线程的这个位置要等
 	return pass_fy->add_render_target(in_out_pass, in_texture);
 }
 
 bool stre_engine::pass_add_mesh(s_pass* in_out_pass, cpu_mesh* in_mesh)
 {
-	update_gpu_memory();//多线程的这个位置要等
 	return pass_fy->add_mesh(in_out_pass, in_mesh);
 }
 
 bool stre_engine::pass_set_shader_layout(s_pass* in_out_pass, shader_layout& in_shader_layout)
 {
-	update_gpu_memory();//多线程的这个位置要等
 	return pass_fy->set_shader_layout(in_out_pass, in_shader_layout);
 }
 
@@ -116,7 +109,6 @@ bool stre_engine::pass_remove_shader_layout(s_pass* in_out_pass)
 
 void stre_engine::package_textures(std::vector<cpu_texture*> in_textures, cpu_texture* in_out_package_container)
 {
-	update_gpu_memory();//多线程的这个位置要等
 	texture_manager->package_textures(in_textures,in_out_package_container);
 }
 

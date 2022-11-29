@@ -48,6 +48,8 @@ class s_connect_resource_command : public s_command
 {
 public:
 	virtual void execute() override;
+private:
+	int try_time = 0; //µÝ¹é´ÎÊý
 };
 
 class s_reconnect_resource_command : public s_command
@@ -57,6 +59,26 @@ public:
 };
 
 class s_create_shader_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+
+/***
+************************************************************
+*
+* Draw Function
+*
+************************************************************
+*/
+
+class s_update_gpu_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+
+class s_debug_output_refresh_command : public s_command
 {
 public:
 	virtual void execute() override;

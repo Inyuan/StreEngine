@@ -3,6 +3,7 @@
 #include <QtWidgets/QGroupBox>
 #include <QtWidgets/QRadioButton>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QTextEdit>
 #include <QSpacerItem>
 #include <QPushButton>
 #include <QLayout>
@@ -59,6 +60,40 @@ struct connect_data
 	}
 };
 
+//1.0
+//连接时检查
+//插入到树的表中
+//有相连时，接入到pass节点中，记录最远的位置level，刷新自己在树表的位置
+//断连时，删除front的对应,刷新level 按照level插回到树表中,
+//删除时，删除树表的节点，并刷新后面的所有节点
+//执行时按照level执行
+// 2.0
+// //pass 和 texture有互相对应的前后节点表
+// //新建pass时加入树表 level为0
+// //新连接pass输出到texture输入时,BFS遍历所有后面的pass节点刷新level
+// //新连接texture输出到pass输入时,BFS遍历所有后面的pass节点刷新level
+// //删除pass输出到texture输入时,BFS遍历所有后面的pass节点刷新level
+// //删除texture输出到pass输入时,BFS遍历所有后面的pass节点刷新level
+//3.0
+//遇到 连接 删除 设置input output时 重构level_map
+// level_map归零
+// 从start pass开始往后遍历
+// output pass最后再画
+// 4.0
+// 用户自己控制level
+//struct pass_node
+//{
+//public:
+//	pass_node(pass_component_invoker* in_pass_comp_ptr) :pass_comp_ptr(in_pass_comp_ptr) {};
+//	pass_node() = delete;
+//	pass_node(const pass_node&) = delete;
+//
+//	
+//	pass_component_invoker* pass_comp_ptr = nullptr;
+//	list<pass_node*> front_passes;
+//	list<pass_node*> next_passes;
+//};
+
 class pipeline_window_invoker : public QWidget
 {
 public:
@@ -67,6 +102,13 @@ public:
 	map<string, pass_component_invoker*> pass_comp_group;
 	map<string, mesh_component_invoker*> mesh_comp_group;
 	map<string,shader_component_invoker*> shader_comp_group;
+	
+	//树表
+	std::set<pass_component_invoker*> running_pass_comp;
+	
+	//-1为output
+	//0为start
+	std::map<int,set<pass_component_invoker*>> pass_comp_level_map;
 
 	list<connect_data*> connect_curve_group;
 
@@ -135,6 +177,8 @@ public:
 		//QT会自己释放子组件， 无需在析构中手动释放子组件
 		if (pass_instance) delete(pass_instance);
 		pass_instance = nullptr;
+		//if (pass_tree_node) delete(pass_tree_node);
+		//pass_tree_node = nullptr;
 	}
 
 
@@ -142,6 +186,10 @@ public:
 
 	void update_res_port(vector<connect_port*>& in_res_port_group);
 
+	int level = 0;
+	set<texture_component_invoker*> input_texture_comp_group;
+	set<texture_component_invoker*> output_texture_comp_group;
+	//pass_node* pass_tree_node = nullptr;
 
 	vector<connect_port*> input_res_port_group;
 	connect_port* mesh_port = nullptr;
@@ -196,12 +244,13 @@ public:
 	}
 
 	cpu_texture* texture_instance = nullptr;
-
+	connect_port* output_port = nullptr;
 protected:
 	
 	QLabel* texture_name = nullptr;
-	connect_port* input_port = nullptr;
-	connect_port* output_port = nullptr;
+	//单张贴图的输入依靠贴图组
+	//connect_port* input_port = nullptr;
+	
 
 private:
 	virtual void keyPressEvent(QKeyEvent* in_event);
@@ -238,6 +287,12 @@ private:
 public:
 
 	vector<texture_element_invoker*> textures_group;
+	
+	//连接时添加
+	//断开时删除
+	set<pass_component_invoker*> input_pass_comp_group;
+	set<pass_component_invoker*> output_pass_comp_group;
+
 	cpu_texture* texture_instance = nullptr;
 
 
@@ -395,4 +450,13 @@ private:
 	virtual void paintEvent(QPaintEvent*);
 
 	s_command* draw_cmd = nullptr;
+};
+
+
+
+class debug_text_invoker : public QTextEdit
+{
+public:
+	debug_text_invoker(QWidget * in_parent);
+
 };

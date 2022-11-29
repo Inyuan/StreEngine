@@ -1,5 +1,6 @@
 #pragma once
 #include <Windows.h>
+#include <list>
 #include "stre_configuration.h"
 #include "cpu_resource.h"
 #include "gpu_resource.h"
@@ -22,8 +23,11 @@ public:
 
 	virtual void draw_pass(s_pass* in_pass) = 0;
 
-	//遍历所有刷新数
-	virtual void update_gpu_memory() = 0;
+	/// <summary>
+	/// //遍历所有刷新函数
+	/// </summary>
+	/// <returns>false代表有错误需要去获取exception</returns>
+	virtual bool update_gpu_memory() = 0;
 
 	virtual void execute_command() = 0;
 
@@ -227,6 +231,21 @@ public:
 	bool set_shader_layout(s_pass* in_out_pass, const shader_layout in_shade_layout);
 
 	bool remove_shader_layout(s_pass* in_out_pass);
+};
+
+
+/***
+************************************************************
+*
+* Exception
+*
+************************************************************
+*/
+
+namespace stre_exception
+{
+	static std::list<std::string> exception_output_str_group;
+	static int fence; //字符串数组上一次获取的位置
 };
 
 

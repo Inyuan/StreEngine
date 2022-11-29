@@ -15,6 +15,7 @@ int pipeline_w_mouse_position_x = 0;
 int pipeline_w_mouse_position_y = 0;
 
 pipeline_window_invoker* pipeline_window_widget_ptr = nullptr;
+debug_text_invoker* debug_text_ptr = nullptr;
 texture_component_invoker* texture_component_add_texture_ptr = nullptr;
 
 connect_port* select_connect_port[2] = { nullptr };
@@ -138,7 +139,9 @@ void component_invoker::mousePressEvent(QMouseEvent* in_event)
 
 	//	}
 	//}
-	return QWidget::mousePressEvent(in_event);
+	
+	// 不许沿父节点往上传递点击事件
+	//return QWidget::mousePressEvent(in_event);
 }
 
 /// <summary>
@@ -250,6 +253,7 @@ pass_component_invoker::pass_component_invoker(
 	component_invoker(in_parent),
 	pass_instance(in_pass_ptr)
 {
+	//pass_tree_node = new pass_node(this);
 	comp_type = COMPONENT_TYPE_PASS;
 	//构建组件
 	setObjectName("pass_component");
@@ -268,7 +272,7 @@ pass_component_invoker::pass_component_invoker(
 		this, 
 		port_information(
 			port_information::PASS_MESH_INPUT, 
-			pass_instance));
+			this));
 	mesh_port->setObjectName("pass_mesh_port");
 	mesh_port->setGeometry(QRect(10, 80, 95, 20));
 	mesh_port->setAutoExclusive(false);
@@ -277,7 +281,7 @@ pass_component_invoker::pass_component_invoker(
 		this,
 		port_information(
 			port_information::PASS_SHADER_INPUT,
-			pass_instance));
+			this));
 	shader_port->setObjectName("pass_shade_port");
 	shader_port->setGeometry(QRect(10, 100, 95, 20));
 	shader_port->setAutoExclusive(false);
@@ -286,7 +290,7 @@ pass_component_invoker::pass_component_invoker(
 		this,
 		port_information(
 			port_information::PASS_OUTPUT,
-			pass_instance));
+			this));
 	output_port->setObjectName("pass_output_port");
 	output_port->setGeometry(QRect(144, 100, 61, 20));
 	output_port->setLayoutDirection(Qt::RightToLeft);
@@ -341,14 +345,15 @@ texture_element_invoker::texture_element_invoker(
 	texture_name->setGeometry(QRect(0, 0, 121, 16));
 
 	//构建端口
-	input_port = new connect_port(this, port_information(port_information::TEXTURE_INPUT, texture_instance));
-	input_port->setObjectName("texture_input_port");
-	input_port->setGeometry(QRect(0, 20, 51, 20));
-	input_port->setLayoutDirection(Qt::LeftToRight);
-	input_port->setAutoExclusive(false);
-	input_port->setText(QCoreApplication::translate("stre_editorClass", "input", nullptr));
+	// //单张贴图的输入依靠贴图组
+	//input_port = new connect_port(this, port_information(port_information::TEXTURE_INPUT, texture_instance));
+	//input_port->setObjectName("texture_input_port");
+	//input_port->setGeometry(QRect(0, 20, 51, 20));
+	//input_port->setLayoutDirection(Qt::LeftToRight);
+	//input_port->setAutoExclusive(false);
+	//input_port->setText(QCoreApplication::translate("stre_editorClass", "input", nullptr));
 
-	output_port = new connect_port(this, port_information(port_information::TEXTURE_OUTPUT, texture_instance));
+	output_port = new connect_port(this, port_information(port_information::TEXTURE_OUTPUT, this));
 	output_port->setObjectName("texture_output_port");
 	output_port->setGeometry(QRect(60, 20, 61, 20));
 	output_port->setLayoutDirection(Qt::RightToLeft);
@@ -470,6 +475,18 @@ void texture_component_invoker::remove_element(cpu_texture* in_texture_ptr)
 	{
 		if (textures_group[i]->texture_instance->uid.name == in_texture_ptr->uid.name)
 		{
+			//断开端口
+			disconnect_port = textures_group[i]->output_port;
+			s_disconnect_resource_command().execute();
+			//断不了就不许删
+			if (!disconnect_success)
+			{
+				//!!!出问题了
+				return;
+			}
+
+			disconnect_port = nullptr;
+
 			textures_group[i]->deleteLater();
 			textures_group.erase(textures_group.begin()+i);
 			break;
@@ -690,7 +707,7 @@ view_port_invoker::view_port_invoker(QWidget* in_parent):QWidget(in_parent)
 	draw_cmd = new s_draw_command();
 
 	setObjectName("rendering_view_widget");
-	setGeometry(QRect(1080, 10, 341, 281));
+	setGeometry(QRect(1100, 10, 311, 241));
 }
 
 /// <summary>
@@ -701,3 +718,12 @@ void view_port_invoker::paintEvent(QPaintEvent* in_event)
 {
 	draw_cmd->execute();
 }
+
+
+debug_text_invoker::debug_text_invoker(QWidget* in_parent) : QTextEdit(in_parent)
+{
+	debug_text_ptr = this;
+	setObjectName("debug_text_edit");
+	setGeometry(QRect(540, 520, 551, 231));
+}
+

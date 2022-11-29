@@ -69,7 +69,7 @@ public:
 
 	void render_system_init(HWND in_HWND, UINT in_width, UINT in_height);
 
-	void update_gpu_memory();
+	bool update_gpu_memory();
 
 	void draw_pass(s_pass* in_pass);
 

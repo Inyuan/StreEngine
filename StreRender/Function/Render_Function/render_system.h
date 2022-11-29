@@ -33,7 +33,7 @@ public:
 	virtual void draw_pass(s_pass* in_pass) override;
 
 	//遍历所有刷新数
-	virtual void update_gpu_memory() override;
+	virtual bool update_gpu_memory() override;
 
 	virtual void execute_command() override;
 

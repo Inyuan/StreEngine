@@ -57,7 +57,7 @@ void load_rootparpameter(
 	}
 }
 
-void directx_render::create_rootsignature(gpu_pass* in_gpu_pass)
+bool directx_render::create_rootsignature(gpu_pass* in_gpu_pass)
 {
 	//DEBUG
 
@@ -146,9 +146,11 @@ void directx_render::create_rootsignature(gpu_pass* in_gpu_pass)
 	create_rootsignature(
 		rootsig_desc,
 		static_cast<directx_pass*>(in_gpu_pass)->rootsignature);
+
+	return true;
 }
 
-void directx_render::create_pso(
+bool directx_render::create_pso(
 	shader_layout& in_shader_layout,
 	gpu_pass* in_gpu_pass)
 {
@@ -234,9 +236,10 @@ void directx_render::create_pso(
 			PsoDesc,
 			pass->pso);
 	}
+	return true;
 }
 
-void directx_render::complie_shader(
+bool directx_render::complie_shader(
 	shader_layout& in_shader_layout,
 	gpu_pass* in_gpu_pass)
 {
@@ -244,41 +247,68 @@ void directx_render::complie_shader(
 	typedef shader_layout::shader_input::INPUT_ELEMENT_SIZE INPUT_ELEMENT_SIZE;
 	auto& shader_layout = in_shader_layout;
 	auto pass = static_cast<directx_pass*>(in_gpu_pass);
+	bool execute_result = true;
+
+	if (!in_gpu_pass)
+	{
+		//!!!出问题了
+		stre_exception::exception_output_str_group.push_back("directx_render::complie_shader in_gpu_pass is nullptr");
+		return false;
+	}
+
+	//检查着色器输入是否正确
+	bool valable = false;
+	for (auto it : shader_layout.shader_vaild)
+	{
+		valable |= it;
+	}
+	if (!valable)
+	{
+		//!!!出问题了
+		stre_exception::exception_output_str_group.push_back("directx_render::complie_shader none of Shader Function is valuable");
+		return false;
+	}
+
 
 	if (in_shader_layout.shader_vaild[SHADER_TYPE::VS])
 	{
 		pass->shader_group[std::string(pass->uid.name) + "VS"]
 			= complie_shader(
 				shader_layout.shader_path[SHADER_TYPE::VS],
-				nullptr, "VS", "vs_5_1");
+				nullptr, "VS", "vs_5_1", execute_result);
+		if (!execute_result) return execute_result;
 	}
 	if (in_shader_layout.shader_vaild[SHADER_TYPE::DS])
 	{
 		pass->shader_group[std::string(pass->uid.name) + "DS"]
 			= complie_shader(
 				shader_layout.shader_path[SHADER_TYPE::DS],
-				nullptr, "DS", "ds_5_1");
+				nullptr, "DS", "ds_5_1", execute_result);
+		if (!execute_result) return execute_result;
 	}
 	if (in_shader_layout.shader_vaild[SHADER_TYPE::HS])
 	{
 		pass->shader_group[std::string(pass->uid.name) + "HS"]
 			= complie_shader(
 				shader_layout.shader_path[SHADER_TYPE::HS],
-				nullptr, "HS", "hs_5_1");
+				nullptr, "HS", "hs_5_1", execute_result);
+		if (!execute_result) return execute_result;
 	}
 	if (in_shader_layout.shader_vaild[SHADER_TYPE::GS])
 	{
 		pass->shader_group[std::string(pass->uid.name) + "GS"]
 			= complie_shader(
 				shader_layout.shader_path[SHADER_TYPE::GS],
-				nullptr, "GS", "gs_5_1");
+				nullptr, "GS", "gs_5_1", execute_result);
+		if (!execute_result) return execute_result;
 	}
 	if (in_shader_layout.shader_vaild[SHADER_TYPE::PS])
 	{
 		pass->shader_group[std::string(pass->uid.name) + "PS"]
 			= complie_shader(
 				shader_layout.shader_path[SHADER_TYPE::PS],
-				nullptr, "PS", "ps_5_1");
+				nullptr, "PS", "ps_5_1", execute_result);
+		if (!execute_result) return execute_result;
 	}
 
 	UINT elem_size_offset = 0;
@@ -323,6 +353,7 @@ void directx_render::complie_shader(
 		reflect_shader(it.second, pass->pass_res_group);
 	}
 
+	return execute_result;
 }
 
 /***
@@ -470,7 +501,7 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	return nullptr;
 }
 
-void directx_render::allocate_default_resource(
+bool directx_render::allocate_default_resource(
 	std::shared_ptr<gpu_shader_resource> in_res,
 	UINT in_elem_size,
 	UINT in_number,
@@ -541,10 +572,11 @@ void directx_render::allocate_default_resource(
 		// the command list has not been executed yet that performs the actual copy.
 		// The caller can Release the uploadBuffer after it knows the copy has been executed.
 	}
+	return true;
 }
 
 //只有自定义能用
-void directx_render::allocate_upload_resource(
+bool directx_render::allocate_upload_resource(
 	std::shared_ptr<gpu_shader_resource> in_res,
 	UINT in_elem_size,
 	UINT in_number)
@@ -575,6 +607,7 @@ void directx_render::allocate_upload_resource(
 		ThrowIfFailed(in_res_elem->dx_resource->Map(0, nullptr, reinterpret_cast<void**>(&(in_res_elem->mapped_data))));
 
 	}
+	return true;
 }
 
 
@@ -586,7 +619,7 @@ void directx_render::allocate_upload_resource(
 /// <param name="in_data">数据块</param>
 /// <param name="in_update_element_index">刷新元素起始位置</param>
 /// <param name="int_update_element_count">刷新元素个数</param>
-void directx_render::update_gpu_resource(
+bool directx_render::update_gpu_resource(
 	std::shared_ptr<gpu_shader_resource> in_out_gpu_res,
 	const void* in_data, 
 	UINT in_update_element_index,
@@ -597,7 +630,8 @@ void directx_render::update_gpu_resource(
 		&& in_out_gpu_res->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP
 		&& in_out_gpu_res->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH)
 	{
-		return;
+		stre_exception::exception_output_str_group.push_back("update_gpu_resource in_out_gpu_res->shader_resource_type is not suitable");
+		return false;
 	}
 	std::shared_ptr<directx_frame_resource> frame_res = std::static_pointer_cast<directx_frame_resource>(in_out_gpu_res);
 
@@ -627,18 +661,21 @@ void directx_render::update_gpu_resource(
 		memcpy(&(gpu_res->mapped_data[in_update_element_index]), in_data, in_out_gpu_res->element_size * int_update_element_count);
 
 	}
+	return true;
 }
 
 
 
 //注意 渲染目标 和 贴图 深度图等的匹配
-void directx_render::package_textures(
+bool directx_render::package_textures(
 	std::vector<std::shared_ptr<gpu_shader_resource>>& in_texture_group,
 	std::shared_ptr<gpu_shader_resource> in_out_table)
 {
 	if (in_texture_group.empty() || !in_out_table.get())
 	{
-		return;
+		//!!!出问题了
+		stre_exception::exception_output_str_group.push_back("package_textures in_texture_group is empty or in_out_table is nullptr");
+		return false;
 	}
 
 	auto texture_res = std::static_pointer_cast<directx_texture_resource>(in_out_table);
@@ -750,7 +787,7 @@ void directx_render::package_textures(
 	}
 	break;
 	}
-
+	return true;
 }
 
 
@@ -1411,7 +1448,8 @@ ID3DBlob* directx_render::complie_shader(
 	const std::wstring& file_name,
 	const D3D_SHADER_MACRO* defines,
 	const std::string& entry_point,
-	const std::string& target)
+	const std::string& target,
+	bool & out_successed)
 {
 	UINT compileFlags = 0;
 
@@ -1426,8 +1464,13 @@ ID3DBlob* directx_render::complie_shader(
 		entry_point.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
 
 	if (errors != nullptr)
+	{
 		OutputDebugStringA((char*)errors->GetBufferPointer());
-	ThrowIfFailed(hr);
+		out_successed = false;
+		stre_exception::exception_output_str_group.push_back((char*)errors->GetBufferPointer());
+	}
+	//不再动态报错，而是输出到消息列表
+	//ThrowIfFailed(hr);
 
 	return byteCode;
 }

@@ -25,5 +25,5 @@ private:
 
     property_tab_widget* information_window_instance = nullptr;
 
-    
+    debug_text_invoker* debug_output_window_instance = nullptr;
 };

@@ -26,33 +26,27 @@ bool pass_factory::check_pass(s_pass* in_out_pass)
 {
 	if (!in_out_pass)
 	{
+		//!!!出问题了
+		stre_exception::exception_output_str_group.push_back("pass_factory::check_pass pass is nullptr");
 		return false;
 	}
 	
 	if (!in_out_pass->gpu_pass_ptr)
 	{
+		//!!!出问题了
+		stre_exception::exception_output_str_group.push_back("pass_factory::check_pass gpu_pass_ptr is nullptr");
 		return false;
 	}
 
-	//检查着色器输入是否正确
-	bool valable = false;
-	for (auto it : in_out_pass->gpu_shader_layout.shader_vaild)
-	{
-		valable |= it;
-	}
-	if (!valable)
-	{
-		return false;
-	}
-	
 	return true;
 
 }
 
 void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 {
-	dx_function pass_functor = [in_out_pass](s_directx_render* in_render)
+	dx_function pass_functor = [in_out_pass](s_directx_render* in_render)->bool
 	{
+		bool execute_successed = true;
 		//删除旧的pass资源
 		if (in_out_pass->gpu_pass_ptr)
 		{
@@ -64,15 +58,24 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 
 		if (!pass_factory().check_pass(in_out_pass))
 		{
-			return;
+			//!!!出问题了！
+			return false;
 		}
 
-		//应该能弹出错误，但不影响程序继续运行
+		//能弹出错误，但不影响程序继续运行
 		//先编译着色器，获得反射数据
-		in_render->complie_shader(in_out_pass->gpu_shader_layout, in_out_pass->gpu_pass_ptr);
+		if (!in_render->complie_shader(in_out_pass->gpu_shader_layout, in_out_pass->gpu_pass_ptr))
+		{
+			//!!!出问题了！
+			return false;
+		}
 
 		//根签名
-		in_render->create_rootsignature(in_out_pass->gpu_pass_ptr);
+		if (!in_render->create_rootsignature(in_out_pass->gpu_pass_ptr))
+		{
+			//!!!出问题了！
+			return false;
+		}
 
 		//着色器输入布局 +  PSO构建
 		{
@@ -91,9 +94,13 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 			in_out_pass->gpu_pass_ptr->is_depth_check = in_out_pass->is_depth_check;
 			in_out_pass->gpu_pass_ptr->is_output = in_out_pass->is_output;
 			in_out_pass->gpu_pass_ptr->rt_number = rt_number;
-			in_render->create_pso(
+			if (!in_render->create_pso(
 				in_out_pass->gpu_shader_layout,
-				in_out_pass->gpu_pass_ptr);
+				in_out_pass->gpu_pass_ptr))
+			{
+				//!!!出问题了！
+				return false;
+			}
 		}
 
 	};
@@ -193,7 +200,13 @@ bool pass_factory::add_shader_resource<cpu_light>(s_pass* in_out_pass, const cpu
 
 bool pass_factory::add_render_target(s_pass* in_out_pass, const cpu_texture* in_gpu_rt)
 {
-	if (in_gpu_rt->gpu_sr_ptr->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP
+	if (!in_out_pass)
+	{
+		//!!!出问题了！
+		return false;
+	}
+	if (!in_gpu_rt->gpu_sr_ptr.get() 
+		&& in_gpu_rt->gpu_sr_ptr->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP
 		&& in_gpu_rt->gpu_sr_ptr->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP)
 	{
 		return false;

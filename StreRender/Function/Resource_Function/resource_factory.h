@@ -37,11 +37,11 @@ struct custom_manager :public s_custom_manager<t_cpu_res_type>
 	virtual void update_gpu(t_cpu_res_type* in_cpu_data) override
 	{
 
-		dx_function sr_functor = [in_cpu_data](s_directx_render* in_render)
+		dx_function sr_functor = [in_cpu_data](s_directx_render* in_render)->bool
 		{
 			std::shared_ptr<gpu_shader_resource> sr_ptr = in_cpu_data->gpu_sr_ptr;
 
-			in_render->update_gpu_resource(sr_ptr, in_cpu_data->get_data(), 0, sr_ptr->element_count);
+			return in_render->update_gpu_resource(sr_ptr, in_cpu_data->get_data(), 0, sr_ptr->element_count);
 		};
 		dx_shader_resource_command.command_queue.push(sr_functor);
 
@@ -50,8 +50,11 @@ struct custom_manager :public s_custom_manager<t_cpu_res_type>
 	virtual void dx_allocate_gpu_resource(t_cpu_res_type* in_cpu_data,
 		gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type) override
 	{
-		dx_function sr_functor = [in_cpu_data, in_sr_type](s_directx_render* in_render)
+		dx_function sr_functor = [in_cpu_data, in_sr_type](s_directx_render* in_render)->bool
 		{
+			bool execute_successed = true;
+			//共享指针自动释放 所以没有delete
+			
 			//构建描述符
 			in_cpu_data->gpu_sr_ptr = in_render->allocate_shader_resource(in_sr_type);
 			
@@ -64,7 +67,7 @@ struct custom_manager :public s_custom_manager<t_cpu_res_type>
 				//构建内存
 				if (in_cpu_data->can_update)
 				{
-					in_render->allocate_default_resource(
+					execute_successed &= in_render->allocate_default_resource(
 						in_cpu_data->gpu_sr_ptr,
 						in_cpu_data->get_element_size(),
 						in_cpu_data->get_element_count(),
@@ -72,7 +75,7 @@ struct custom_manager :public s_custom_manager<t_cpu_res_type>
 				}
 				else
 				{
-					in_render->allocate_upload_resource(
+					execute_successed &= in_render->allocate_upload_resource(
 						in_cpu_data->gpu_sr_ptr,
 						in_cpu_data->get_element_size(),
 						in_cpu_data->get_element_count());
@@ -81,7 +84,7 @@ struct custom_manager :public s_custom_manager<t_cpu_res_type>
 				break;
 			}
 			
-
+			return execute_successed;
 		};
 
 		dx_shader_resource_command.command_queue.push(sr_functor);
@@ -163,12 +166,7 @@ public:
 		std::vector<cpu_texture*> in_texture_group,
 		cpu_texture* in_out_table) override
 	{
-		if (in_texture_group.empty())
-		{
-			return;
-		}
-
-		dx_function sr_functor = [in_texture_group, in_out_table](s_directx_render* in_render)
+		dx_function sr_functor = [in_texture_group, in_out_table](s_directx_render* in_render)->bool
 		{
 			std::vector<std::shared_ptr<gpu_shader_resource>> package_group;
 
@@ -177,7 +175,7 @@ public:
 				package_group.push_back(it->gpu_sr_ptr);
 			}
 
-			in_render->package_textures(package_group, in_out_table->gpu_sr_ptr);
+			return in_render->package_textures(package_group, in_out_table->gpu_sr_ptr);
 		};
 		dx_shader_resource_command.command_queue.push(sr_functor);
 	}

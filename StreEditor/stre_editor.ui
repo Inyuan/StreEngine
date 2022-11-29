@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1413</width>
+    <width>1417</width>
     <height>811</height>
    </rect>
   </property>
@@ -15,6 +15,9 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QWidget" name="pipeline_blue_print_widget" native="true">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>540</x>
@@ -329,13 +332,23 @@
      </rect>
     </property>
    </widget>
+   <widget class="QTextEdit" name="debug_text_edit">
+    <property name="geometry">
+     <rect>
+      <x>540</x>
+      <y>520</y>
+      <width>551</width>
+      <height>231</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1413</width>
+     <width>1417</width>
      <height>22</height>
     </rect>
    </property>

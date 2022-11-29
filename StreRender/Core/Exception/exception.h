@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <string>
 #include <comdef.h>
-
+#include <list>
 inline std::wstring AnsiToWString(const std::string& str)
 {
     WCHAR buffer[512];

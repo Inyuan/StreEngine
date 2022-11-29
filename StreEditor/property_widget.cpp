@@ -20,9 +20,11 @@ texture_property_widget* current_texture_property_widget = nullptr;
 texture_group_property_widget* current_texture_group_property_widget = nullptr;
 pass_property_widget* current_pass_property_widget = nullptr;
 
+bool had_output_pass = false;
+
 extern component_invoker* current_component_ptr;
-
-
+extern pipeline_window_invoker* pipeline_window_widget_ptr;
+extern const int pass_max_level;
 
 property_tab_widget::property_tab_widget(QWidget* in_parent) :QTabWidget(in_parent)
 {
@@ -39,7 +41,7 @@ property_tab_widget::property_tab_widget(QWidget* in_parent) :QTabWidget(in_pare
     addTab(mesh_property_window_instance, "mesh property");
     addTab(shader_property_window_instance, "shader property");
     addTab(texture_property_window_instance, "texture property");
-    addTab(texture_property_window_instance, "texture group property");
+    addTab(texture_group_property_window_instance, "texture group property");
     addTab(pass_property_window_instance, "pass property");
 }
 
@@ -163,22 +165,27 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
     vs_check_box = new QCheckBox(this);
     vs_check_box->setObjectName("vs_check_box");
     vs_check_box->setGeometry(QRect(20, 90, 100, 31));
+    vs_check_box->setText("VS");
 
     ds_check_box = new QCheckBox(this);
     ds_check_box->setObjectName("ds_check_box");
     ds_check_box->setGeometry(QRect(20, 120, 100, 31));
+    ds_check_box->setText("DS");
 
     hs_check_box = new QCheckBox(this);
     hs_check_box->setObjectName("hs_check_box");
     hs_check_box->setGeometry(QRect(20, 150, 100, 31));
+    hs_check_box->setText("HS");
 
     gs_check_box = new QCheckBox(this);
     gs_check_box->setObjectName("gs_check_box");
     gs_check_box->setGeometry(QRect(20, 180, 100, 31));
+    gs_check_box->setText("GS");
 
     ps_check_box = new QCheckBox(this);
     ps_check_box->setObjectName("ps_check_box");
     ps_check_box->setGeometry(QRect(20, 210, 100, 31));
+    ps_check_box->setText("PS");
 
     connect(vs_check_box, &QCheckBox::clicked, this,
         [&]() 
@@ -363,7 +370,73 @@ pass_property_widget::pass_property_widget(QTabWidget* in_parent_tab_widget)
     current_pass_property_widget = this;
     setObjectName("pass_property_tab");
 
+    //ÀàÐÍÑ¡Ôñ
+    pass_level_comcobox = new QComboBox(this);
+    pass_level_comcobox->setObjectName("pass_level_comcobox");
+    pass_level_comcobox->setGeometry(QRect(20, 30, 271, 22));
 
+    for (int i = 0; i < pass_max_level; i++)
+    {
+        pass_level_comcobox->addItem(QString::fromStdString(std::to_string(i)));
+    }
+    
+
+    connect(pass_level_comcobox, &QComboBox::currentIndexChanged, this, [&](int index)
+        {
+            if (current_component_ptr->comp_type == COMPONENT_TYPE_PASS)
+            {
+                auto pass_comp_ptr = static_cast<pass_component_invoker*>(current_component_ptr);
+                
+                pipeline_window_widget_ptr->pass_comp_level_map[pass_comp_ptr->level].erase(pass_comp_ptr);
+                pass_comp_ptr->level = index;
+                pipeline_window_widget_ptr->pass_comp_level_map[pass_comp_ptr->level].insert(pass_comp_ptr);
+            
+            }
+        }
+    );
+
+
+    is_output_check_box = new QCheckBox(this);
+    is_output_check_box->setObjectName("is_output_check_box");
+    is_output_check_box->setGeometry(QRect(20, 90, 100, 31));
+    is_output_check_box->setText("is output");
+    connect(is_output_check_box, &QCheckBox::clicked, this,
+        [&]()
+        {
+            if (current_component_ptr->comp_type == COMPONENT_TYPE_PASS)
+            {
+                auto pass_comp_ptr = static_cast<pass_component_invoker*>(current_component_ptr);
+                
+                pass_comp_ptr->pass_instance->is_output = is_output_check_box->isChecked();
+                had_output_pass = is_output_check_box->isChecked();
+            }
+
+        }
+    );
+
+    
+
+    //is_start_check_box = new QCheckBox(this);
+    //is_start_check_box->setObjectName("is_output_check_box");
+    //is_start_check_box->setGeometry(QRect(20, 210, 100, 31));
+    //is_start_check_box->setText("is start");
+    //connect(is_start_check_box, &QCheckBox::clicked, this,
+    //    [&]()
+    //    {
+    //        if (current_component_ptr->comp_type == COMPONENT_TYPE_PASS)
+    //        {
+    //            auto pass_comp_ptr = static_cast<pass_component_invoker*>(current_component_ptr);
+    //            if (is_start_check_box->isChecked())
+    //            {
+    //                pipeline_window_widget_ptr->pass_comp_level_map[0].insert(pass_comp_ptr);
+    //            }
+    //            else
+    //            {
+    //                pipeline_window_widget_ptr->pass_comp_level_map[0].erase(pass_comp_ptr);
+    //            }
+    //        }
+    //    }
+    //);
 }
 
 

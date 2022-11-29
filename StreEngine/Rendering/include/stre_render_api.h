@@ -21,19 +21,19 @@ public:
 	virtual std::shared_ptr<gpu_shader_resource> allocate_shader_resource(
 		gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type) = 0;
 
-	virtual void allocate_upload_resource(
+	virtual bool allocate_upload_resource(
 		std::shared_ptr<gpu_shader_resource> in_res_elem,
 		UINT in_elem_size,
 		UINT in_number) = 0;
 
-	virtual void allocate_default_resource(
+	virtual bool allocate_default_resource(
 		std::shared_ptr<gpu_shader_resource> in_res_elem,
 		UINT in_elem_size,
 		UINT in_number,
 		void* in_cpu_data) = 0;
 
 	//会自动释放原有贴图堆，重新分配
-	virtual void package_textures(
+	virtual bool package_textures(
 		std::vector<std::shared_ptr<gpu_shader_resource>>& in_texture_group,
 		std::shared_ptr<gpu_shader_resource> in_out_table) = 0;
 
@@ -41,16 +41,16 @@ public:
 	//	std::vector<CD3DX12_ROOT_PARAMETER>& in_out_root_parameter,
 	//	const gpu_shader_resource* in_gpu_sr) = 0;
 
-	virtual void create_rootsignature(gpu_pass* in_gpu_pass) = 0;
+	virtual bool create_rootsignature(gpu_pass* in_gpu_pass) = 0;
 
-	virtual void create_pso(
+	virtual bool create_pso(
 		shader_layout& in_shader_layout,
 		gpu_pass* in_gpu_pass) = 0;
 
 
 	//外部只提供路径
 	//自动反射提供输入接口和根签名参数
-	virtual void complie_shader(
+	virtual bool complie_shader(
 		shader_layout& in_shader_layout,
 		gpu_pass* in_gpu_pass) = 0;
 
@@ -62,7 +62,7 @@ public:
 	/// <param name="in_data">数据块</param>
 	/// <param name="in_update_element_index">刷新元素起始位置</param>
 	/// <param name="int_update_element_count">刷新元素个数</param>
-	virtual void update_gpu_resource(
+	virtual bool update_gpu_resource(
 		std::shared_ptr<gpu_shader_resource> in_out_gpu_res,
 		const void* in_data,
 		UINT in_update_element_index,

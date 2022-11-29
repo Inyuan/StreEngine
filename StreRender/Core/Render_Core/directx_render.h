@@ -197,24 +197,24 @@ public:
     virtual std::shared_ptr<gpu_shader_resource> allocate_shader_resource(
         gpu_shader_resource::SHADER_RESOURCE_TYPE in_shader_res_type) override;
 
-    virtual void update_gpu_resource(
+    virtual bool update_gpu_resource(
         std::shared_ptr<gpu_shader_resource> in_out_gpu_res,
         const void* in_data,
         UINT in_update_element_index,
         size_t int_update_element_count) override;
 
-    virtual void allocate_upload_resource(
+    virtual bool allocate_upload_resource(
         std::shared_ptr<gpu_shader_resource> in_res_elem,
         UINT in_elem_size,
         UINT in_number) override;
 
-    virtual void allocate_default_resource(
+    virtual bool allocate_default_resource(
         std::shared_ptr<gpu_shader_resource> in_res_elem,
         UINT in_elem_size,
         UINT in_number,
         void* in_cpu_data) override;
 
-    virtual void package_textures(
+    virtual bool package_textures(
         std::vector<std::shared_ptr<gpu_shader_resource>>& in_texture_group,
         std::shared_ptr<gpu_shader_resource> in_out_table) override;
 
@@ -222,13 +222,13 @@ public:
     //    std::vector<CD3DX12_ROOT_PARAMETER> & in_out_root_parameter,
     //    const gpu_shader_resource* in_gpu_sr) override;
 
-    virtual void create_rootsignature(gpu_pass* in_gpu_pass) override;
+    virtual bool create_rootsignature(gpu_pass* in_gpu_pass) override;
 
-    virtual void complie_shader(
+    virtual bool complie_shader(
         shader_layout& in_shader_layout,
         gpu_pass* in_gpu_pass) override;
 
-    virtual void create_pso(
+    virtual bool create_pso(
         shader_layout& in_shader_layout,
         gpu_pass* in_gpu_pass) override;
 
@@ -314,7 +314,8 @@ private:
         const std::wstring& filename,
         const D3D_SHADER_MACRO* defines,
         const std::string& entrypoint,
-        const std::string& target);
+        const std::string& target,
+        bool& out_successed);
 
     void reflect_shader(ComPtr<ID3DBlob>&  in_shader_data, std::vector<gpu_pass::pass_resource>& out_res_group);
 
