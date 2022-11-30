@@ -92,7 +92,7 @@ public:
         ComPtr<ID3D12DescriptorHeap> srv_heap = nullptr;
     };
 
-    struct directx_sr_render_target_group : public directx_resource
+    struct directx_sr_render_target_group : public directx_sr_texture_group
     {
         //用于刷新状态
         std::vector< std::shared_ptr<directx_sr_render_target>> rt_group;
@@ -100,10 +100,10 @@ public:
         ComPtr<ID3D12DescriptorHeap> rtv_heap = nullptr;
     };
 
-    struct directx_sr_depth_stencil_group : public directx_shader_resource
+    struct directx_sr_depth_stencil_group : public directx_sr_texture_group
     {
         //用于刷新状态
-        std::shared_ptr < directx_sr_render_target> ds_ptr;
+        std::shared_ptr < directx_sr_depth_stencil> ds_ptr;
         ComPtr<ID3D12DescriptorHeap> dsv_heap = nullptr;
     };
 
@@ -154,6 +154,7 @@ protected:
 
     Microsoft::WRL::ComPtr<IDXGISwapChain> dx_swap_chain;
 
+    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> dx_frame_cmdlist_alloc[FRAME_BUFFER_COUNT];
     std::shared_ptr < directx_sr_render_target> swap_chain_buffer[SWAP_CHAIN_BUFFER_COUNT];
     std::shared_ptr < directx_sr_render_target_group> swap_chain_buffer_heap[SWAP_CHAIN_BUFFER_COUNT];
     UINT current_back_buffer = 0;
@@ -251,6 +252,9 @@ private:
     DXGI_FORMAT back_buffer_format = DXGI_FORMAT_R8G8B8A8_UNORM;
     
     DXGI_FORMAT depth_stencil_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
+    //DS作为SR时按R24_UNORM_X8_TYPELESS解析
+    DXGI_FORMAT depth_stencil_as_shader_resource_format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
     
     D3D12_RESOURCE_STATES default_resource_states = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ;
 

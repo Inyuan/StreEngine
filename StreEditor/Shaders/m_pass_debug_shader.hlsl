@@ -37,7 +37,7 @@ vs_out VS(vs_in vIn)
 float4 PS(vs_out pIn) : SV_TARGET
 {
 
-    float4 rescolor = 1.0f;
+    float4 rescolor = texture_debug[pIn.texcoord];
 
     return rescolor;
 }

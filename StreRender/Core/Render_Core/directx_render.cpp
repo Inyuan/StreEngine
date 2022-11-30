@@ -109,7 +109,7 @@ bool directx_render::create_rootsignature(gpu_pass* in_gpu_pass)
 	//用反射得到的数据自动构建根签名
 	for (auto it : in_gpu_pass->pass_res_group)
 	{
-		switch (it.type)
+		switch (it.type)//反射出来的种类
 		{
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
 		{
@@ -127,8 +127,6 @@ bool directx_render::create_rootsignature(gpu_pass* in_gpu_pass)
 		}
 		break;
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
-		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP:
-		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP:
 		{
 			//局部状态下在根签名构造完成前不能被销毁
 			CD3DX12_DESCRIPTOR_RANGE texTable;
@@ -742,11 +740,17 @@ bool directx_render::package_textures(
 		}
 
 		create_descriptor_heap(
+			gpu_table->srv_heap,
+			DIRECTX_RESOURCE_DESC_TYPE::DX_SRV,
+			(UINT)in_texture_group.size());
+
+		create_descriptor_heap(
 			gpu_table->rtv_heap,
 			DIRECTX_RESOURCE_DESC_TYPE::DX_RTV,
 			(UINT)in_texture_group.size());
 
-		CD3DX12_CPU_DESCRIPTOR_HANDLE handle(gpu_table->rtv_heap->GetCPUDescriptorHandleForHeapStart());
+		CD3DX12_CPU_DESCRIPTOR_HANDLE sr_handle(gpu_table->srv_heap->GetCPUDescriptorHandleForHeapStart());
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rt_handle(gpu_table->rtv_heap->GetCPUDescriptorHandleForHeapStart());
 
 		gpu_table->rt_number = in_texture_group.size();
 		for (int i = 0; i < in_texture_group.size(); i++)
@@ -766,11 +770,18 @@ bool directx_render::package_textures(
 			auto gpu_texture = static_cast<const directx_sr_render_target*>(each_res->resource.get());
 
 			load_descriptor_into_heap(
+				DIRECTX_RESOURCE_DESC_TYPE::DX_SRV,
+				gpu_texture,
+				sr_handle
+			);
+
+			load_descriptor_into_heap(
 				DIRECTX_RESOURCE_DESC_TYPE::DX_RTV,
 				gpu_texture,
-				handle
+				rt_handle
 			);
-			handle.Offset(1, rtv_descriptor_size);
+			sr_handle.Offset(1, cbv_srv_uav_descriptor_size);
+			rt_handle.Offset(1, rtv_descriptor_size);
 		}
 
 		texture_res->element_count = in_texture_group.size();
@@ -784,13 +795,18 @@ bool directx_render::package_textures(
 			gpu_table->dsv_heap->Release();
 			//release()
 		}
+		create_descriptor_heap(
+			gpu_table->srv_heap,
+			DIRECTX_RESOURCE_DESC_TYPE::DX_SRV,
+			(UINT)in_texture_group.size());
 
 		create_descriptor_heap(
 			gpu_table->dsv_heap,
 			DIRECTX_RESOURCE_DESC_TYPE::DX_DSV,
 			(UINT)in_texture_group.size());
 
-		CD3DX12_CPU_DESCRIPTOR_HANDLE handle(gpu_table->dsv_heap->GetCPUDescriptorHandleForHeapStart());
+		CD3DX12_CPU_DESCRIPTOR_HANDLE sr_handle(gpu_table->srv_heap->GetCPUDescriptorHandleForHeapStart());
+		CD3DX12_CPU_DESCRIPTOR_HANDLE ds_handle(gpu_table->dsv_heap->GetCPUDescriptorHandleForHeapStart());
 
 		//！！！！！！一般只有一张！！！！！！
 		for (int i = 0; i < in_texture_group.size(); i++)
@@ -808,11 +824,19 @@ bool directx_render::package_textures(
 			}    
 
 			load_descriptor_into_heap(
+				DIRECTX_RESOURCE_DESC_TYPE::DX_SRV,
+				gpu_texture,
+				sr_handle
+			);
+
+			load_descriptor_into_heap(
 				DIRECTX_RESOURCE_DESC_TYPE::DX_DSV,
 				gpu_texture,
-				handle
+				ds_handle
 			);
-			handle.Offset(1, dsv_descriptor_size);
+
+			sr_handle.Offset(1, cbv_srv_uav_descriptor_size);
+			ds_handle.Offset(1, dsv_descriptor_size);
 		}
 
 		texture_res->element_count = in_texture_group.size();
@@ -938,10 +962,13 @@ void directx_render::set_render_target(
 		//转换RT状态
 		for (auto it : render_targets_ptr->rt_group)
 		{
-			float clearValue[] = { 0.0f, 0.0f, 1.0f, 0.0f };
-			dx_command_list->ClearRenderTargetView(handle_c, clearValue,0,nullptr);
 
 			switch_gpu_resource_state(it, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			
+			float clearValue[] = { 0.0f, 0.0f, 1.0f, 0.0f };
+			dx_command_list->ClearRenderTargetView(handle_c, clearValue, 0, nullptr);
+
+			
 			handle_c.Offset(1, rtv_descriptor_size);
 			i++;
 		}
@@ -1047,6 +1074,24 @@ void directx_render::load_resource(
 			dx_command_list->SetGraphicsRootDescriptorTable(gpu_res.second->register_index, gpu_sr->srv_heap->GetGPUDescriptorHandleForHeapStart());
 		}
 		break;
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP:
+		{
+			const directx_texture_resource* rt_res = static_cast<const directx_texture_resource*>(gpu_res.second);
+			auto gpu_sr = static_cast<const directx_sr_render_target_group*>(rt_res->resource.get());
+			ID3D12DescriptorHeap* descriptorHeaps[] = { gpu_sr->srv_heap.Get() };
+			dx_command_list->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+			dx_command_list->SetGraphicsRootDescriptorTable(gpu_res.second->register_index, gpu_sr->srv_heap->GetGPUDescriptorHandleForHeapStart());
+		}
+		break;
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP:
+		{
+			const directx_texture_resource* ds_res = static_cast<const directx_texture_resource*>(gpu_res.second);
+			auto gpu_sr = static_cast<const directx_sr_depth_stencil_group*>(ds_res->resource.get());
+			ID3D12DescriptorHeap* descriptorHeaps[] = { gpu_sr->srv_heap.Get() };
+			dx_command_list->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+			dx_command_list->SetGraphicsRootDescriptorTable(gpu_res.second->register_index, gpu_sr->srv_heap->GetGPUDescriptorHandleForHeapStart());
+		}
+		break;
 		}
 	}
 
@@ -1118,6 +1163,10 @@ void directx_render::draw_call(
 /// </summary>
 void directx_render::excute_command_list()
 {
+	//将交换链资源置为present状态
+	auto swap_ptr = std::static_pointer_cast<directx_sr_render_target_group>(swap_chain_buffer_heap[current_back_buffer]);
+	switch_gpu_resource_state(swap_ptr->rt_group[0], D3D12_RESOURCE_STATE_PRESENT);
+
 	// Done recording commands.
 	ThrowIfFailed(dx_command_list->Close());
 
@@ -1129,8 +1178,8 @@ void directx_render::excute_command_list()
 
 void directx_render::reset_command_allocator()
 {
-	ThrowIfFailed(dx_cmdlist_alloc->Reset());
-	ThrowIfFailed(dx_command_list->Reset(dx_cmdlist_alloc.Get(), nullptr));
+	ThrowIfFailed(dx_frame_cmdlist_alloc[current_frame]->Reset());
+	ThrowIfFailed(dx_command_list->Reset(dx_frame_cmdlist_alloc[current_frame].Get(), nullptr));
 }
 
 /// <summary>
@@ -1386,7 +1435,13 @@ void directx_render::create_descriptor(
 			ZeroMemory(&desc, sizeof(desc));
 			desc.Texture2D.MipLevels = 1;
 			desc.Texture2D.MostDetailedMip = 0;
+
 			desc.Format = in_gpu_res_elem->dx_format;
+			if (in_gpu_res_elem->dx_format == depth_stencil_format)
+			{
+				desc.Format = depth_stencil_as_shader_resource_format;
+			}
+			
 			desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 			desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 			in_gpu_res_elem->dx_srv = desc;
@@ -1627,6 +1682,13 @@ void directx_render::init(HWND in_main_wnd, UINT in_width, UINT in_height)
 			D3D12_COMMAND_LIST_TYPE_DIRECT,
 			IID_PPV_ARGS(dx_cmdlist_alloc.GetAddressOf())));
 
+		for (int i = 0; i < FRAME_BUFFER_COUNT; i++)
+		{
+			ThrowIfFailed(dx_device->CreateCommandAllocator(
+				D3D12_COMMAND_LIST_TYPE_DIRECT,
+				IID_PPV_ARGS(dx_frame_cmdlist_alloc[i].GetAddressOf())));
+		}
+
 		ThrowIfFailed(dx_device->CreateCommandList(
 			0,
 			D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -1670,7 +1732,7 @@ void directx_render::init(HWND in_main_wnd, UINT in_width, UINT in_height)
 
 	
 	flush_command_queue();
-	reset_command_allocator();
+	ThrowIfFailed(dx_command_list->Reset(dx_cmdlist_alloc.Get(), nullptr));
 
 
 	ScreenViewportResize(in_width, in_height);

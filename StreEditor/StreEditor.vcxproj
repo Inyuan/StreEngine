@@ -72,6 +72,20 @@ copy StreRender.dll $(TargetPath)\..
 copy libfbxsdk.dll $(TargetPath)\..</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Link>
+      <AdditionalLibraryDirectories>G:\project\StreEngine\StreEditor\Rendering\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>StreRender.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy Shaders $(TargetPath)\..\Shaders
+copy StreRender.dll $(TargetPath)\..
+copy libfbxsdk.dll $(TargetPath)\..</Command>
+    </PostBuildEvent>
+    <ClCompile>
+      <AdditionalIncludeDirectories>G:\project\StreEngine\StreEditor\Rendering;G:\project\StreEngine\StreEditor\Rendering\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
     <ClCompile>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
@@ -117,11 +131,6 @@ copy libfbxsdk.dll $(TargetPath)\..</Command>
     <ClInclude Include="stre_engine.h" />
     <ClInclude Include="s_command.h" />
     <ClInclude Include="s_receiver.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="Shaders\debug_pass.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
