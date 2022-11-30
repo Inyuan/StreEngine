@@ -79,6 +79,8 @@ public:
 
 	cpu_texture* create_texture(gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type);
 
+	void update_texture_gpu(cpu_texture* in_texture);
+
 	cpu_mesh* create_viewport_mesh();
 
 	cpu_mesh* create_mesh_from_fbx(std::wstring path);
@@ -109,10 +111,11 @@ public:
 
 	bool pass_remove_shader_layout(s_pass* in_out_pass);
 
-
 	void package_textures(std::vector<cpu_texture*> in_textures, cpu_texture* in_out_package_container);
 
 	bool allocate_pass(s_pass* in_out_pass);
+
+	bool release_pass(s_pass* in_out_pass);
 
 	bool check_pass(s_pass* in_out_pass);
 

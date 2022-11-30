@@ -1,3 +1,8 @@
+#ifdef  DLL_GRAPHICS_API
+#else
+#define DLL_GRAPHICS_API _declspec(dllexport)
+#endif
+
 #include "directx_render.h"
 #include "stre_render.h"
 #include <WindowsX.h>
@@ -5,8 +10,13 @@
 #include <array>
 #include <string>
 #include "Core/Memory/s_memory.h"
+#include <d3d12sdklayers.h>
 
-
+namespace stre_exception
+{
+	DLL_GRAPHICS_API std::list<std::string> exception_output_str_group;
+	DLL_GRAPHICS_API int fence; //字符串数组上一次获取的位置
+};
 
 
 /***
@@ -20,41 +30,6 @@
 gpu_pass* directx_render::allocate_pass()
 {
 	return new directx_render::directx_pass();
-}
-
-void load_rootparpameter(
-	std::vector<CD3DX12_ROOT_PARAMETER>& in_out_root_parameter, 
-	const gpu_pass::pass_resource& in_pass_res)
-{
-	switch (in_pass_res.type)
-	{
-	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
-	{
-		CD3DX12_ROOT_PARAMETER r_p;
-		r_p.InitAsConstantBufferView(in_pass_res.bind_point);
-		in_out_root_parameter.push_back(r_p);
-	}
-		break;
-	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP:
-	case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE:
-	{
-		CD3DX12_ROOT_PARAMETER r_p;
-		r_p.InitAsShaderResourceView(in_pass_res.bind_point);
-		in_out_root_parameter.push_back(r_p);
-	}
-		break;
-	case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
-	{
-		CD3DX12_DESCRIPTOR_RANGE texTable;
-		texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, /*in_gpu_sr->element_count*/ 20, in_pass_res.bind_point);
-		CD3DX12_ROOT_PARAMETER texture_rp;
-		texture_rp.InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-		in_out_root_parameter.push_back(texture_rp);
-	}
-		break;
-	default:
-		break;
-	}
 }
 
 bool directx_render::create_rootsignature(gpu_pass* in_gpu_pass)
@@ -134,18 +109,54 @@ bool directx_render::create_rootsignature(gpu_pass* in_gpu_pass)
 	//用反射得到的数据自动构建根签名
 	for (auto it : in_gpu_pass->pass_res_group)
 	{
-		load_rootparpameter(slotRootParameter,it);
+		switch (it.type)
+		{
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
+		{
+			CD3DX12_ROOT_PARAMETER r_p;
+			r_p.InitAsConstantBufferView(it.bind_point);
+			slotRootParameter.push_back(r_p);
+		}
+		break;
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP:
+
+		{
+			CD3DX12_ROOT_PARAMETER r_p;
+			r_p.InitAsShaderResourceView(it.bind_point);
+			slotRootParameter.push_back(r_p);
+		}
+		break;
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP:
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP:
+		{
+			//局部状态下在根签名构造完成前不能被销毁
+			CD3DX12_DESCRIPTOR_RANGE texTable;
+			texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, it.bind_count, it.bind_point, it.register_space);
+			CD3DX12_ROOT_PARAMETER texture_rp;
+			texture_rp.InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_ALL);
+			slotRootParameter.push_back(texture_rp);
+		}
+		break;
+		default:
+			break;
+		}
 	}
 
 	auto staticSamplers = smaples_group;
 
-	CD3DX12_ROOT_SIGNATURE_DESC rootsig_desc((UINT)slotRootParameter.size(), slotRootParameter.data(),
+	CD3DX12_ROOT_PARAMETER* ptr = slotRootParameter.data();
+
+	CD3DX12_ROOT_SIGNATURE_DESC rootsig_desc((UINT)slotRootParameter.size(), ptr,
 		(UINT)staticSamplers.size(), staticSamplers.data(),
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
+	auto root_ptr = static_cast<directx_pass*>(in_gpu_pass);
+
+
 	create_rootsignature(
 		rootsig_desc,
-		static_cast<directx_pass*>(in_gpu_pass)->rootsignature);
+		root_ptr->rootsignature);
 
 	return true;
 }
@@ -667,6 +678,7 @@ bool directx_render::update_gpu_resource(
 
 
 //注意 渲染目标 和 贴图 深度图等的匹配
+//如果渲染目标 和 贴图 深度图不匹配,返回false
 bool directx_render::package_textures(
 	std::vector<std::shared_ptr<gpu_shader_resource>>& in_texture_group,
 	std::shared_ptr<gpu_shader_resource> in_out_table)
@@ -677,6 +689,7 @@ bool directx_render::package_textures(
 		stre_exception::exception_output_str_group.push_back("package_textures in_texture_group is empty or in_out_table is nullptr");
 		return false;
 	}
+	
 
 	auto texture_res = std::static_pointer_cast<directx_texture_resource>(in_out_table);
 	
@@ -701,7 +714,10 @@ bool directx_render::package_textures(
 
 		for (int i = 0; i < in_texture_group.size(); i++)
 		{
+			
 			const directx_texture_resource* each_res = static_cast< const directx_texture_resource*>(in_texture_group[i].get());
+
+			//贴图组不检查，允许所有类型贴图作为输入
 
 			auto gpu_texture = static_cast<const directx_sr_texture*>(each_res->resource.get());
 
@@ -737,6 +753,14 @@ bool directx_render::package_textures(
 		{
 			auto each_res = std::static_pointer_cast<directx_texture_resource>(in_texture_group[i]);
 			
+			//组内必须全是渲染目标
+			if (each_res->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET)
+			{
+				//!!!出问题了
+				stre_exception::exception_output_str_group.push_back("packaged render taget group, textures most be render taget");
+				return false;
+			}
+
 			gpu_table->rt_group.push_back(std::static_pointer_cast<directx_shader_resource>(each_res->resource));
 
 			auto gpu_texture = static_cast<const directx_sr_render_target*>(each_res->resource.get());
@@ -774,6 +798,14 @@ bool directx_render::package_textures(
 			auto each_res = std::static_pointer_cast<directx_texture_resource>(in_texture_group[i]);
 			gpu_table->ds_ptr = std::static_pointer_cast<directx_shader_resource>(each_res->resource);
 			auto gpu_texture = static_cast<const directx_sr_depth_stencil*>(each_res->resource.get());
+
+			//组内必须全是深度模板
+			if (each_res->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL)
+			{
+				//!!!出问题了
+				stre_exception::exception_output_str_group.push_back("packaged depth stencil group, texture most be depth stencil");
+				return false;
+			}    
 
 			load_descriptor_into_heap(
 				DIRECTX_RESOURCE_DESC_TYPE::DX_DSV,
@@ -982,7 +1014,7 @@ void directx_render::load_resource(
 		}
 		break;
 
-		//结构体组
+		//结构体组 只有结构体组是SRV
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP:
 		{
 			const directx_frame_resource* frame_res = static_cast<const directx_frame_resource*>(gpu_res.second);
@@ -994,17 +1026,17 @@ void directx_render::load_resource(
 		}
 		break;
 
-		//贴图
-		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE:
-		{
-			const directx_texture_resource* texture_res = static_cast<const directx_texture_resource*>(gpu_res.second);
-			auto gpu_sr = static_cast<const directx_sr_texture*>(texture_res->resource.get());
-			dx_command_list->
-				SetGraphicsRootShaderResourceView(
-					gpu_res.second->register_index,
-					gpu_sr->dx_resource.Get()->GetGPUVirtualAddress());
-		}
-		break;
+		////贴图不是SRV
+		//case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE:
+		//{
+		//	const directx_texture_resource* texture_res = static_cast<const directx_texture_resource*>(gpu_res.second);
+		//	auto gpu_sr = static_cast<const directx_sr_texture*>(texture_res->resource.get());
+		//	dx_command_list->
+		//		SetGraphicsRootShaderResourceView(
+		//			gpu_res.second->register_index,
+		//			gpu_sr->dx_resource.Get()->GetGPUVirtualAddress());
+		//}
+		//break;
 		//贴图堆
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
 		{
@@ -1504,6 +1536,7 @@ void directx_render::reflect_shader(
 		pass_res.register_space = resource_desc.Space;
 		auto resourceType = resource_desc.Type;
 		pass_res.bind_point = resource_desc.BindPoint;
+		pass_res.bind_count = resource_desc.BindCount;
 
 		switch (resource_desc.Type)
 		{
@@ -1512,8 +1545,6 @@ void directx_render::reflect_shader(
 			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER;
 			break;
 		case D3D_SIT_TEXTURE:
-			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_TEXTURE;
-			break;
 		case D3D_SIT_TBUFFER:
 			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_TEXTURE_GROUP;
 			break;
@@ -1545,6 +1576,17 @@ void directx_render::create_pso(
 
 void directx_render::init(HWND in_main_wnd, UINT in_width, UINT in_height)
 {
+	//启动调试层
+	//启动了之后才会在出问题的时候输出错误提示
+	ID3D12Debug* debug = nullptr;
+	D3D12GetDebugInterface(IID_PPV_ARGS(&debug));
+	if (debug)
+	{
+		debug->EnableDebugLayer();
+		debug->Release();
+		debug = nullptr;
+	}
+
 	//factory & adapter & device & fance
 	{
 		ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&dx_factory)));

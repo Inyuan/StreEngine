@@ -11,19 +11,6 @@ extern int pipeline_w_mouse_position_y;
 
 extern pipeline_window_invoker* pipeline_window_widget_ptr;
 extern debug_text_invoker* debug_text_ptr;
-extern texture_component_invoker* texture_component_add_texture_ptr;
-
-extern connect_port* select_connect_port[2];
-extern connect_port* reconnect_port;
-extern connect_port* disconnect_port;
-extern bool disconnect_success;
-
-extern texture_element_invoker* texture_element_delete_ptr;
-extern texture_component_invoker* texture_component_delete_ptr;
-extern mesh_component_invoker* mesh_component_delete_ptr;
-extern shader_component_invoker* shader_component_delete_ptr;
-extern pass_component_invoker* pass_component_delete_ptr;
-
 extern component_invoker* current_component_ptr;
 
 extern property_tab_widget* current_property_tab_widget;
@@ -33,9 +20,8 @@ extern shader_property_widget* current_shader_property_widget;
 extern texture_property_widget* current_texture_property_widget;
 extern texture_group_property_widget* current_texture_group_property_widget;
 extern pass_property_widget* current_pass_property_widget;
-extern bool had_output_pass;
 
-bool draw_pass_tree_need_update = false;
+extern bool had_output_pass;
 
 /// <summary>
 /// 生成唯一标识符
@@ -68,9 +54,7 @@ void s_create_texture_command::execute()
 {
 	//构建实例
 	//DEBUG
-	gpu_shader_resource::SHADER_RESOURCE_TYPE debug;
-	debug = gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL;
-	auto texture_ptr = stre_engine::get_instance()->create_texture(debug);
+	auto texture_ptr = stre_engine::get_instance()->create_texture(init_type);
 
 	//DEBUG
 
@@ -119,8 +103,8 @@ void s_create_shader_command::execute()
 	generate_unique_identifier<shader_layout>(debug_shader_layout.uid);
 	debug_shader_layout.shader_vaild[shader_layout::VS] = true;
 	debug_shader_layout.shader_vaild[shader_layout::PS] = true;
-	debug_shader_layout.shader_path[shader_layout::VS] = L"Shaders\\debug_pass.hlsl";
-	debug_shader_layout.shader_path[shader_layout::PS] = L"Shaders\\debug_pass.hlsl";
+	debug_shader_layout.shader_path[shader_layout::VS] = L"Shaders\\m_pass_debug_shader.hlsl";
+	debug_shader_layout.shader_path[shader_layout::PS] = L"Shaders\\m_pass_debug_shader.hlsl";
 	debug_shader_layout.shader_input_group.push_back(
 		{ "POSITION",shader_layout::shader_input::INPUT_ELEMENT_SIZE_R32G32B32 });
 	debug_shader_layout.shader_input_group.push_back(
@@ -157,7 +141,7 @@ void s_create_pass_command::execute()
 	
 	//插入树表
 	pipeline_window_widget_ptr->pass_comp_level_map[new_pass_comp->level].insert(new_pass_comp);
-	pipeline_window_widget_ptr->pass_comp_level_map[new_pass_comp->level].insert(new_pass_comp);
+
 	new_pass_comp->show();
 	
 }
@@ -165,9 +149,9 @@ void s_create_pass_command::execute()
 /// <summary>
 /// 反射pass的shader资源接口到组件上
 /// </summary>
-void reflect_pass_res_input(s_pass* in_pass)
+void reflect_pass_res_input(pass_component_invoker* in_pass_cmp)
 {
-	auto current_pass_component_ptr = pipeline_window_widget_ptr->pass_comp_group[in_pass->uid.name];
+	auto current_pass_component_ptr = in_pass_cmp;
 	if (!current_pass_component_ptr)
 	{
 		return;
@@ -175,37 +159,40 @@ void reflect_pass_res_input(s_pass* in_pass)
 	
 	vector<connect_port*> res_port_group;
 
-	auto shader_res = current_pass_component_ptr->pass_instance->gpu_pass_ptr->pass_res_group;
-
-	for (auto it : shader_res)
+	if (current_pass_component_ptr->pass_instance->gpu_pass_ptr)
 	{
-		auto res_port = new connect_port(
-			current_pass_component_ptr,
-			port_information(
-				port_information::PASS_RES_PORT_GROUP,
-				current_pass_component_ptr,
-				it.bind_point));
+		auto shader_res = current_pass_component_ptr->pass_instance->gpu_pass_ptr->pass_res_group;
 
-		string res_t;
-		switch (it.type)
+		for (auto it : shader_res)
 		{
-		case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
-			res_t = "b";
-			break;
-		case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP:
-		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE:
-		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
-			res_t = "t";
-			break;
+			auto res_port = new connect_port(
+				current_pass_component_ptr,
+				port_information(
+					port_information::PASS_RES_PORT_GROUP,
+					current_pass_component_ptr,
+					it.bind_point));
+
+			string res_t;
+			switch (it.type)
+			{
+			case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
+				res_t = "b";
+				break;
+			case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP:
+			case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE:
+			case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
+				res_t = "t";
+				break;
+			}
+
+			string res_port_name = it.name + " " + res_t + " " + std::to_string(it.bind_point); //+ " " + std::to_string(it.register_space)
+
+			res_port->setObjectName(res_port_name);
+			res_port->setAutoExclusive(false);
+
+			res_port_group.push_back(res_port);
+
 		}
-
-		string res_port_name = it.name + " " + res_t + " " + std::to_string(it.bind_point); //+ " " + std::to_string(it.register_space)
-
-		res_port->setObjectName(res_port_name);
-		res_port->setAutoExclusive(false);
-
-		res_port_group.push_back(res_port);
-
 	}
 
 	current_pass_component_ptr->update_res_port(res_port_group);
@@ -218,6 +205,12 @@ void reflect_pass_res_input(s_pass* in_pass)
 /// </summary>
 void s_connect_resource_command::execute()
 {
+	if (!select_connect_port[0] || !select_connect_port[1])
+	{
+		//!!!出问题了
+		//! 指空 有可能是组件被删了
+		return;
+	}
 	const port_information connect_port1 = select_connect_port[0]->port_inf;
 	const port_information connect_port2 = select_connect_port[1]->port_inf;
 
@@ -226,26 +219,23 @@ void s_connect_resource_command::execute()
 	bool connect_success = false;
 	switch (connect_port1.port_type)
 	{
-	case port_information::TEXTURE_OUTPUT:
-	{
-		//可以连到Pass的res输入口
-		switch (connect_port2.port_type)
-		{
-			case port_information::PASS_RES_PORT_GROUP:
-			{
-				texture_element_invoker* t_ptr = reinterpret_cast<texture_element_invoker*>(connect_port1.ptr);
-				pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
-
-				t_ptr->texture_instance->gpu_sr_ptr->register_index = connect_port1.port_index;
-
-				connect_success = stre_engine::get_instance()->pass_add_shader_resource<cpu_texture>(p_ptr->pass_instance, t_ptr->texture_instance);
-
-			}
-			break;
-		}
-
-	}
-		break;
+	//texture不能单独作为SRV输入到pass里
+	//case port_information::TEXTURE_OUTPUT:
+	//{
+	//	//可以连到Pass的res输入口
+	//	switch (connect_port2.port_type)
+	//	{
+	//		case port_information::PASS_RES_PORT_GROUP:
+	//		{
+	//			texture_element_invoker* t_ptr = reinterpret_cast<texture_element_invoker*>(connect_port1.ptr);
+	//			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+	//			t_ptr->texture_instance->gpu_sr_ptr->register_index = connect_port1.port_index;
+	//			connect_success = stre_engine::get_instance()->pass_add_shader_resource<cpu_texture>(p_ptr->pass_instance, t_ptr->texture_instance);
+	//		}
+	//		break;
+	//	}
+	//}
+	//	break;
 	case port_information::TEXTURE_GROUP_INPUT:
 	{
 		//可以连到Pass的输出口
@@ -258,18 +248,20 @@ void s_connect_resource_command::execute()
 			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
 			//正事
 			{
-				vector<cpu_texture*> pack_buffer;
-				for (int i = 0; i < t_ptr->textures_group.size(); i++)
-				{
-					pack_buffer.push_back(t_ptr->textures_group[i]->texture_instance);
-				}
-				//先刷新，怕打包的资源还没gpu资源
-				s_update_gpu_command().execute();
-				stre_engine::get_instance()->package_textures(pack_buffer, t_ptr->texture_instance);
+				//打包由texture_comp独立完成
 				
 				//先刷新，怕texture没分配gpu
-				s_update_gpu_command().execute();
-				connect_success = stre_engine::get_instance()->pass_add_render_target(p_ptr->pass_instance, t_ptr->texture_instance);
+				s_update_gpu_command local_update_request;
+				local_update_request.execute();
+				if (!local_update_request.execute_success)
+				{
+					//!!!出问题了，阻止连线
+					connect_success = false;
+				}
+				else
+				{
+					connect_success = stre_engine::get_instance()->pass_add_render_target(p_ptr->pass_instance, t_ptr->texture_instance);
+				}
 			}
 			//刷新texture和pass的表
 			{
@@ -308,16 +300,8 @@ void s_connect_resource_command::execute()
 			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
 			//正事
 			{
-				vector<cpu_texture*> pack_buffer;
-				for (int i = 0; i < t_ptr->textures_group.size(); i++)
-				{
-					pack_buffer.push_back(t_ptr->textures_group[i]->texture_instance);
-				}
-
-				//先刷新，怕打包的资源还没gpu资源
-				s_update_gpu_command().execute();
-				stre_engine::get_instance()->package_textures(pack_buffer, t_ptr->texture_instance);
-
+				//打包由texture_comp独立完成
+				// 
 				//寄存器号
 				t_ptr->texture_instance->gpu_sr_ptr->register_index = connect_port1.port_index;
 
@@ -361,10 +345,20 @@ void s_connect_resource_command::execute()
 			cpu_mesh* m_ptr = reinterpret_cast<cpu_mesh*>(connect_port1.ptr);
 
 			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
-			
+
+
 			//先刷新怕mesh没gpu_resource
-			s_update_gpu_command().execute();
-			connect_success = stre_engine::get_instance()->pass_add_mesh(p_ptr->pass_instance, m_ptr);
+			s_update_gpu_command local_update_request;
+			local_update_request.execute();
+			if (!local_update_request.execute_success)
+			{
+				//!!!出问题了，阻止连线
+				connect_success = false;
+			}
+			else
+			{
+				connect_success = stre_engine::get_instance()->pass_add_mesh(p_ptr->pass_instance, m_ptr);
+			}
 		}
 		break;
 		}
@@ -384,11 +378,24 @@ void s_connect_resource_command::execute()
 			connect_success = stre_engine::get_instance()->pass_set_shader_layout(p_ptr->pass_instance, *s_ptr);
 
 			//!!!即刻刷新
-			s_update_gpu_command().execute();
-			stre_engine::get_instance()->allocate_pass(p_ptr->pass_instance);
+			s_update_gpu_command local_update_request;
+			local_update_request.execute();
+			if (!local_update_request.execute_success)
+			{
+				//!!!出问题了，阻止连线
+				connect_success = false;
+			}
+			connect_success &= stre_engine::get_instance()->allocate_pass(p_ptr->pass_instance);
 			
-			s_update_gpu_command().execute();
-			reflect_pass_res_input(p_ptr->pass_instance);
+			local_update_request.execute();
+			if (!local_update_request.execute_success)
+			{
+				//着色器编译不通过
+				//!!!出问题了，阻止连线
+				connect_success = false;
+			}
+
+			reflect_pass_res_input(p_ptr);
 
 		}
 		break;
@@ -471,12 +478,28 @@ void s_reconnect_resource_command::execute()
 	{
 		if ((*it)->port1 == reconnect_port || (*it)->port2 == reconnect_port)
 		{
-			select_connect_port[0] = (*it)->port1;
-			select_connect_port[1] = (*it)->port2;
+			s_disconnect_resource_command disconnect_resource_cmd;
+			disconnect_resource_cmd.in_port1 = (*it)->port1;
+			disconnect_resource_cmd.in_port2 = (*it)->port2;
+			disconnect_resource_cmd.execute();
+
+
+			if (!disconnect_resource_cmd.disconnect_success)
+			{
+				//!!!出问题了
+				return;
+			}
+			s_connect_resource_command connect_resource_cmd;
+
+			connect_resource_cmd.select_connect_port[0] = (*it)->port1;
+			connect_resource_cmd.select_connect_port[1] = (*it)->port2;
 
 			it = pipeline_window_widget_ptr->connect_curve_group.erase(it);
 
-			s_connect_resource_command().execute();
+			connect_resource_cmd.execute();
+
+			connect_resource_cmd.select_connect_port[0] = nullptr;
+			connect_resource_cmd.select_connect_port[1] = nullptr;
 
 		}
 		else
@@ -566,8 +589,10 @@ void s_debug_output_refresh_command::execute()
 
 void s_update_gpu_command::execute()
 {
+	
 	if (!stre_engine::get_instance()->update_gpu_memory())
 	{
+		execute_success = false;
 		s_debug_output_refresh_command().execute();
 	}
 }
@@ -582,33 +607,33 @@ void s_update_gpu_command::execute()
 */
 
 //删除连接资源
-bool remove_resource(connect_port* in_port1, connect_port* in_port2,int in_try_times = 0)
+void s_disconnect_resource_command::execute()
 {
-	bool disconnect_success = false;
+	disconnect_success = false;
 
 	const port_information connect_port1 = in_port1->port_inf;
 	const port_information connect_port2 = in_port2->port_inf;
 
 	switch (connect_port1.port_type)
 	{
-	case port_information::TEXTURE_OUTPUT:
-	{
-		//可以连到Pass的res输入口
-		switch (connect_port2.port_type)
-		{
-		case port_information::PASS_RES_PORT_GROUP:
-		{
-			//贴图的port记录的是贴图控件的指针
-			texture_element_invoker* t_ptr = reinterpret_cast<texture_element_invoker*>(connect_port1.ptr);
+	//texture不能单独作为SRV输入到pass里
+	//case port_information::TEXTURE_OUTPUT:
+	//{
+	//	//可以连到Pass的res输入口
+	//	switch (connect_port2.port_type)
+	//	{
+	//	case port_information::PASS_RES_PORT_GROUP:
+	//	{
+	//		//贴图的port记录的是贴图控件的指针
+	//		texture_element_invoker* t_ptr = reinterpret_cast<texture_element_invoker*>(connect_port1.ptr);
+	//		pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+	//		disconnect_success = stre_engine::get_instance()->pass_remove_shader_resource<cpu_texture>(p_ptr->pass_instance, t_ptr->texture_instance);
+	//	}
+	//	break;
+	//	}
+	//}
+	//break;
 
-			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
-
-			disconnect_success = stre_engine::get_instance()->pass_remove_shader_resource<cpu_texture>(p_ptr->pass_instance, t_ptr->texture_instance);
-		}
-		break;
-		}
-	}
-	break;
 	case port_information::TEXTURE_GROUP_INPUT:
 	{
 		//可以连到Pass的输出口
@@ -731,11 +756,10 @@ bool remove_resource(connect_port* in_port1, connect_port* in_port2,int in_try_t
 
 			disconnect_success = stre_engine::get_instance()->pass_remove_shader_layout(p_ptr->pass_instance);
 
-			//!!!即刻刷新， 制作空的pass
-			stre_engine::get_instance()->allocate_pass(p_ptr->pass_instance);
-
-			reflect_pass_res_input(p_ptr->pass_instance);
-
+			//输入命令 制作空的pass
+			stre_engine::get_instance()->release_pass(p_ptr->pass_instance);
+			
+			reflect_pass_res_input(p_ptr);
 		}
 		break;
 		}
@@ -763,19 +787,21 @@ bool remove_resource(connect_port* in_port1, connect_port* in_port2,int in_try_t
 		if (in_try_times < 1)
 		{
 			in_try_times++;
-			disconnect_success = remove_resource(in_port2, in_port1, in_try_times);
+			auto tmp = in_port1;
+			in_port1 = in_port2;
+			in_port2 = tmp;
+			execute();
 		}
 	}
 		break;
 	}
 
-	return disconnect_success;
 }
 
 /// <summary>
 /// 移除所有disconnect_port连接的资源
 /// </summary>
-void s_disconnect_resource_command::execute()
+void s_disconnect_all_resource_command::execute()
 {
 	if (!disconnect_port)
 		return;
@@ -787,7 +813,11 @@ void s_disconnect_resource_command::execute()
 		//检查两边，有就删
 		if ((*it)->port1 == disconnect_port || (*it)->port2 == disconnect_port)
 		{
-			disconnect_success = remove_resource((*it)->port1, (*it)->port2);
+			s_disconnect_resource_command disconnect_resource_cmd;
+			disconnect_resource_cmd.in_port1 = (*it)->port1;
+			disconnect_resource_cmd.in_port2 = (*it)->port2;
+			disconnect_resource_cmd.execute();
+			disconnect_success = disconnect_resource_cmd.disconnect_success;
 			if (disconnect_success)
 			{
 				it = pipeline_window_widget_ptr->connect_curve_group.erase(it);
@@ -835,39 +865,41 @@ void s_remove_texture_group_command::execute()
 	}
 
 	//删除连接接口
-	disconnect_port = texture_component_delete_ptr->input_port;
-	s_disconnect_resource_command().execute();
+	s_disconnect_all_resource_command disconnect_resource_cmd;
+	disconnect_resource_cmd.disconnect_port = texture_component_delete_ptr->input_port;
+	disconnect_resource_cmd.execute();
 	//断不了就不许删
-	if (!disconnect_success)
+	if (!disconnect_resource_cmd.disconnect_success)
 	{
 		//!!!出问题了
 		return;
 	}
 
-	disconnect_port = texture_component_delete_ptr->output_port;
-	s_disconnect_resource_command().execute();
+	disconnect_resource_cmd.disconnect_port = texture_component_delete_ptr->output_port;
+	disconnect_resource_cmd.execute();
 	//断不了就不许删
-	if (!disconnect_success)
+	if (!disconnect_resource_cmd.disconnect_success)
 	{
 		//!!!出问题了
 		return;
 	}
 
-	disconnect_port = nullptr;
+	disconnect_resource_cmd.disconnect_port = nullptr;
 
 	//删除贴图组
 	for (auto it : texture_component_delete_ptr->textures_group)
 	{
+		//没有端口
 		//只需断开端口
-		disconnect_port = it->output_port;
-		s_disconnect_resource_command().execute();
-		//断不了就不许删
-		if (!disconnect_success)
-		{
-			//!!!出问题了
-			return;
-		}
-		disconnect_port = nullptr;
+		//disconnect_resource_cmd.disconnect_port = it->output_port;
+		//disconnect_resource_cmd.execute();
+		////断不了就不许删
+		//if (!disconnect_resource_cmd.disconnect_success)
+		//{
+		//	//!!!出问题了
+		//	return;
+		//}
+		//disconnect_resource_cmd.disconnect_port = nullptr;
 
 		//父组件被删除后,自动删除子组件，所以无需在这里删除
 		//it->deleteLater();
@@ -894,15 +926,16 @@ void s_remove_mesh_command::execute()
 	}
 
 	//删除连接接口
-	disconnect_port = mesh_component_delete_ptr->output_port;
-	s_disconnect_resource_command().execute();
+	s_disconnect_all_resource_command disconnect_resource_cmd;
+	disconnect_resource_cmd.disconnect_port = mesh_component_delete_ptr->output_port;
+	disconnect_resource_cmd.execute();
 	//断不了就不许删
-	if (!disconnect_success)
+	if (!disconnect_resource_cmd.disconnect_success)
 	{
 		return;
 	}
 
-	disconnect_port = nullptr;
+	disconnect_resource_cmd.disconnect_port = nullptr;
 
 	//删除表中的指针
 	pipeline_window_widget_ptr->mesh_comp_group.erase(mesh_component_delete_ptr->mesh_instance->uid.name);
@@ -924,16 +957,17 @@ void s_remove_shader_command::execute()
 	}
 
 	//删除连接接口
-	disconnect_port = shader_component_delete_ptr->output_port;
-	s_disconnect_resource_command().execute();
+	s_disconnect_all_resource_command disconnect_resource_cmd;
+	disconnect_resource_cmd.disconnect_port = shader_component_delete_ptr->output_port;
+	disconnect_resource_cmd.execute();
 	//断不了就不许删
-	if (!disconnect_success)
+	if (!disconnect_resource_cmd.disconnect_success)
 	{
 		//!!!出问题了
 		return;
 	}
 
-	disconnect_port = nullptr;
+	disconnect_resource_cmd.disconnect_port = nullptr;
 
 	//删除表中的指针
 	pipeline_window_widget_ptr->shader_comp_group.erase(shader_component_delete_ptr->shader_layout_instance.uid.name);
@@ -961,50 +995,56 @@ void s_remove_pass_command::execute()
 		had_output_pass = false;
 	}
 
+	s_disconnect_all_resource_command disconnect_resource_cmd;
+	
+
 	//删除连接接口
 	for (auto it : pass_component_delete_ptr->input_res_port_group)
 	{
-		disconnect_port = it;
-		s_disconnect_resource_command().execute();
+		disconnect_resource_cmd.disconnect_port = it;
+		disconnect_resource_cmd.execute();
 		//断不了就不许删
-		if (!disconnect_success)
+		if (!disconnect_resource_cmd.disconnect_success)
 		{
 			//!!!出问题了
 			return;
 		}
+		disconnect_resource_cmd.disconnect_port = nullptr;
 	}
 
 	//删除连接接口
-	disconnect_port = pass_component_delete_ptr->mesh_port;
-	s_disconnect_resource_command().execute();
+	disconnect_resource_cmd.disconnect_port = pass_component_delete_ptr->mesh_port;
+	disconnect_resource_cmd.execute();
 	//断不了就不许删
-	if (!disconnect_success)
+	if (!disconnect_resource_cmd.disconnect_success)
+	{
+		//!!!出问题了
+		return;
+	}
+	disconnect_resource_cmd.disconnect_port = nullptr;
+
+	//删除连接接口
+	disconnect_resource_cmd.disconnect_port = pass_component_delete_ptr->shader_port;
+	disconnect_resource_cmd.execute();
+	//断不了就不许删
+	if (!disconnect_resource_cmd.disconnect_success)
+	{
+		//!!!出问题了
+		return;
+	}
+	disconnect_resource_cmd.disconnect_port = nullptr;
+
+	//删除连接接口
+	disconnect_resource_cmd.disconnect_port = pass_component_delete_ptr->output_port;
+	disconnect_resource_cmd.execute();
+	//断不了就不许删
+	if (!disconnect_resource_cmd.disconnect_success)
 	{
 		//!!!出问题了
 		return;
 	}
 
-	//删除连接接口
-	disconnect_port = pass_component_delete_ptr->shader_port;
-	s_disconnect_resource_command().execute();
-	//断不了就不许删
-	if (!disconnect_success)
-	{
-		//!!!出问题了
-		return;
-	}
-
-	//删除连接接口
-	disconnect_port = pass_component_delete_ptr->output_port;
-	s_disconnect_resource_command().execute();
-	//断不了就不许删
-	if (!disconnect_success)
-	{
-		//!!!出问题了
-		return;
-	}
-
-	disconnect_port = nullptr;
+	disconnect_resource_cmd.disconnect_port = nullptr;
 
 	//删除表中的指针
 	pipeline_window_widget_ptr->pass_comp_group.erase(pass_component_delete_ptr->pass_instance->uid.name);
@@ -1065,7 +1105,8 @@ void s_change_mesh_data_command::execute()
 /// /// </summary>
 void s_switch_property_widget_command::execute()
 {
-	stre_engine::get_instance()->update_gpu_memory();
+	s_update_gpu_command local_update_request;
+	local_update_request.execute();
 	//0:Empty
 	//1:mesh
 	//2:shader
@@ -1222,4 +1263,38 @@ void s_switch_property_widget_command::execute()
 	}
 	break;
 	}
+}
+
+void s_update_texture_gpu_command::execute()
+{
+	if(!texture_update_ptr)
+	{
+		//!!!出问题了
+		return;
+	}
+	//先刷新 怕原有资源已经有命令入队了
+	s_update_gpu_command().execute();
+
+	stre_engine::get_instance()->update_texture_gpu(texture_update_ptr);
+
+
+}
+
+void s_package_texture_command::execute()
+{
+	if (!texture_component_package_texture_ptr)
+	{
+		//!!!出问题了
+		return;
+	}
+	vector<cpu_texture*> pack_buffer;
+	for (int i = 0; i < texture_component_package_texture_ptr->textures_group.size(); i++)
+	{
+		pack_buffer.push_back(texture_component_package_texture_ptr->textures_group[i]->texture_instance);
+	}
+	//先刷新，怕打包的资源还没gpu资源
+	s_update_gpu_command().execute();
+
+	stre_engine::get_instance()->package_textures(pack_buffer, texture_component_package_texture_ptr->texture_instance);
+
 }

@@ -42,6 +42,17 @@ bool pass_factory::check_pass(s_pass* in_out_pass)
 
 }
 
+bool pass_factory::release_gpu_pass(s_pass* in_out_pass)
+{
+	//删除旧的pass资源 //gpu_pass_ptr为空 也意味着无法被执行绘制
+	if (in_out_pass->gpu_pass_ptr)
+	{
+		delete(in_out_pass->gpu_pass_ptr);
+		in_out_pass->gpu_pass_ptr = nullptr;
+	}
+	return true;
+}
+
 void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 {
 	dx_function pass_functor = [in_out_pass](s_directx_render* in_render)->bool
@@ -55,18 +66,17 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 		}
 
 		in_out_pass->gpu_pass_ptr = in_render->allocate_pass();
-
-		if (!pass_factory().check_pass(in_out_pass))
-		{
-			//!!!出问题了！
-			return false;
-		}
-
 		//能弹出错误，但不影响程序继续运行
 		//先编译着色器，获得反射数据
 		if (!in_render->complie_shader(in_out_pass->gpu_shader_layout, in_out_pass->gpu_pass_ptr))
 		{
 			//!!!出问题了！
+			//! 删除gpu_Ptr 防止无法预测的错误
+			if (in_out_pass->gpu_pass_ptr)
+			{
+				delete(in_out_pass->gpu_pass_ptr);
+				in_out_pass->gpu_pass_ptr = nullptr;
+			}
 			return false;
 		}
 
@@ -74,6 +84,12 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 		if (!in_render->create_rootsignature(in_out_pass->gpu_pass_ptr))
 		{
 			//!!!出问题了！
+			//! 删除gpu_Ptr 防止无法预测的错误
+			if (in_out_pass->gpu_pass_ptr)
+			{
+				delete(in_out_pass->gpu_pass_ptr);
+				in_out_pass->gpu_pass_ptr = nullptr;
+			}
 			return false;
 		}
 
@@ -99,6 +115,12 @@ void pass_factory::dx_allocate_gpu_pass(s_pass* in_out_pass)
 				in_out_pass->gpu_pass_ptr))
 			{
 				//!!!出问题了！
+				//! 删除gpu_Ptr 防止无法预测的错误
+				if (in_out_pass->gpu_pass_ptr)
+				{
+					delete(in_out_pass->gpu_pass_ptr);
+					in_out_pass->gpu_pass_ptr = nullptr;
+				}
 				return false;
 			}
 		}
@@ -209,6 +231,7 @@ bool pass_factory::add_render_target(s_pass* in_out_pass, const cpu_texture* in_
 		&& in_gpu_rt->gpu_sr_ptr->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP
 		&& in_gpu_rt->gpu_sr_ptr->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP)
 	{
+		//!!!出问题了！
 		return false;
 	}
 	in_out_pass->gpu_rt_texture_ptr[in_gpu_rt->uid.name] = in_gpu_rt->gpu_sr_ptr;

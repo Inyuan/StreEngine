@@ -62,6 +62,7 @@ struct gpu_pass
 	{
 		std::string name;
 		UINT bind_point = 0;
+		UINT bind_count = 0;
 		UINT register_space = 0;
 		gpu_shader_resource::SHADER_RESOURCE_TYPE type = gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER;
 

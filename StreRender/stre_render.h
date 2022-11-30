@@ -190,6 +190,8 @@ public:
 	//创建pass
 	s_pass* create_pass();
 	void dx_allocate_gpu_pass(s_pass* in_out_pass);
+
+	bool release_gpu_pass(s_pass* in_out_pass);
 	//??? 差刷新pass函数
 
 	bool check_pass(s_pass* in_out_pass);
@@ -244,8 +246,8 @@ public:
 
 namespace stre_exception
 {
-	static std::list<std::string> exception_output_str_group;
-	static int fence; //字符串数组上一次获取的位置
+	DLL_GRAPHICS_API extern std::list<std::string> exception_output_str_group;
+	DLL_GRAPHICS_API extern int fence; //字符串数组上一次获取的位置
 };
 
 

@@ -158,7 +158,14 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
                 shader_comp_ptr->shader_layout_instance.shader_path[3] = path_str.toStdWString();
                 shader_comp_ptr->shader_layout_instance.shader_path[4] = path_str.toStdWString();
 
+                //重连 重连保证所连的pass全部重新编译
+                s_reconnect_resource_command reconnect_cmd;
+                reconnect_cmd.reconnect_port = shader_comp_ptr->output_port;
+                reconnect_cmd.execute();
+                reconnect_cmd.reconnect_port = nullptr;
             }
+
+
         }
     );
 
@@ -194,6 +201,12 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
             {
                 auto shader_comp_ptr = static_cast<shader_component_invoker*>(current_component_ptr);
                 shader_comp_ptr->shader_layout_instance.shader_vaild[0] = vs_check_box->isChecked();
+                
+                //重连 重连保证所连的pass全部重新编译
+                s_reconnect_resource_command reconnect_cmd;
+                reconnect_cmd.reconnect_port = shader_comp_ptr->output_port;
+                reconnect_cmd.execute();
+                reconnect_cmd.reconnect_port = nullptr;
             }
         }
     );
@@ -204,6 +217,12 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
             {
                 auto shader_comp_ptr = static_cast<shader_component_invoker*>(current_component_ptr);
                 shader_comp_ptr->shader_layout_instance.shader_vaild[1] = ds_check_box->isChecked();
+
+                //重连 重连保证所连的pass全部重新编译
+                s_reconnect_resource_command reconnect_cmd;
+                reconnect_cmd.reconnect_port = shader_comp_ptr->output_port;
+                reconnect_cmd.execute();
+                reconnect_cmd.reconnect_port = nullptr;
             }
         }
     );
@@ -214,6 +233,12 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
             {
                 auto shader_comp_ptr = static_cast<shader_component_invoker*>(current_component_ptr);
                 shader_comp_ptr->shader_layout_instance.shader_vaild[2] = hs_check_box->isChecked();
+
+                //重连 重连保证所连的pass全部重新编译
+                s_reconnect_resource_command reconnect_cmd;
+                reconnect_cmd.reconnect_port = shader_comp_ptr->output_port;
+                reconnect_cmd.execute();
+                reconnect_cmd.reconnect_port = nullptr;
             }
         }
     );
@@ -224,6 +249,12 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
             {
                 auto shader_comp_ptr = static_cast<shader_component_invoker*>(current_component_ptr);
                 shader_comp_ptr->shader_layout_instance.shader_vaild[3] = gs_check_box->isChecked();
+
+                //重连 重连保证所连的pass全部重新编译
+                s_reconnect_resource_command reconnect_cmd;
+                reconnect_cmd.reconnect_port = shader_comp_ptr->output_port;
+                reconnect_cmd.execute();
+                reconnect_cmd.reconnect_port = nullptr;
             }
         }
     );
@@ -234,6 +265,12 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
             {
                 auto shader_comp_ptr = static_cast<shader_component_invoker*>(current_component_ptr);
                 shader_comp_ptr->shader_layout_instance.shader_vaild[4] = ps_check_box->isChecked();
+
+                //重连 重连保证所连的pass全部重新编译
+                s_reconnect_resource_command reconnect_cmd;
+                reconnect_cmd.reconnect_port = shader_comp_ptr->output_port;
+                reconnect_cmd.execute();
+                reconnect_cmd.reconnect_port = nullptr;
             }
         }
     );
@@ -312,6 +349,21 @@ void texture_property_widget::change_combobox_index(int index)
     }
     break;
     }
+    //重新分配贴图
+    s_update_texture_gpu_command update_texture_gpu_cmd;
+    update_texture_gpu_cmd.texture_update_ptr = texture_comp_ptr->texture_instance;
+    update_texture_gpu_cmd.execute();
+    update_texture_gpu_cmd.texture_update_ptr = nullptr;
+    
+    //先刷新
+    s_update_gpu_command().execute();
+    
+    //重新打包贴图组
+    auto texture_component_package_texture_ptr = static_cast<texture_component_invoker*>(current_component_ptr->parent());
+    texture_component_package_texture_ptr->update_package();
+    
+    //先刷新
+    s_update_gpu_command().execute();
 }
 
 texture_group_property_widget::texture_group_property_widget(QTabWidget* in_parent_tab_widget) : QWidget(in_parent_tab_widget)
@@ -363,6 +415,15 @@ void texture_group_property_widget::change_combobox_index(int index)
     }
     break;
     }
+
+    //先刷新
+    s_update_gpu_command().execute();
+
+    //重新打包贴图组
+    texture_comp_ptr->update_package();
+
+    //先刷新
+    s_update_gpu_command().execute();
 }
 
 pass_property_widget::pass_property_widget(QTabWidget* in_parent_tab_widget)

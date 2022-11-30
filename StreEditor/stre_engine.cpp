@@ -39,16 +39,27 @@ bool stre_engine::allocate_pass(s_pass* in_out_pass)
 	return true;
 }
 
+bool stre_engine::release_pass(s_pass* in_out_pass)
+{
+	return pass_fy->release_gpu_pass(in_out_pass);
+}
+
 bool stre_engine::check_pass(s_pass* in_out_pass)
 {
 	return pass_fy->check_pass(in_out_pass);
+}
+
+void stre_engine::update_texture_gpu(cpu_texture* in_texture)
+{
+	//类型改变在in_texture->gpu_sr_ptr中
+	texture_manager->dx_allocate_gpu_resource(in_texture, in_texture->gpu_sr_ptr->shader_resource_type);
 }
 
 cpu_texture* stre_engine::create_texture(gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type)
 {
 	auto texture_ptr = texture_manager->create_resource();
 	
-	//偷懒直接分配
+	//提交分配分配命令
 	texture_manager->dx_allocate_gpu_resource(texture_ptr, in_sr_type);
 	
 	return texture_ptr;
@@ -109,6 +120,9 @@ bool stre_engine::pass_remove_shader_layout(s_pass* in_out_pass)
 
 void stre_engine::package_textures(std::vector<cpu_texture*> in_textures, cpu_texture* in_out_package_container)
 {
+	//重新分配贴图组的类型
+	update_texture_gpu(in_out_package_container);
+
 	texture_manager->package_textures(in_textures,in_out_package_container);
 }
 

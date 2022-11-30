@@ -244,7 +244,7 @@ public:
 	}
 
 	cpu_texture* texture_instance = nullptr;
-	connect_port* output_port = nullptr;
+	//connect_port* output_port = nullptr;
 protected:
 	
 	QLabel* texture_name = nullptr;
@@ -269,17 +269,14 @@ public:
 
 	void remove_element(cpu_texture* in_texture_ptr);
 
+	void update_package();
+
 	~texture_component_invoker()
 	{
 		//QT会自己释放子组件， 无需在析构中手动释放子组件
 		if (texture_instance) delete(texture_instance);
 		texture_instance = nullptr;
 
-		if (create_texture_cmd) delete(create_texture_cmd);
-		create_texture_cmd = nullptr;
-
-		if (reconnect_cmd) delete(reconnect_cmd);
-		reconnect_cmd = nullptr;
 	}
 private:
 	virtual void keyPressEvent(QKeyEvent* in_event);
@@ -308,9 +305,6 @@ protected:
 
 	QMenu* right_click_menu = nullptr;
 	QPushButton* add_texture_button = nullptr;
-	
-	s_command* create_texture_cmd = nullptr;
-	s_command* reconnect_cmd = nullptr;
 };
 
 class shader_component_invoker : public component_invoker
@@ -386,18 +380,28 @@ struct port_information
 class connect_port : public QRadioButton
 {
 public:
+	//这个好像只能全局  //执行命令时装入命令的局部执行
+	static connect_port* select_connect_port[2];
+	static int select_port_index;
+
 	const port_information port_inf;
 	connect_port(QWidget* in_parent, 
 		port_information in_port_inf);
 
 	~connect_port()
 	{
-		if (connect_res_cmd) delete(connect_res_cmd);
-		connect_res_cmd = nullptr;
+		//防止被删后还被使用
+		if (select_connect_port[0] == this)
+		{
+			select_connect_port[0] = nullptr;
+		}
+		if (select_connect_port[1] == this)
+		{
+			select_connect_port[1] = nullptr;
+		}
 	}
 
 protected:
-	s_command* connect_res_cmd = nullptr;
 
 private:
 

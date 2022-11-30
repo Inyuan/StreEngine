@@ -16,19 +16,6 @@ int pipeline_w_mouse_position_y = 0;
 
 pipeline_window_invoker* pipeline_window_widget_ptr = nullptr;
 debug_text_invoker* debug_text_ptr = nullptr;
-texture_component_invoker* texture_component_add_texture_ptr = nullptr;
-
-connect_port* select_connect_port[2] = { nullptr };
-connect_port* reconnect_port = nullptr;
-connect_port* disconnect_port = nullptr;
-bool disconnect_success = false;
-
-texture_element_invoker* texture_element_delete_ptr = nullptr;
-texture_component_invoker* texture_component_delete_ptr = nullptr;
-mesh_component_invoker* mesh_component_delete_ptr = nullptr;
-shader_component_invoker* shader_component_delete_ptr = nullptr;
-pass_component_invoker* pass_component_delete_ptr = nullptr;
-
 component_invoker* current_component_ptr = nullptr;
 
 pipeline_window_invoker::pipeline_window_invoker(
@@ -210,9 +197,10 @@ void mesh_component_invoker::keyPressEvent(QKeyEvent* in_event)
 {
 	if (in_event->key() == Qt::Key_Delete)
 	{
-		mesh_component_delete_ptr = this;
-		s_remove_mesh_command().execute();
-		mesh_component_delete_ptr = nullptr;
+		s_remove_mesh_command remove_mesh_cmd;
+		remove_mesh_cmd.mesh_component_delete_ptr = this;
+		remove_mesh_cmd.execute();
+		remove_mesh_cmd.mesh_component_delete_ptr = nullptr;
 	}
 	return QWidget::keyPressEvent(in_event);
 }
@@ -232,6 +220,11 @@ void pass_component_invoker::update_res_port(vector<connect_port*>& in_res_port_
 	//删除原有的槽
 	for (auto it : input_res_port_group)
 	{
+		//和资源断开
+		s_disconnect_all_resource_command disconnect_resource_cmd;
+		disconnect_resource_cmd.disconnect_port = it;
+		disconnect_resource_cmd.execute();
+
 		it->deleteLater();
 	}
 	input_res_port_group.clear();
@@ -314,9 +307,10 @@ void pass_component_invoker::keyPressEvent(QKeyEvent* in_event)
 {
 	if (in_event->key() == Qt::Key_Delete)
 	{
-		pass_component_delete_ptr = this;
-		s_remove_pass_command().execute();
-		pass_component_delete_ptr = nullptr;
+		s_remove_pass_command remove_pass_cmd;
+		remove_pass_cmd.pass_component_delete_ptr = this;
+		remove_pass_cmd.execute();
+		remove_pass_cmd.pass_component_delete_ptr = nullptr;
 	}
 	return QWidget::keyPressEvent(in_event);
 }
@@ -353,12 +347,13 @@ texture_element_invoker::texture_element_invoker(
 	//input_port->setAutoExclusive(false);
 	//input_port->setText(QCoreApplication::translate("stre_editorClass", "input", nullptr));
 
-	output_port = new connect_port(this, port_information(port_information::TEXTURE_OUTPUT, this));
-	output_port->setObjectName("texture_output_port");
-	output_port->setGeometry(QRect(60, 20, 61, 20));
-	output_port->setLayoutDirection(Qt::RightToLeft);
-	output_port->setAutoExclusive(false);
-	output_port->setText(QCoreApplication::translate("stre_editorClass", "output", nullptr));
+	//并不能作为pass的输入
+	//output_port = new connect_port(this, port_information(port_information::TEXTURE_OUTPUT, this));
+	//output_port->setObjectName("texture_output_port");
+	//output_port->setGeometry(QRect(60, 20, 61, 20));
+	//output_port->setLayoutDirection(Qt::RightToLeft);
+	//output_port->setAutoExclusive(false);
+	//output_port->setText(QCoreApplication::translate("stre_editorClass", "output", nullptr));
 
 }
 
@@ -379,9 +374,10 @@ void texture_element_invoker::keyPressEvent(QKeyEvent* in_event)
 {
 	if (in_event->key() == Qt::Key_Delete)
 	{
-		texture_element_delete_ptr = this;
-		s_remove_texture_command().execute();
-		texture_element_delete_ptr = nullptr;
+		s_remove_texture_command remove_texture_cmd;
+		remove_texture_cmd.texture_element_delete_ptr = this;
+		remove_texture_cmd.execute();
+		remove_texture_cmd.texture_element_delete_ptr = nullptr;
 	}
 	return QWidget::keyPressEvent(in_event);
 }
@@ -401,9 +397,6 @@ texture_component_invoker::texture_component_invoker(
 		121, 211));
 	setAlignment(Qt::AlignCenter);
 	setTitle(QCoreApplication::translate("stre_editorClass", "texture", nullptr));
-
-	create_texture_cmd = new s_create_texture_command();
-	reconnect_cmd = new s_reconnect_resource_command();
 
 	//构建端口
 	input_port = new connect_port(this, port_information(port_information::TEXTURE_GROUP_INPUT, this));
@@ -454,13 +447,8 @@ void texture_component_invoker::add_element(cpu_texture* in_texture_ptr)
 
 	textures_group.back()->show();
 
-	//重新连接接口
-	reconnect_port = input_port;
-	reconnect_cmd->execute();
+	update_package();
 
-	reconnect_port = output_port;
-	reconnect_cmd->execute();
-	reconnect_port = nullptr;
 	element_stk_height += 41;
 }
 
@@ -475,17 +463,18 @@ void texture_component_invoker::remove_element(cpu_texture* in_texture_ptr)
 	{
 		if (textures_group[i]->texture_instance->uid.name == in_texture_ptr->uid.name)
 		{
+			//没有端口
 			//断开端口
-			disconnect_port = textures_group[i]->output_port;
-			s_disconnect_resource_command().execute();
-			//断不了就不许删
-			if (!disconnect_success)
-			{
-				//!!!出问题了
-				return;
-			}
-
-			disconnect_port = nullptr;
+			//s_disconnect_all_resource_command disconnect_resource_cmd;
+			//disconnect_resource_cmd.disconnect_port = textures_group[i]->output_port;
+			//disconnect_resource_cmd.execute();
+			////断不了就不许删
+			//if (!disconnect_resource_cmd.disconnect_success)
+			//{
+			//	//!!!出问题了
+			//	return;
+			//}
+			//disconnect_resource_cmd.disconnect_port = nullptr;
 
 			textures_group[i]->deleteLater();
 			textures_group.erase(textures_group.begin()+i);
@@ -503,14 +492,36 @@ void texture_component_invoker::remove_element(cpu_texture* in_texture_ptr)
 		element_stk_height += 41;
 	}
 
+	update_package();
+}
+
+/// <summary>
+/// 更新package
+/// </summary>
+void texture_component_invoker::update_package()
+{
+	//刷新自己
+	if (textures_group.empty())
+	{
+		s_update_texture_gpu_command update_texture_gpu_cmd;
+		update_texture_gpu_cmd.texture_update_ptr = texture_instance;
+		update_texture_gpu_cmd.execute();
+		update_texture_gpu_cmd.texture_update_ptr = nullptr;
+	}
+	else
+	{//重新打包
+		s_package_texture_command package_texture_cmd;
+		package_texture_cmd.texture_component_package_texture_ptr = this;
+		package_texture_cmd.execute();
+	}
 	//重新连接接口
-	reconnect_port = input_port;
-	reconnect_cmd->execute();
+	s_reconnect_resource_command reconnect_cmd;
+	reconnect_cmd.reconnect_port = input_port;
+	reconnect_cmd.execute();
 
-	reconnect_port = output_port;
-	reconnect_cmd->execute();
-
-	reconnect_port = nullptr;
+	reconnect_cmd.reconnect_port = output_port;
+	reconnect_cmd.execute();
+	reconnect_cmd.reconnect_port = nullptr;
 }
 
 /// <summary>
@@ -518,11 +529,10 @@ void texture_component_invoker::remove_element(cpu_texture* in_texture_ptr)
 /// </summary>
 void texture_component_invoker::add_texture()
 {
-	texture_component_add_texture_ptr = this;
-
-	create_texture_cmd->execute();
-
-	texture_component_add_texture_ptr = nullptr;
+	s_create_texture_command create_texture_cmd;
+	create_texture_cmd.texture_component_add_texture_ptr = this;
+	create_texture_cmd.execute();
+	create_texture_cmd.texture_component_add_texture_ptr = nullptr;
 }
 
 /// <summary>
@@ -533,9 +543,10 @@ void texture_component_invoker::keyPressEvent(QKeyEvent* in_event)
 {
 	if (in_event->key() == Qt::Key_Delete)
 	{
-		texture_component_delete_ptr = this;
-		s_remove_texture_group_command().execute();
-		texture_component_delete_ptr = nullptr;
+		s_remove_texture_group_command remove_texture_group_cmd;
+		remove_texture_group_cmd.texture_component_delete_ptr = this;
+		remove_texture_group_cmd.execute();
+		remove_texture_group_cmd.texture_component_delete_ptr = nullptr;
 	
 	}
 	return QWidget::keyPressEvent(in_event);
@@ -577,9 +588,10 @@ void shader_component_invoker::keyPressEvent(QKeyEvent* in_event)
 {
 	if (in_event->key() == Qt::Key_Delete)
 	{
-		shader_component_delete_ptr = this;
-		s_remove_shader_command().execute();
-		shader_component_delete_ptr = nullptr;
+		s_remove_shader_command remove_shader_cmd;
+		remove_shader_cmd.shader_component_delete_ptr = this;
+		remove_shader_cmd.execute();
+		remove_shader_cmd.shader_component_delete_ptr = nullptr;
 	}
 	return QWidget::keyPressEvent(in_event);
 }
@@ -588,7 +600,9 @@ void shader_component_invoker::keyPressEvent(QKeyEvent* in_event)
 * connect_port
 * 
 *********************************************/
-int select_port_index = 0;
+//这个好像只能全局  //执行命令时装入命令的局部执行
+connect_port* connect_port::select_connect_port[2] = { nullptr };
+int connect_port::select_port_index = 0;
 
 connect_port::connect_port(
 	QWidget* in_parent,
@@ -596,7 +610,6 @@ connect_port::connect_port(
 	QRadioButton(in_parent),
 	port_inf(in_port_inf)
 {
-	connect_res_cmd = new s_connect_resource_command();
 }
 
 /// <summary>
@@ -608,14 +621,18 @@ void connect_port::mousePressEvent(QMouseEvent* in_event)
 
 	if (in_event->button() == Qt::LeftButton)
 	{
+		//!!!不太对
 		switch (select_port_index)
 		{
 		case 0:
+		{
 			select_connect_port[0] = this;
 			setChecked(true);
 			select_port_index++;
+		}
 			break;
 		case 1:
+		{
 			if (select_connect_port[0] == this)
 			{
 				select_connect_port[0] = nullptr;
@@ -626,7 +643,11 @@ void connect_port::mousePressEvent(QMouseEvent* in_event)
 			select_connect_port[1] = this;
 			setChecked(true);
 			select_port_index++;
-			connect_res_cmd->execute();
+			s_connect_resource_command connect_resource_cmd;
+			connect_resource_cmd.select_connect_port[0] = select_connect_port[0];
+			connect_resource_cmd.select_connect_port[1] = select_connect_port[1];
+			connect_resource_cmd.execute();//装入局部执行
+		}
 		default:
 		{
 			if(select_connect_port[0])
