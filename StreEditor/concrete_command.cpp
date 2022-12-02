@@ -442,10 +442,10 @@ void s_connect_resource_command::execute()
 		
 		QPoint end = QPoint(0, 0);
 
-		start = select_connect_port[0]->mapToGlobal(QPoint(0, 0));
+		start = select_connect_port[0]->mapToGlobal(QPoint(select_connect_port[0]->width(), select_connect_port[0]->height()/2));
 		start = pipeline_window_widget_ptr->mapFromGlobal(start);
 
-		end = select_connect_port[1]->mapToGlobal(QPoint(0, 0));
+		end = select_connect_port[1]->mapToGlobal(QPoint(0, select_connect_port[1]->height() / 2));
 		end = pipeline_window_widget_ptr->mapFromGlobal(end);
 
 		//制作连线曲线

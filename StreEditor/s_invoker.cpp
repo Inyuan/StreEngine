@@ -105,6 +105,7 @@ component_invoker::component_invoker(
 	QWidget* in_parent) :
 	QGroupBox(in_parent)
 {
+	setStyleSheet("border: 1px solid gray; border - radius: 5px; ");
 	setFocusPolicy(Qt::ClickFocus);
 };
 
@@ -116,7 +117,10 @@ void component_invoker::mousePressEvent(QMouseEvent* in_event)
 {
 	if (in_event->button() == Qt::LeftButton)
 	{
+		if(current_component_ptr)
+		current_component_ptr->setStyleSheet("border: 1px solid gray; border - radius: 5px; ");
 		current_component_ptr = this;
+		current_component_ptr->setStyleSheet("border: 2px solid gray; border - radius: 5px; ");
 		s_switch_property_widget_command().execute();
 	}
 	//else if (in_event->button() == Qt::RightButton)
