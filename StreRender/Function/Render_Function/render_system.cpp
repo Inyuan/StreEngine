@@ -73,6 +73,7 @@ bool render_system<directx_render>::update_gpu_memory()
 
 void render_system<directx_render>::init_in_HWND(HWND in_HWND, UINT in_width, UINT in_height)
 {
+
 	renderer = new directx_render();
 
 	renderer->init(in_HWND, in_width, in_height);
@@ -80,6 +81,7 @@ void render_system<directx_render>::init_in_HWND(HWND in_HWND, UINT in_width, UI
 
 void render_system<directx_render>::init_new_window(HINSTANCE in_instance, UINT in_width, UINT in_height)
 {
+
 	//s_memory* memory_allocater = memory_allocater_group["render_memory_allocater"];
 
 	//gpu_res_factory = memory_allocater->allocate<gpu_resource_factory>();

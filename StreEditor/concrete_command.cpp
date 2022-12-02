@@ -438,14 +438,26 @@ void s_connect_resource_command::execute()
 
 	if (connect_success)
 	{
-		QPoint start = QPoint(0,0);
+		QPoint start = select_connect_port[0]->mapToGlobal(QPoint(0,0));
 		
-		QPoint end = QPoint(0, 0);
+		QPoint end = select_connect_port[1]->mapToGlobal(QPoint(0, 0));
 
-		start = select_connect_port[0]->mapToGlobal(QPoint(select_connect_port[0]->width(), select_connect_port[0]->height()/2));
+		//默认sart组件在end组件的左边
+		int local_start_x = select_connect_port[0]->width();
+		int local_end_x = 0;
+		//如果在右边就起始位置修改一下
+		if (start.x() > end.x())
+		{
+			local_start_x = 0;
+			local_end_x = select_connect_port[1]->width();
+		}
+
+
+
+		start = select_connect_port[0]->mapToGlobal(QPoint(local_start_x, select_connect_port[0]->height() / 2));
 		start = pipeline_window_widget_ptr->mapFromGlobal(start);
 
-		end = select_connect_port[1]->mapToGlobal(QPoint(0, select_connect_port[1]->height() / 2));
+		end = select_connect_port[1]->mapToGlobal(QPoint(local_end_x, select_connect_port[1]->height() / 2));
 		end = pipeline_window_widget_ptr->mapFromGlobal(end);
 
 		//制作连线曲线

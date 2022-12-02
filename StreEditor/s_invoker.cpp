@@ -101,6 +101,14 @@ void pipeline_window_invoker::paintEvent(QPaintEvent*)
 
 std::set<component_invoker*> selected_components;
 
+component_invoker::~component_invoker()
+{
+	if (current_component_ptr == this)
+	{
+		current_component_ptr = nullptr;
+	}
+}
+
 component_invoker::component_invoker(
 	QWidget* in_parent) :
 	QGroupBox(in_parent)
@@ -118,7 +126,7 @@ void component_invoker::mousePressEvent(QMouseEvent* in_event)
 	if (in_event->button() == Qt::LeftButton)
 	{
 		if(current_component_ptr)
-		current_component_ptr->setStyleSheet("border: 1px solid gray; border - radius: 5px; ");
+	current_component_ptr->setStyleSheet("border: 1px solid gray; border - radius: 5px; ");
 		current_component_ptr = this;
 		current_component_ptr->setStyleSheet("border: 2px solid gray; border - radius: 5px; ");
 		s_switch_property_widget_command().execute();
@@ -335,7 +343,7 @@ texture_element_invoker::texture_element_invoker(
 
 	setObjectName("texture_element_widget");
 	setGeometry(QRect(0, in_height, 121, 41));
-
+	setTitle(QCoreApplication::translate("stre_editorClass", "element", nullptr));
 
 	//构建名字标签
 	texture_name = new QLabel(this);
@@ -400,7 +408,7 @@ texture_component_invoker::texture_component_invoker(
 		pipeline_w_mouse_position_y, 
 		121, 211));
 	setAlignment(Qt::AlignCenter);
-	setTitle(QCoreApplication::translate("stre_editorClass", "texture", nullptr));
+	setTitle(QCoreApplication::translate("stre_editorClass", "ds texture", nullptr));
 
 	//构建端口
 	input_port = new connect_port(this, port_information(port_information::TEXTURE_GROUP_INPUT, this));
@@ -504,6 +512,7 @@ void texture_component_invoker::remove_element(cpu_texture* in_texture_ptr)
 /// </summary>
 void texture_component_invoker::update_package()
 {
+
 	//刷新自己
 	if (textures_group.empty())
 	{
@@ -518,6 +527,21 @@ void texture_component_invoker::update_package()
 		package_texture_cmd.texture_component_package_texture_ptr = this;
 		package_texture_cmd.execute();
 	}
+
+	//刷新自己的名字
+	switch (texture_instance->gpu_sr_ptr->shader_resource_type)
+	{
+	case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP:
+		setTitle(QCoreApplication::translate("stre_editorClass", "ds texture", nullptr));
+		break;
+	case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP:
+		setTitle(QCoreApplication::translate("stre_editorClass", "rt texture", nullptr));
+		break;
+	case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
+		setTitle(QCoreApplication::translate("stre_editorClass", "tx texture", nullptr));
+		break;
+	}
+
 	//重新连接接口
 	s_reconnect_resource_command reconnect_cmd;
 	reconnect_cmd.reconnect_port = input_port;

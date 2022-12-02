@@ -1261,8 +1261,8 @@ void directx_render::create_gpu_texture(
 	resourceDesc.SampleDesc.Quality = MSAAX4_STATE ? (MSAAX4_QUALITY - 1) : 0;
 	resourceDesc.MipLevels = 1;
 	resourceDesc.DepthOrArraySize = 1;
-	resourceDesc.Width = CLIENT_WIDTH;
-	resourceDesc.Height = CLIENT_HEIGHT;
+	resourceDesc.Width = client_width;
+	resourceDesc.Height = client_height;
 	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 
 
@@ -1631,6 +1631,9 @@ void directx_render::create_pso(
 
 void directx_render::init(HWND in_main_wnd, UINT in_width, UINT in_height)
 {
+	client_width = in_width;
+	client_height = in_height;
+
 	//启动调试层
 	//启动了之后才会在出问题的时候输出错误提示
 	ID3D12Debug* debug = nullptr;

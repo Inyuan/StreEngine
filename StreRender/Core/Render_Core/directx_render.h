@@ -248,6 +248,9 @@ private:
 
     UINT cbv_srv_uav_descriptor_size = 0;
 
+    UINT client_width = 800;
+    UINT client_height = 600;
+
     //??? ¾«¶È¿ØÖÆ
     DXGI_FORMAT back_buffer_format = DXGI_FORMAT_R8G8B8A8_UNORM;
     

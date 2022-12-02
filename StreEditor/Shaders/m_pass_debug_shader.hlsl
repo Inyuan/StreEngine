@@ -1,3 +1,12 @@
+SamplerState gsamPointWrap        : register(s0);
+SamplerState gsamPointClamp       : register(s1);
+SamplerState gsamLinearWrap       : register(s2);
+SamplerState gsamLinearClamp      : register(s3);
+SamplerState gsamAnisotropicWrap  : register(s4);
+SamplerState gsamAnisotropicClamp : register(s5);
+SamplerComparisonState gsamShadow : register(s6);
+
+
 
 struct db_struct
 {
@@ -36,8 +45,7 @@ vs_out VS(vs_in vIn)
 
 float4 PS(vs_out pIn) : SV_TARGET
 {
-
-    float4 rescolor = texture_debug[pIn.texcoord];
+    float4 rescolor = texture_debug.Sample(gsamPointClamp, pIn.texcoord);
 
     return rescolor;
 }

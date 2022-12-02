@@ -157,6 +157,7 @@ class component_invoker : public QGroupBox
 public:
 	COMPONENT_TYPE comp_type = COMPONENT_TYPE_NONE;
 	component_invoker(QWidget* in_parent);
+	~component_invoker();
 protected:
 	component_invoker() {  };
 	virtual void mousePressEvent(QMouseEvent* in_event);
