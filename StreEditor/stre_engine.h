@@ -88,6 +88,27 @@ public:
 	s_pass* create_pass();
 
 	template<class t_cpu_resource>
+	t_cpu_resource* create_custom_resource()
+	{
+		s_custom_manager<t_cpu_resource>* custom_manager = res_manager_fy->create_manager<t_cpu_resource>();
+		auto instance_ptr = custom_manager->create_resource();
+		//
+		custom_manager->dx_allocate_gpu_resource(instance_ptr, gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
+		
+		delete(custom_manager);
+		return instance_ptr;
+	}
+
+	template<class t_cpu_resource>
+	void update_custom_gpu_resource(t_cpu_resource* in_res_ptr)
+	{
+		s_custom_manager<t_cpu_resource>* custom_manager = res_manager_fy->create_manager<t_cpu_resource>();
+		custom_manager->update_gpu(in_res_ptr);
+		delete(custom_manager);
+	}
+
+
+	template<class t_cpu_resource>
 	bool pass_add_shader_resource(s_pass* in_out_pass,const t_cpu_resource * in_sr)
 	{
 		return pass_fy->add_shader_resource<t_cpu_resource>(in_out_pass, in_sr);

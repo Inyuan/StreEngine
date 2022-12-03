@@ -3,7 +3,11 @@
 #include "s_invoker.h"
 //具体命令
 
-//创建贴图
+/******************************************
+* create command
+*
+*********************************************/
+
 class s_create_texture_command : public s_command
 {
 public:
@@ -12,20 +16,46 @@ public:
 	texture_component_invoker* texture_component_add_texture_ptr = nullptr;
 };
 
-
-
 class s_create_texture_group_command : public s_command
 {
 public:
 	virtual void execute() override;
 };
 
-//创建物体
 class s_create_mesh_command : public s_command
 {
 public:
 	virtual void execute() override;
 };
+
+class s_create_pass_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+
+class s_create_shader_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+
+class s_create_camera_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+
+class s_create_light_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+
+/******************************************
+* update / change / connect command
+*
+*********************************************/
 
 class s_change_mesh_data_command : public s_command
 {
@@ -33,14 +63,8 @@ public:
 	virtual void execute() override;
 };
 
-class s_switch_property_widget_command : public s_command 
-{
-public:
-	virtual void execute() override;
-};
 
-
-class s_create_pass_command : public s_command
+class s_switch_property_widget_command : public s_command
 {
 public:
 	virtual void execute() override;
@@ -65,12 +89,6 @@ public:
 
 	connect_port* reconnect_port = nullptr;
 
-};
-
-class s_create_shader_command : public s_command
-{
-public:
-	virtual void execute() override;
 };
 
 /***
@@ -192,4 +210,23 @@ public:
 	pass_component_invoker* pass_component_delete_ptr = nullptr;
 
 };
+
+class s_remove_camera_command : public s_command
+{
+public:
+	virtual void execute() override;
+
+	camera_component_invoker* camera_component_delete_ptr = nullptr;
+
+};
+
+class s_remove_light_command : public s_command
+{
+public:
+	virtual void execute() override;
+
+	light_component_invoker* light_component_delete_ptr = nullptr;
+
+};
+
 

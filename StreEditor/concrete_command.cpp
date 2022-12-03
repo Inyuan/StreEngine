@@ -114,9 +114,6 @@ void s_create_shader_command::execute()
 	debug_shader_layout.shader_input_group.push_back(
 		{ "TANGENT",shader_layout::shader_input::INPUT_ELEMENT_SIZE_R32G32B32 });
 
-
-
-
 	//构造蓝图组件
 	pipeline_window_widget_ptr->shader_comp_group[debug_shader_layout.uid.name] = new shader_component_invoker(pipeline_window_widget_ptr, debug_shader_layout);
 	pipeline_window_widget_ptr->shader_comp_group[debug_shader_layout.uid.name]->show();
@@ -145,6 +142,38 @@ void s_create_pass_command::execute()
 	new_pass_comp->show();
 	
 }
+
+void s_create_camera_command::execute()
+{
+	auto camera_ptr = stre_engine::get_instance()->create_custom_resource<cpu_camera>();
+
+	camera_component_invoker* new_camera_comp = new camera_component_invoker(pipeline_window_widget_ptr, camera_ptr);
+
+	pipeline_window_widget_ptr->camera_comp_group[camera_ptr->uid.name] = new_camera_comp;
+
+	new_camera_comp->show();
+
+}
+
+void s_create_light_command::execute()
+{
+	auto light_ptr = stre_engine::get_instance()->create_custom_resource<cpu_light>();
+
+	light_component_invoker* new_light_comp = new light_component_invoker(pipeline_window_widget_ptr, light_ptr);
+
+	pipeline_window_widget_ptr->light_comp_group[light_ptr->uid.name] = new_light_comp;
+
+	new_light_comp->show();
+
+}
+
+/***
+************************************************************
+*
+* Connect Function
+*
+************************************************************
+*/
 
 /// <summary>
 /// 反射pass的shader资源接口到组件上
@@ -198,6 +227,7 @@ void reflect_pass_res_input(pass_component_invoker* in_pass_cmp)
 	current_pass_component_ptr->update_res_port(res_port_group);
 
 }
+
 
 
 /// <summary>
@@ -287,7 +317,7 @@ void s_connect_resource_command::execute()
 		break;
 		}
 	}
-		break;
+	break;
 	case port_information::TEXTURE_GROUP_OUTPUT:
 	{
 		//可以连到Pass的res输入口
@@ -334,7 +364,41 @@ void s_connect_resource_command::execute()
 		break;
 		}
 	}
+	break;
+	case port_information::CAMERA_OUTPUT:
+	{
+		switch (connect_port2.port_type)
+		{
+		case port_information::PASS_RES_PORT_GROUP:
+		{
+			cpu_camera* camera_ptr = reinterpret_cast<cpu_camera*>(connect_port1.ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			//正事
+			{
+				connect_success = stre_engine::get_instance()->pass_add_shader_resource<cpu_camera>(p_ptr->pass_instance, camera_ptr);
+			}
+		}
 		break;
+		}
+	}
+	break;
+	case port_information::LIGHT_OUTPUT:
+	{
+		switch (connect_port2.port_type)
+		{
+		case port_information::PASS_RES_PORT_GROUP:
+		{
+			cpu_light* light_ptr = reinterpret_cast<cpu_light*>(connect_port1.ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			//正事
+			{
+				connect_success = stre_engine::get_instance()->pass_add_shader_resource<cpu_light>(p_ptr->pass_instance, light_ptr);
+			}
+		}
+		break;
+		}
+	}
+	break;
 	case port_information::MESH_OUTPUT:
 	{
 		//MESH输入
@@ -401,23 +465,7 @@ void s_connect_resource_command::execute()
 		break;
 		}
 	}
-		break;
-	//case port_information::PASS_RES_PORT_GROUP:
-	//{
-	//}
-	//	break;
-	//case port_information::PASS_MESH_INPUT:
-	//{
-	//}
-	//	break;
-	//case port_information::PASS_SHADER_INPUT:
-	//{
-	//}
-	//	break;
-	//case port_information::PASS_OUTPUT:
-	//{
-	//}
-	//break;
+	break;
 	default:
 	{
 		//反过来试一次
@@ -609,6 +657,249 @@ void s_update_gpu_command::execute()
 	}
 }
 
+/***
+************************************************************
+*
+* Update Function
+*
+************************************************************
+*/
+
+
+void s_change_mesh_data_command::execute()
+{
+	if (current_component_ptr->comp_type != COMPONENT_TYPE_MESH)
+	{
+		return;
+	}
+
+	auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
+	if (mesh_comp_ptr->mesh_instance->is_view_mesh || mesh_comp_ptr->mesh_instance->path.empty())
+	{
+		if (mesh_comp_ptr->mesh_instance)
+		{
+			delete(mesh_comp_ptr->mesh_instance);
+		}
+		mesh_comp_ptr->mesh_instance = nullptr;
+		mesh_comp_ptr->mesh_instance = stre_engine::get_instance()->create_viewport_mesh();
+	}
+	else
+	{
+
+		auto path_str = mesh_comp_ptr->mesh_instance->path;
+		if (mesh_comp_ptr->mesh_instance)
+		{
+			delete(mesh_comp_ptr->mesh_instance);
+		}
+		mesh_comp_ptr->mesh_instance = nullptr;
+		//需要检查路径啥的
+		mesh_comp_ptr->mesh_instance = stre_engine::get_instance()->create_mesh_from_fbx(path_str);
+	}
+
+	s_switch_property_widget_command().execute();
+}
+
+
+/// <summary>
+/// 选中了哪个组件
+/// 遍历属性 反射值到属性窗口
+/// /// </summary>
+void s_switch_property_widget_command::execute()
+{
+	s_update_gpu_command local_update_request;
+	local_update_request.execute();
+	//0:Empty
+	//1:mesh
+	//2:shader
+	//3:texture
+	//4:texture group
+	//4:pass
+	current_property_tab_widget->setTabEnabled(0, false);
+	current_property_tab_widget->setTabEnabled(1, false);
+	current_property_tab_widget->setTabEnabled(2, false);
+	current_property_tab_widget->setTabEnabled(3, false);
+	current_property_tab_widget->setTabEnabled(4, false);
+	current_property_tab_widget->setTabEnabled(5, false);
+	current_property_tab_widget->setTabVisible(0, false);
+	current_property_tab_widget->setTabVisible(1, false);
+	current_property_tab_widget->setTabVisible(2, false);
+	current_property_tab_widget->setTabVisible(3, false);
+	current_property_tab_widget->setTabVisible(4, false);
+	current_property_tab_widget->setTabVisible(5, false);
+	if (!current_component_ptr)
+	{
+		//显示空窗口
+		current_property_tab_widget->setTabEnabled(0, true);
+		current_property_tab_widget->setTabVisible(0, true);
+		return;
+	}
+
+	switch (current_component_ptr->comp_type)
+	{
+	case COMPONENT_TYPE_MESH:
+	{
+		current_property_tab_widget->setTabEnabled(1, true);
+		current_property_tab_widget->setTabVisible(1, true);
+		//遍历属性 反射值到窗口
+		auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
+
+		if (mesh_comp_ptr->mesh_instance->is_view_mesh)
+		{
+			current_mesh_property_widget->type_select_comcobox->setCurrentIndex(0);
+			current_mesh_property_widget->path_select_pushbutton->setEnabled(false);
+		}
+		else
+		{
+			current_mesh_property_widget->type_select_comcobox->setCurrentIndex(1);
+			current_mesh_property_widget->path_select_pushbutton->setEnabled(true);
+			QString path_str;
+			path_str = path_str.fromStdWString(mesh_comp_ptr->mesh_instance->path);
+			current_mesh_property_widget->path_text->setText(path_str);
+		}
+	}
+	break;
+	case COMPONENT_TYPE_SHADER:
+	{
+		current_property_tab_widget->setTabEnabled(2, true);
+		current_property_tab_widget->setTabVisible(2, true);
+
+		auto shader_comp_ptr = static_cast<shader_component_invoker*>(current_component_ptr);
+
+		QString path_str;
+		path_str = path_str.fromStdWString(shader_comp_ptr->shader_layout_instance.shader_path[0]);
+		current_shader_property_widget->path_text->setText(path_str);
+
+		current_shader_property_widget->vs_check_box->setChecked(shader_comp_ptr->shader_layout_instance.shader_vaild[0]);
+		current_shader_property_widget->ds_check_box->setChecked(shader_comp_ptr->shader_layout_instance.shader_vaild[1]);
+		current_shader_property_widget->hs_check_box->setChecked(shader_comp_ptr->shader_layout_instance.shader_vaild[2]);
+		current_shader_property_widget->gs_check_box->setChecked(shader_comp_ptr->shader_layout_instance.shader_vaild[3]);
+		current_shader_property_widget->ps_check_box->setChecked(shader_comp_ptr->shader_layout_instance.shader_vaild[4]);
+
+	}
+	break;
+	case COMPONENT_TYPE_TEXTURE:
+	{
+		current_property_tab_widget->setTabEnabled(3, true);
+		current_property_tab_widget->setTabVisible(3, true);
+
+		auto texture_comp_ptr = static_cast<texture_element_invoker*>(current_component_ptr);
+
+		//反射路径
+		QString path_str;
+		path_str = path_str.fromStdWString(texture_comp_ptr->texture_instance->path);
+		current_texture_property_widget->path_text->setText(path_str);
+
+		//反射选项框
+		int index = -1;
+		switch (texture_comp_ptr->texture_instance->gpu_sr_ptr->shader_resource_type)
+		{
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE:
+			index = 0;
+			break;
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET:
+			index = 1;
+			break;
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL:
+			index = 2;
+			break;
+		}
+		current_texture_property_widget->type_select_comcobox->setCurrentIndex(index);
+
+	}
+	break;
+	case COMPONENT_TYPE_TEXTURE_GROUP:
+	{
+		current_property_tab_widget->setTabEnabled(4, true);
+		current_property_tab_widget->setTabVisible(4, true);
+
+		auto texture_comp_ptr = static_cast<texture_component_invoker*>(current_component_ptr);
+
+		//反射选项框
+		int index = -1;
+		switch (texture_comp_ptr->texture_instance->gpu_sr_ptr->shader_resource_type)
+		{
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
+			index = 0;
+			break;
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP:
+			index = 1;
+			break;
+		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP:
+			index = 2;
+			break;
+		}
+
+		current_texture_group_property_widget->type_select_comcobox->setCurrentIndex(index);
+
+	}
+	break;
+
+	case COMPONENT_TYPE_PASS:
+	{
+		current_property_tab_widget->setTabEnabled(5, true);
+		current_property_tab_widget->setTabVisible(5, true);
+
+		auto pass_comp_ptr = static_cast<pass_component_invoker*>(current_component_ptr);
+
+		//level comcobox
+		current_pass_property_widget->pass_level_comcobox->setCurrentIndex(pass_comp_ptr->level);
+
+		//is_output check
+		//只允许一个
+		if (had_output_pass)
+		{
+			current_pass_property_widget->is_output_check_box->setEnabled(false);
+		}
+		else
+		{
+			current_pass_property_widget->is_output_check_box->setEnabled(true);
+		}
+
+		if (pass_comp_ptr->pass_instance->is_output)
+		{
+			current_pass_property_widget->is_output_check_box->setEnabled(true);
+		}
+
+		current_pass_property_widget->is_output_check_box->setChecked(pass_comp_ptr->pass_instance->is_output);
+	}
+	break;
+	}
+}
+
+void s_update_texture_gpu_command::execute()
+{
+	if (!texture_update_ptr)
+	{
+		//!!!出问题了
+		return;
+	}
+	//先刷新 怕原有资源已经有命令入队了
+	s_update_gpu_command().execute();
+
+	stre_engine::get_instance()->update_texture_gpu(texture_update_ptr);
+
+
+}
+
+void s_package_texture_command::execute()
+{
+	if (!texture_component_package_texture_ptr)
+	{
+		//!!!出问题了
+		return;
+	}
+	vector<cpu_texture*> pack_buffer;
+	for (int i = 0; i < texture_component_package_texture_ptr->textures_group.size(); i++)
+	{
+		pack_buffer.push_back(texture_component_package_texture_ptr->textures_group[i]->texture_instance);
+	}
+	//先刷新，怕打包的资源还没gpu资源
+	s_update_gpu_command().execute();
+
+	stre_engine::get_instance()->package_textures(pack_buffer, texture_component_package_texture_ptr->texture_instance);
+
+}
+
 
 /***
 ************************************************************
@@ -645,7 +936,6 @@ void s_disconnect_resource_command::execute()
 	//	}
 	//}
 	//break;
-
 	case port_information::TEXTURE_GROUP_INPUT:
 	{
 		//可以连到Pass的输出口
@@ -737,6 +1027,40 @@ void s_disconnect_resource_command::execute()
 			//		pipeline_window_widget_ptr->pass_comp_level_map[p_ptr->level].insert(p_ptr);
 			//	}
 			//}
+		}
+		break;
+		}
+	}
+	break;
+	case port_information::CAMERA_OUTPUT:
+	{
+		switch (connect_port2.port_type)
+		{
+		case port_information::PASS_RES_PORT_GROUP:
+		{
+			cpu_camera* camera_ptr = reinterpret_cast<cpu_camera*>(connect_port1.ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			//正事
+			{
+				disconnect_success = stre_engine::get_instance()->pass_remove_shader_resource<cpu_camera>(p_ptr->pass_instance, camera_ptr);
+			}
+		}
+		break;
+		}
+	}
+	break;
+	case port_information::LIGHT_OUTPUT:
+	{
+		switch (connect_port2.port_type)
+		{
+		case port_information::PASS_RES_PORT_GROUP:
+		{
+			cpu_light* light_ptr = reinterpret_cast<cpu_light*>(connect_port1.ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			//正事
+			{
+				disconnect_success = stre_engine::get_instance()->pass_remove_shader_resource<cpu_light>(p_ptr->pass_instance, light_ptr);
+			}
 		}
 		break;
 		}
@@ -988,8 +1312,6 @@ void s_remove_shader_command::execute()
 	shader_component_delete_ptr = nullptr;
 }
 
-
-
 /// <summary>
 /// 删除连接的接口
 /// 删除表中指针
@@ -1004,7 +1326,7 @@ void s_remove_pass_command::execute()
 	}
 	if (pass_component_delete_ptr->pass_instance->is_output)
 	{
-		had_output_pass = false;
+		had_output_pass = false;  
 	}
 
 	s_disconnect_all_resource_command disconnect_resource_cmd;
@@ -1066,247 +1388,56 @@ void s_remove_pass_command::execute()
 	pass_component_delete_ptr = nullptr;
 }
 
-
-
-/***
-************************************************************
-*
-* Update Function
-*
-************************************************************
-*/
-
-
-void s_change_mesh_data_command::execute()
+void s_remove_camera_command::execute()
 {
-	if (current_component_ptr->comp_type != COMPONENT_TYPE_MESH)
-	{
-		return;
-	}
-
-	auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
-	if (mesh_comp_ptr->mesh_instance->is_view_mesh || mesh_comp_ptr->mesh_instance->path.empty())
-	{
-		if (mesh_comp_ptr->mesh_instance)
-		{
-			delete(mesh_comp_ptr->mesh_instance);
-		}
-		mesh_comp_ptr->mesh_instance = nullptr;
-		mesh_comp_ptr->mesh_instance = stre_engine::get_instance()->create_viewport_mesh();
-	}
-	else
-	{
-
-		auto path_str = mesh_comp_ptr->mesh_instance->path;
-		if (mesh_comp_ptr->mesh_instance)
-		{
-			delete(mesh_comp_ptr->mesh_instance);
-		}
-		mesh_comp_ptr->mesh_instance = nullptr;
-		//需要检查路径啥的
-		mesh_comp_ptr->mesh_instance = stre_engine::get_instance()->create_mesh_from_fbx(path_str);
-	}
-
-	s_switch_property_widget_command().execute();
-}
-
-
-/// <summary>
-/// 选中了哪个组件
-/// 遍历属性 反射值到属性窗口
-/// /// </summary>
-void s_switch_property_widget_command::execute()
-{
-	s_update_gpu_command local_update_request;
-	local_update_request.execute();
-	//0:Empty
-	//1:mesh
-	//2:shader
-	//3:texture
-	//4:texture group
-	//4:pass
-	current_property_tab_widget->setTabEnabled(0, false);
-	current_property_tab_widget->setTabEnabled(1, false);
-	current_property_tab_widget->setTabEnabled(2, false);
-	current_property_tab_widget->setTabEnabled(3, false);
-	current_property_tab_widget->setTabEnabled(4, false);
-	current_property_tab_widget->setTabEnabled(5, false);
-	current_property_tab_widget->setTabVisible(0, false);
-	current_property_tab_widget->setTabVisible(1, false);
-	current_property_tab_widget->setTabVisible(2, false);
-	current_property_tab_widget->setTabVisible(3, false);
-	current_property_tab_widget->setTabVisible(4, false);
-	current_property_tab_widget->setTabVisible(5, false);
-	if (!current_component_ptr)
-	{
-		//显示空窗口
-		current_property_tab_widget->setTabEnabled(0,true);
-		current_property_tab_widget->setTabVisible(0, true);
-		return;
-	}
-	
-	switch (current_component_ptr->comp_type)
-	{
-	case COMPONENT_TYPE_MESH:
-	{
-		current_property_tab_widget->setTabEnabled(1, true);
-		current_property_tab_widget->setTabVisible(1, true);
-		//遍历属性 反射值到窗口
-		auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
-
-		if (mesh_comp_ptr->mesh_instance->is_view_mesh)
-		{
-			current_mesh_property_widget->type_select_comcobox->setCurrentIndex(0);
-			current_mesh_property_widget->path_select_pushbutton->setEnabled(false);
-		}
-		else
-		{
-			current_mesh_property_widget->type_select_comcobox->setCurrentIndex(1);
-			current_mesh_property_widget->path_select_pushbutton->setEnabled(true);
-			QString path_str;
-			path_str = path_str.fromStdWString(mesh_comp_ptr->mesh_instance->path);
-			current_mesh_property_widget->path_text->setText(path_str);
-		}
-	}
-	break;
-	case COMPONENT_TYPE_SHADER:
-	{
-		current_property_tab_widget->setTabEnabled(2, true);
-		current_property_tab_widget->setTabVisible(2, true);
-		
-		auto shader_comp_ptr = static_cast<shader_component_invoker*>(current_component_ptr);
-
-		QString path_str;
-		path_str = path_str.fromStdWString(shader_comp_ptr->shader_layout_instance.shader_path[0]);
-		current_shader_property_widget->path_text->setText(path_str);
-		
-		current_shader_property_widget->vs_check_box->setChecked(shader_comp_ptr->shader_layout_instance.shader_vaild[0]);
-		current_shader_property_widget->ds_check_box->setChecked(shader_comp_ptr->shader_layout_instance.shader_vaild[1]);
-		current_shader_property_widget->hs_check_box->setChecked(shader_comp_ptr->shader_layout_instance.shader_vaild[2]);
-		current_shader_property_widget->gs_check_box->setChecked(shader_comp_ptr->shader_layout_instance.shader_vaild[3]);
-		current_shader_property_widget->ps_check_box->setChecked(shader_comp_ptr->shader_layout_instance.shader_vaild[4]);
-	
-	}
-	break;
-	case COMPONENT_TYPE_TEXTURE:
-	{
-		current_property_tab_widget->setTabEnabled(3, true);
-		current_property_tab_widget->setTabVisible(3, true);
-
-		auto texture_comp_ptr = static_cast<texture_element_invoker*>(current_component_ptr);
-
-		//反射路径
-		QString path_str;
-		path_str = path_str.fromStdWString(texture_comp_ptr->texture_instance->path);
-		current_texture_property_widget->path_text->setText(path_str);
-
-		//反射选项框
-		int index = -1;
-		switch (texture_comp_ptr->texture_instance->gpu_sr_ptr->shader_resource_type)
-		{
-		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE:
-			index = 0;
-			break;
-		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET:
-			index = 1;
-			break;
-		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL:
-			index = 2;
-			break;
-		}
-		current_texture_property_widget->type_select_comcobox->setCurrentIndex(index);
-	
-	}
-	break;
-	case COMPONENT_TYPE_TEXTURE_GROUP:
-	{
-		current_property_tab_widget->setTabEnabled(4, true);
-		current_property_tab_widget->setTabVisible(4, true);
-	
-		auto texture_comp_ptr = static_cast<texture_component_invoker*>(current_component_ptr);
-
-		//反射选项框
-		int index = -1;
-		switch (texture_comp_ptr->texture_instance->gpu_sr_ptr->shader_resource_type)
-		{
-		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
-			index = 0;
-			break;
-		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP:
-			index = 1;
-			break;
-		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP:
-			index = 2;
-			break;
-		}
-
-		current_texture_group_property_widget->type_select_comcobox->setCurrentIndex(index);
-
-	}
-	break;
-
-	case COMPONENT_TYPE_PASS:
-	{
-		current_property_tab_widget->setTabEnabled(5, true);
-		current_property_tab_widget->setTabVisible(5, true);
-		
-		auto pass_comp_ptr = static_cast<pass_component_invoker*>(current_component_ptr);
-		
-		//level comcobox
-		current_pass_property_widget->pass_level_comcobox->setCurrentIndex(pass_comp_ptr->level);
-
-		//is_output check
-		//只允许一个
-		if (had_output_pass)
-		{
-			current_pass_property_widget->is_output_check_box->setEnabled(false);
-		}
-		else
-		{
-			current_pass_property_widget->is_output_check_box->setEnabled(true);
-		}
-
-		if (pass_comp_ptr->pass_instance->is_output)
-		{
-			current_pass_property_widget->is_output_check_box->setEnabled(true);
-		}
-
-		current_pass_property_widget->is_output_check_box->setChecked(pass_comp_ptr->pass_instance->is_output);
-	}
-	break;
-	}
-}
-
-void s_update_texture_gpu_command::execute()
-{
-	if(!texture_update_ptr)
+	if (!camera_component_delete_ptr)
 	{
 		//!!!出问题了
 		return;
 	}
-	//先刷新 怕原有资源已经有命令入队了
-	s_update_gpu_command().execute();
 
-	stre_engine::get_instance()->update_texture_gpu(texture_update_ptr);
-
-
-}
-
-void s_package_texture_command::execute()
-{
-	if (!texture_component_package_texture_ptr)
+	//删除连接接口
+	s_disconnect_all_resource_command disconnect_resource_cmd;
+	disconnect_resource_cmd.disconnect_port = camera_component_delete_ptr->output_port;
+	disconnect_resource_cmd.execute();
+	//断不了就不许删
+	if (!disconnect_resource_cmd.disconnect_success)
 	{
 		//!!!出问题了
 		return;
 	}
-	vector<cpu_texture*> pack_buffer;
-	for (int i = 0; i < texture_component_package_texture_ptr->textures_group.size(); i++)
-	{
-		pack_buffer.push_back(texture_component_package_texture_ptr->textures_group[i]->texture_instance);
-	}
-	//先刷新，怕打包的资源还没gpu资源
-	s_update_gpu_command().execute();
 
-	stre_engine::get_instance()->package_textures(pack_buffer, texture_component_package_texture_ptr->texture_instance);
+	//删除表中的指针
+	pipeline_window_widget_ptr->camera_comp_group.erase(camera_component_delete_ptr->camera_instance->uid.name);
+
+	camera_component_delete_ptr->deleteLater();
+	camera_component_delete_ptr = nullptr;
+
+}
+
+void s_remove_light_command::execute()
+{
+	if (!light_component_delete_ptr)
+	{
+		//!!!出问题了
+		return;
+	}
+
+	//删除连接接口
+	s_disconnect_all_resource_command disconnect_resource_cmd;
+	disconnect_resource_cmd.disconnect_port = light_component_delete_ptr->output_port;
+	disconnect_resource_cmd.execute();
+	//断不了就不许删
+	if (!disconnect_resource_cmd.disconnect_success)
+	{
+		//!!!出问题了
+		return;
+	}
+
+	//删除表中的指针
+	pipeline_window_widget_ptr->light_comp_group.erase(light_component_delete_ptr->light_instance->uid.name);
+
+	light_component_delete_ptr->deleteLater();
+	light_component_delete_ptr = nullptr;
 
 }

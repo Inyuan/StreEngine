@@ -20,6 +20,18 @@ using std::set;
 using std::vector;
 using std::list;
 
+//
+// 做组件过程：
+// 1.cpu_类型
+// 2.invoker类,成员端口，析构
+// 3.组件类型枚举，端口类型枚举
+// 4.stre_engine底层提供基础功能暴露
+// 5.删除功能，命令，和其他各种命令,
+// 6.管线窗体构建，连接，断开处理
+// 7.属性窗体
+
+
+
 class connect_port;
 class curve_tool;
 class component_invoker;
@@ -27,10 +39,16 @@ class texture_component_invoker;
 class mesh_component_invoker;
 class pass_component_invoker;
 class shader_component_invoker;
+class camera_component_invoker;
+class light_component_invoker;
+
+
 
 enum COMPONENT_TYPE
 {
 	COMPONENT_TYPE_MESH,
+	COMPONENT_TYPE_CAMERA,
+	COMPONENT_TYPE_LIGHT,
 	COMPONENT_TYPE_SHADER,
 	COMPONENT_TYPE_TEXTURE_GROUP,
 	COMPONENT_TYPE_TEXTURE,
@@ -101,13 +119,13 @@ public:
 	map<string, texture_component_invoker*> texture_comp_group;
 	map<string, pass_component_invoker*> pass_comp_group;
 	map<string, mesh_component_invoker*> mesh_comp_group;
-	map<string,shader_component_invoker*> shader_comp_group;
-	
-	//树表
-	std::set<pass_component_invoker*> running_pass_comp;
-	
+	map<string, shader_component_invoker*> shader_comp_group;
+	map<string, camera_component_invoker*> camera_comp_group;
+	map<string, light_component_invoker*> light_comp_group;
+
 	//-1为output
 	//0为start
+	////树表
 	std::map<int,set<pass_component_invoker*>> pass_comp_level_map;
 
 	list<connect_data*> connect_curve_group;
@@ -128,11 +146,15 @@ public:
 		if (create_texture_group_cmd) delete(create_texture_group_cmd);
 		if (create_mesh_cmd) delete(create_mesh_cmd);
 		if (create_shader_cmd) delete(create_shader_cmd);
+		if (create_camera_cmd) delete(create_camera_cmd);
+		if (create_light_cmd) delete(create_light_cmd);
 
 		create_pass_cmd = nullptr;
 		create_texture_group_cmd = nullptr;
 		create_mesh_cmd = nullptr;
 		create_shader_cmd = nullptr;
+		create_camera_cmd = nullptr;
+		create_light_cmd = nullptr;
 	}
 
 	void reconnect();
@@ -145,6 +167,8 @@ protected:
 	s_command* create_texture_group_cmd = nullptr;
 	s_command* create_mesh_cmd = nullptr;
 	s_command* create_shader_cmd = nullptr;
+	s_command* create_camera_cmd = nullptr;
+	s_command* create_light_cmd = nullptr;
 private:
 
 	virtual void mousePressEvent(QMouseEvent* in_event);
@@ -157,12 +181,11 @@ class component_invoker : public QGroupBox
 public:
 	COMPONENT_TYPE comp_type = COMPONENT_TYPE_NONE;
 	component_invoker(QWidget* in_parent);
-	~component_invoker();
+	virtual ~component_invoker();
 protected:
 	component_invoker() {  };
 	virtual void mousePressEvent(QMouseEvent* in_event);
 	virtual void mouseReleaseEvent(QMouseEvent* in_event);
-
 };
 
 
@@ -333,6 +356,64 @@ private:
 	virtual void keyPressEvent(QKeyEvent* in_event);
 };
 
+class camera_component_invoker : public component_invoker
+{
+public:
+	camera_component_invoker(QWidget* in_parent, cpu_camera* in_camera_ptr);
+
+	~camera_component_invoker()
+	{
+		//QT会自己释放子组件，无需在析构中手动释放子组件
+		if (camera_instance)
+		{
+			delete(camera_instance);
+		}
+
+		camera_instance = nullptr;
+	}
+
+	connect_port* output_port = nullptr;
+
+	cpu_camera* camera_instance = nullptr;
+
+protected:
+	camera_component_invoker() = delete;
+
+private:
+	virtual void keyPressEvent(QKeyEvent* in_event);
+};
+
+class light_component_invoker : public component_invoker
+{
+public:
+	light_component_invoker(QWidget* in_parent, cpu_light* in_light_ptr);
+
+	~light_component_invoker()
+	{
+		//QT会自己释放子组件，无需在析构中手动释放子组件
+		if (light_instance)
+		{
+			delete(light_instance);
+		}
+
+		light_instance = nullptr;
+	}
+
+	connect_port* output_port = nullptr;
+
+	cpu_light* light_instance = nullptr;
+
+protected:
+	light_component_invoker() = delete;
+
+private:
+	virtual void keyPressEvent(QKeyEvent* in_event);
+};
+
+/******************************************
+* connect port
+*
+*********************************************/
 
 //???硬转换？
 struct port_information
@@ -347,6 +428,8 @@ struct port_information
 		TEXTURE_GROUP_OUTPUT,
 		MESH_OUTPUT,
 		SHADER_OUTPUT,
+		CAMERA_OUTPUT,
+		LIGHT_OUTPUT,
 		PASS_RES_PORT_GROUP,
 		PASS_MESH_INPUT,
 		PASS_SHADER_INPUT,

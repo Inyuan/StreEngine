@@ -26,7 +26,9 @@ pipeline_window_invoker::pipeline_window_invoker(
 	create_texture_group_cmd = new s_create_texture_group_command();
 	create_mesh_cmd = new s_create_mesh_command();
 	create_shader_cmd = new s_create_shader_command();
-	
+	create_camera_cmd = new s_create_camera_command();
+	create_light_cmd = new s_create_light_command();
+
 	pipeline_window_widget_ptr = this;
 	right_click_menu = new QMenu(this);
 
@@ -34,17 +36,23 @@ pipeline_window_invoker::pipeline_window_invoker(
 	QAction* create_texture_group_act = new QAction("create texture group");
 	QAction* create_mesh_act = new QAction("create mesh");
 	QAction* create_shader_act = new QAction("create shader");
+	QAction* create_camera_act = new QAction("create camera");
+	QAction* create_light_act = new QAction("create light");
 
 	right_click_menu->addAction(create_pass_act);
 	right_click_menu->addAction(create_texture_group_act);
 	right_click_menu->addAction(create_mesh_act);
 	right_click_menu->addAction(create_shader_act);
+	right_click_menu->addAction(create_camera_act);
+	right_click_menu->addAction(create_light_act);
 
 	//链接组件和命令
 	connect(create_pass_act, &QAction::triggered, this, [&]() {create_pass_cmd->execute(); });
 	connect(create_texture_group_act, &QAction::triggered, this, [&]() {create_texture_group_cmd->execute(); });
 	connect(create_mesh_act, &QAction::triggered, this, [&]() {create_mesh_cmd->execute(); });
 	connect(create_shader_act, &QAction::triggered, this, [&]() {create_shader_cmd->execute(); });
+	connect(create_camera_act, &QAction::triggered, this, [&]() {create_camera_cmd->execute(); });
+	connect(create_light_act, &QAction::triggered, this, [&]() {create_light_cmd->execute(); });
 
 }
 
@@ -623,6 +631,100 @@ void shader_component_invoker::keyPressEvent(QKeyEvent* in_event)
 	}
 	return QWidget::keyPressEvent(in_event);
 }
+/*********************************************
+* camera_component
+*
+*********************************************/
+
+camera_component_invoker::camera_component_invoker(
+	QWidget* in_parent,
+	cpu_camera* in_camera_ptr) :
+	component_invoker(in_parent),
+	camera_instance(in_camera_ptr)
+{
+	comp_type = COMPONENT_TYPE_CAMERA;
+	//构建组件
+	setObjectName("camera_component");
+	setGeometry(QRect(pipeline_w_mouse_position_x, pipeline_w_mouse_position_y, 120, 51));
+	setAlignment(Qt::AlignCenter);
+
+	//构建端口
+	output_port = new connect_port(this, port_information(port_information::CAMERA_OUTPUT, &camera_instance));
+	output_port->setObjectName("camera_output_port");
+	output_port->setGeometry(QRect(54, 30, 61, 20));
+	output_port->setLayoutDirection(Qt::RightToLeft);
+	output_port->setAutoExclusive(false);
+	setTitle(QCoreApplication::translate("stre_editorClass", "camera", nullptr));
+	output_port->setText(QCoreApplication::translate("stre_editorClass", "output", nullptr));
+
+}
+
+/// <summary>
+/// delete删除控件
+/// </summary>
+/// <param name="in_event"></param>
+void camera_component_invoker::keyPressEvent(QKeyEvent* in_event)
+{
+	if (in_event->key() == Qt::Key_Delete)
+	{
+		s_remove_camera_command remove_camera_cmd;
+		remove_camera_cmd.camera_component_delete_ptr = this;
+		remove_camera_cmd.execute();
+		remove_camera_cmd.camera_component_delete_ptr = nullptr;
+
+	}
+	return QWidget::keyPressEvent(in_event);
+}
+
+
+
+
+/*********************************************
+* light_component
+*
+*********************************************/
+
+light_component_invoker::light_component_invoker(
+	QWidget* in_parent,
+	cpu_light* in_light_ptr) :
+	component_invoker(in_parent),
+	light_instance(in_light_ptr)
+{
+	comp_type = COMPONENT_TYPE_LIGHT;
+	//构建组件
+	setObjectName("light_component");
+	setGeometry(QRect(pipeline_w_mouse_position_x, pipeline_w_mouse_position_y, 120, 51));
+	setAlignment(Qt::AlignCenter);
+
+	//构建端口
+	output_port = new connect_port(this, port_information(port_information::LIGHT_OUTPUT, &light_instance));
+	output_port->setObjectName("light_output_port");
+	output_port->setGeometry(QRect(54, 30, 61, 20));
+	output_port->setLayoutDirection(Qt::RightToLeft);
+	output_port->setAutoExclusive(false);
+	setTitle(QCoreApplication::translate("stre_editorClass", "light", nullptr));
+	output_port->setText(QCoreApplication::translate("stre_editorClass", "output", nullptr));
+
+}
+
+/// <summary>
+/// delete删除控件
+/// </summary>
+/// <param name="in_event"></param>
+void light_component_invoker::keyPressEvent(QKeyEvent* in_event)
+{
+	if (in_event->key() == Qt::Key_Delete)
+	{
+		s_remove_light_command remove_light_cmd;
+		remove_light_cmd.light_component_delete_ptr = this;
+		remove_light_cmd.execute();
+		remove_light_cmd.light_component_delete_ptr = nullptr;
+
+	}
+	return QWidget::keyPressEvent(in_event);
+}
+
+
 
 /*********************************************
 * connect_port
