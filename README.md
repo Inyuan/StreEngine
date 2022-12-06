@@ -27,6 +27,6 @@
 - 策略模式封装资源和资源控制器
 - 命令队列执行批量更新操作
 
-![image](https://user-images.githubusercontent.com/55373014/203470901-d640edd5-8abd-4b1d-982f-e500b98c8853.png)
+![image](https://user-images.githubusercontent.com/55373014/205907457-78e24f3e-b5ab-4c35-bd5c-46d9b5b73457.png)
 
 
