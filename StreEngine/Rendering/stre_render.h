@@ -64,9 +64,9 @@ public:
 template<typename t_cpu_res_type>
 struct s_custom_manager
 {
-	virtual t_cpu_res_type* create_resource() = 0;
+	virtual t_cpu_res_type* create_resource(bool can_update = false) = 0;
 
-	virtual t_cpu_res_type* create_resource(size_t in_element_number) = 0;
+	virtual t_cpu_res_type* create_resource(size_t in_element_number, bool can_update = false) = 0;
 
 	//??? È±¶ÁÈ¡×ÊÔ´
 	virtual t_cpu_res_type* load_resource(wchar_t* in_path) = 0;

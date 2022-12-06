@@ -14,16 +14,17 @@ extern function_command<dx_function> dx_shader_resource_command;
 template<typename t_cpu_res_type>
 struct custom_manager :public s_custom_manager<t_cpu_res_type>
 {
-	virtual t_cpu_res_type* create_resource() override
+	virtual t_cpu_res_type* create_resource(bool in_can_update = false) override
 	{
-		auto instance = new t_cpu_res_type();
+		auto instance = new t_cpu_res_type(in_can_update);
 		generate_unique_identifier<t_cpu_res_type>(instance->uid);
 		return instance;
 	}
 
-	virtual t_cpu_res_type* create_resource(size_t in_element_number) override
+	//初始内存将处于全0状态
+	virtual t_cpu_res_type* create_resource(size_t in_element_number, bool in_can_update = false) override
 	{
-		t_cpu_res_type* cpu_ptr = create_resource();
+		t_cpu_res_type* cpu_ptr = create_resource(in_can_update);
 		cpu_ptr->data = custom_allocate(in_element_number * sizeof(t_cpu_res_type));
 		cpu_ptr->count = in_element_number;
 
@@ -62,10 +63,18 @@ struct custom_manager :public s_custom_manager<t_cpu_res_type>
 			{
 				//自定义内存手动申请空间
 			case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
+			case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_FOLLOW_MESH:
 			case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP:
-			case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH:
+			{
 				//构建内存
 				if (in_cpu_data->can_update)
+				{
+					execute_successed &= in_render->allocate_upload_resource(
+						in_cpu_data->gpu_sr_ptr,
+						in_cpu_data->get_element_size(),
+						in_cpu_data->get_element_count());
+				}
+				else
 				{
 					execute_successed &= in_render->allocate_default_resource(
 						in_cpu_data->gpu_sr_ptr,
@@ -73,16 +82,12 @@ struct custom_manager :public s_custom_manager<t_cpu_res_type>
 						in_cpu_data->get_element_count(),
 						in_cpu_data->data);
 				}
-				else
-				{
-					execute_successed &= in_render->allocate_upload_resource(
-						in_cpu_data->gpu_sr_ptr,
-						in_cpu_data->get_element_size(),
-						in_cpu_data->get_element_count());
-				}
+			}
 			default:
 				break;
 			}
+			//初始化寄存器为-1
+			in_cpu_data->gpu_sr_ptr->register_index = -1;
 			
 			return execute_successed;
 		};
@@ -94,12 +99,12 @@ struct custom_manager :public s_custom_manager<t_cpu_res_type>
 struct material_manager : public s_material_manager
 {
 public:
-	virtual cpu_material* create_resource() override
+	virtual cpu_material* create_resource(bool in_can_update = false) override
 	{
 		return custom_manager<cpu_material>().create_resource();
 	}
 
-	virtual cpu_material* create_resource(size_t in_element_number) override
+	virtual cpu_material* create_resource(size_t in_element_number, bool in_can_update = false) override
 	{
 		return custom_manager<cpu_material>().create_resource(in_element_number);
 	}
@@ -134,14 +139,14 @@ public:
 struct texture_manager : public s_texture_manager
 {
 public:
-	virtual cpu_texture* create_resource() override
+	virtual cpu_texture* create_resource(bool in_can_update = false) override
 	{
-		return custom_manager<cpu_texture>().create_resource();
+		return custom_manager<cpu_texture>().create_resource(in_can_update);
 	}
 
-	virtual cpu_texture* create_resource(size_t in_element_number) override
+	virtual cpu_texture* create_resource(size_t in_element_number, bool in_can_update = false) override
 	{
-		return custom_manager<cpu_texture>().create_resource(in_element_number);
+		return custom_manager<cpu_texture>().create_resource(in_element_number, in_can_update);
 	}
 
 	//??? 缺读取资源

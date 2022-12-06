@@ -114,6 +114,7 @@ copy libfbxsdk.dll $(TargetPath)\..</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="property_widget.cpp" />
+    <ClCompile Include="RCamera.cpp" />
     <ClCompile Include="stre_engine.cpp" />
     <ClCompile Include="concrete_command.cpp" />
     <ClCompile Include="s_invoker.cpp" />
@@ -126,6 +127,7 @@ copy libfbxsdk.dll $(TargetPath)\..</Command>
   <ItemGroup>
     <ClInclude Include="concrete_command.h" />
     <ClInclude Include="property_widget.h" />
+    <ClInclude Include="RCamera.h" />
     <ClInclude Include="Rendering\stre_render.h" />
     <ClInclude Include="s_invoker.h" />
     <ClInclude Include="stre_engine.h" />

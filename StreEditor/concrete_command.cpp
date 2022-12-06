@@ -145,9 +145,21 @@ void s_create_pass_command::execute()
 
 void s_create_camera_command::execute()
 {
-	auto camera_ptr = stre_engine::get_instance()->create_custom_resource<cpu_camera>();
+	auto camera_ptr = stre_engine::get_instance()->create_custom_resource<cpu_camera>(1,true);
+
 
 	camera_component_invoker* new_camera_comp = new camera_component_invoker(pipeline_window_widget_ptr, camera_ptr);
+
+	//init camera
+	//Debug
+	//new_camera_comp->camera_cal_helper.SetLens(0.25f * 3.1415926535f, 1.0f, 1.0f, 1000.0f);
+	s_update_camera_command update_camera_cmd;
+	
+	update_camera_cmd.camera_helper_ptr = &new_camera_comp->camera_cal_helper;
+	update_camera_cmd.camera_ptr = new_camera_comp->camera_instance;
+	update_camera_cmd.execute();
+	update_camera_cmd.camera_helper_ptr = nullptr;
+	update_camera_cmd.camera_ptr = nullptr;
 
 	pipeline_window_widget_ptr->camera_comp_group[camera_ptr->uid.name] = new_camera_comp;
 
@@ -157,7 +169,9 @@ void s_create_camera_command::execute()
 
 void s_create_light_command::execute()
 {
-	auto light_ptr = stre_engine::get_instance()->create_custom_resource<cpu_light>();
+	auto light_ptr = stre_engine::get_instance()->create_custom_resource<cpu_light>(1,true);
+
+	//Debug
 
 	light_component_invoker* new_light_comp = new light_component_invoker(pipeline_window_widget_ptr, light_ptr);
 
@@ -191,18 +205,20 @@ void reflect_pass_res_input(pass_component_invoker* in_pass_cmp)
 	if (current_pass_component_ptr->pass_instance->gpu_pass_ptr)
 	{
 		auto shader_res = current_pass_component_ptr->pass_instance->gpu_pass_ptr->pass_res_group;
+		
+		//必须严格按照当初申请根签名的顺序列出列表和端口索引
 
+		int root_sign_index = 0;
 		for (auto it : shader_res)
 		{
 			auto res_port = new connect_port(
 				current_pass_component_ptr,
-				port_information(
-					port_information::PASS_RES_PORT_GROUP,
+				connect_port::PASS_RES_PORT_GROUP,
 					current_pass_component_ptr,
-					it.bind_point));
+					root_sign_index);
 
 			string res_t;
-			switch (it.type)
+			switch (it.second.type)
 			{
 			case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
 				res_t = "b";
@@ -214,13 +230,13 @@ void reflect_pass_res_input(pass_component_invoker* in_pass_cmp)
 				break;
 			}
 
-			string res_port_name = it.name + " " + res_t + " " + std::to_string(it.bind_point); //+ " " + std::to_string(it.register_space)
+			string res_port_name = it.second.name + " " + res_t + " " + std::to_string(it.second.bind_point); //+ " " + std::to_string(it.register_space)
 
 			res_port->setObjectName(res_port_name);
 			res_port->setAutoExclusive(false);
 
 			res_port_group.push_back(res_port);
-
+			root_sign_index++;
 		}
 	}
 
@@ -241,41 +257,41 @@ void s_connect_resource_command::execute()
 		//! 指空 有可能是组件被删了
 		return;
 	}
-	const port_information connect_port1 = select_connect_port[0]->port_inf;
-	const port_information connect_port2 = select_connect_port[1]->port_inf;
+	const connect_port* connect_port1 = select_connect_port[0];
+	const connect_port* connect_port2 = select_connect_port[1];
 
 
 	//获取连接的两个port
 	bool connect_success = false;
-	switch (connect_port1.port_type)
+	switch (connect_port1->port_type)
 	{
 	//texture不能单独作为SRV输入到pass里
-	//case port_information::TEXTURE_OUTPUT:
+	//case connect_port::TEXTURE_OUTPUT:
 	//{
 	//	//可以连到Pass的res输入口
 	//	switch (connect_port2.port_type)
 	//	{
-	//		case port_information::PASS_RES_PORT_GROUP:
+	//		case connect_port::PASS_RES_PORT_GROUP:
 	//		{
 	//			texture_element_invoker* t_ptr = reinterpret_cast<texture_element_invoker*>(connect_port1.ptr);
 	//			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
-	//			t_ptr->texture_instance->gpu_sr_ptr->register_index = connect_port1.port_index;
+	//			t_ptr->texture_instance->gpu_sr_ptr->register_index = connect_port2.port_index;
 	//			connect_success = stre_engine::get_instance()->pass_add_shader_resource<cpu_texture>(p_ptr->pass_instance, t_ptr->texture_instance);
 	//		}
 	//		break;
 	//	}
 	//}
 	//	break;
-	case port_information::TEXTURE_GROUP_INPUT:
+	case connect_port::TEXTURE_GROUP_INPUT:
 	{
 		//可以连到Pass的输出口
-		switch (connect_port2.port_type)
+		switch (connect_port2->port_type)
 		{
-		case port_information::PASS_OUTPUT:
+		case connect_port::PASS_OUTPUT:
 		{
 			//贴图的port记录的是贴图控件的指针
-			texture_component_invoker* t_ptr = reinterpret_cast<texture_component_invoker*>(connect_port1.ptr);
-			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			texture_component_invoker* t_ptr = reinterpret_cast<texture_component_invoker*>(connect_port1->ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2->ptr);
 			//正事
 			{
 				//打包由texture_comp独立完成
@@ -318,22 +334,22 @@ void s_connect_resource_command::execute()
 		}
 	}
 	break;
-	case port_information::TEXTURE_GROUP_OUTPUT:
+	case connect_port::TEXTURE_GROUP_OUTPUT:
 	{
 		//可以连到Pass的res输入口
-		switch (connect_port2.port_type)
+		switch (connect_port2->port_type)
 		{
-		case port_information::PASS_RES_PORT_GROUP:
+		case connect_port::PASS_RES_PORT_GROUP:
 		{
 			//贴图的port记录的是贴图控件的指针
-			texture_component_invoker* t_ptr = reinterpret_cast<texture_component_invoker*>(connect_port1.ptr);
-			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			texture_component_invoker* t_ptr = reinterpret_cast<texture_component_invoker*>(connect_port1->ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2->ptr);
 			//正事
 			{
 				//打包由texture_comp独立完成
 				// 
 				//寄存器号
-				t_ptr->texture_instance->gpu_sr_ptr->register_index = connect_port1.port_index;
+				t_ptr->texture_instance->gpu_sr_ptr->register_index = connect_port2->port_index;
 
 				connect_success = stre_engine::get_instance()->pass_add_shader_resource<cpu_texture>(p_ptr->pass_instance, t_ptr->texture_instance);
 			}
@@ -348,7 +364,7 @@ void s_connect_resource_command::execute()
 				int max_level = p_ptr->level;
 				for (auto it : t_ptr->input_pass_comp_group)
 				{
-					max_level = std::max(it->level + 1, max_level);
+					max_level = max(it->level + 1, max_level);
 				}
 				if (max_level != p_ptr->level)
 				{
@@ -365,50 +381,74 @@ void s_connect_resource_command::execute()
 		}
 	}
 	break;
-	case port_information::CAMERA_OUTPUT:
+	case connect_port::CAMERA_OUTPUT:
 	{
-		switch (connect_port2.port_type)
+		switch (connect_port2->port_type)
 		{
-		case port_information::PASS_RES_PORT_GROUP:
+		case connect_port::PASS_RES_PORT_GROUP:
 		{
-			cpu_camera* camera_ptr = reinterpret_cast<cpu_camera*>(connect_port1.ptr);
-			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			camera_component_invoker* camera_ptr = reinterpret_cast<camera_component_invoker*>(connect_port1->ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2->ptr);
+			
+			//先刷新，怕camera没分配gpu
+			s_update_gpu_command local_update_request;
+			local_update_request.execute();
+			if (!local_update_request.execute_success)
+			{
+				//!!!出问题了，阻止连线
+				connect_success = false;
+			}
+			else
 			//正事
 			{
-				connect_success = stre_engine::get_instance()->pass_add_shader_resource<cpu_camera>(p_ptr->pass_instance, camera_ptr);
+				camera_ptr->camera_instance->gpu_sr_ptr->register_index = connect_port2->port_index;
+				
+				
+				connect_success = stre_engine::get_instance()->pass_add_shader_resource<cpu_camera>(p_ptr->pass_instance, camera_ptr->camera_instance);
 			}
 		}
 		break;
 		}
 	}
 	break;
-	case port_information::LIGHT_OUTPUT:
+	case connect_port::LIGHT_OUTPUT:
 	{
-		switch (connect_port2.port_type)
+		switch (connect_port2->port_type)
 		{
-		case port_information::PASS_RES_PORT_GROUP:
+		case connect_port::PASS_RES_PORT_GROUP:
 		{
-			cpu_light* light_ptr = reinterpret_cast<cpu_light*>(connect_port1.ptr);
-			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			light_component_invoker* light_ptr = reinterpret_cast<light_component_invoker*>(connect_port1->ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2->ptr);
+			
+			//先刷新，怕light没分配gpu
+			s_update_gpu_command local_update_request;
+			local_update_request.execute();
+			if (!local_update_request.execute_success)
+			{
+				//!!!出问题了，阻止连线
+				connect_success = false;
+			}
+			else
 			//正事
 			{
-				connect_success = stre_engine::get_instance()->pass_add_shader_resource<cpu_light>(p_ptr->pass_instance, light_ptr);
+				light_ptr->light_instance->gpu_sr_ptr->register_index = connect_port2->port_index;
+				connect_success = stre_engine::get_instance()->pass_add_shader_resource<cpu_light>(p_ptr->pass_instance, light_ptr->light_instance);
 			}
 		}
 		break;
 		}
 	}
 	break;
-	case port_information::MESH_OUTPUT:
+	case connect_port::MESH_OUTPUT:
 	{
 		//MESH输入
-		switch (connect_port2.port_type)
+		switch (connect_port2->port_type)
 		{
-		case port_information::PASS_MESH_INPUT:
+		case connect_port::PASS_MESH_INPUT:
 		{
-			cpu_mesh* m_ptr = reinterpret_cast<cpu_mesh*>(connect_port1.ptr);
+			mesh_component_invoker* m_ptr = reinterpret_cast<mesh_component_invoker*>(connect_port1->ptr);
 
-			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2->ptr);
 
 
 			//先刷新怕mesh没gpu_resource
@@ -421,25 +461,61 @@ void s_connect_resource_command::execute()
 			}
 			else
 			{
-				connect_success = stre_engine::get_instance()->pass_add_mesh(p_ptr->pass_instance, m_ptr);
+				connect_success = stre_engine::get_instance()->pass_add_mesh(p_ptr->pass_instance, m_ptr->mesh_instance);
 			}
 		}
 		break;
 		}
 	}
 		break;
-	case port_information::SHADER_OUTPUT:
+	case connect_port::MESH_CONTANTS_OUTPUT:
+	{
+		switch (connect_port2->port_type)
+		{
+		case connect_port::PASS_RES_PORT_GROUP:
+		{
+			mesh_component_invoker* m_cb_ptr = reinterpret_cast<mesh_component_invoker*>(connect_port1->ptr);
+
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2->ptr);
+			//只记录寄存器号
+
+			m_cb_ptr->mesh_instance->object_constant_ptr->gpu_sr_ptr->register_index = connect_port2->port_index;
+			connect_success = true;
+		}
+		break;
+		}
+	}
+	break;
+	case connect_port::MESH_MATERIAL_OUTPUT:
+	{
+		switch (connect_port2->port_type)
+		{
+		case connect_port::PASS_RES_PORT_GROUP:
+		{
+			mesh_component_invoker* m_mat_ptr = reinterpret_cast<mesh_component_invoker*>(connect_port1->ptr);
+
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2->ptr);
+
+			//只记录寄存器号
+			m_mat_ptr->mesh_instance->material_ptr->gpu_sr_ptr->register_index = connect_port2->port_index;
+			connect_success = true;
+		}
+		break;
+		}
+	}
+	break;
+	case connect_port::SHADER_OUTPUT:
 	{
 		//Shader输入
-		switch (connect_port2.port_type)
+		switch (connect_port2->port_type)
 		{
-		case port_information::PASS_SHADER_INPUT:
+		case connect_port::PASS_SHADER_INPUT:
 		{
-			shader_layout* s_ptr = reinterpret_cast<shader_layout*>(connect_port1.ptr);
+			shader_component_invoker* s_ptr = reinterpret_cast<shader_component_invoker*>(connect_port1->ptr);
 
-			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2->ptr);
 
-			connect_success = stre_engine::get_instance()->pass_set_shader_layout(p_ptr->pass_instance, *s_ptr);
+			connect_success = stre_engine::get_instance()->pass_set_shader_layout(p_ptr->pass_instance, s_ptr->shader_layout_instance);
 
 			//!!!即刻刷新
 			s_update_gpu_command local_update_request;
@@ -665,8 +741,27 @@ void s_update_gpu_command::execute()
 ************************************************************
 */
 
+void s_update_camera_command::execute()
+{
+	if (!camera_helper_ptr || !camera_ptr)
+	{
+		return;
+	}
+	camera_helper_ptr->convert_to_camera_data(camera_ptr->data);
 
-void s_change_mesh_data_command::execute()
+	//先刷新，怕camera没分配gpu
+	s_update_gpu_command local_update_request;
+	local_update_request.execute();
+	if (!local_update_request.execute_success)
+	{
+		//!!!出问题了，阻止连线
+		//return;
+	}
+	stre_engine::get_instance()->update_custom_gpu_resource<cpu_camera>(camera_ptr);
+
+}
+
+void s_change_mesh_type_command::execute()
 {
 	if (current_component_ptr->comp_type != COMPONENT_TYPE_MESH)
 	{
@@ -699,6 +794,15 @@ void s_change_mesh_data_command::execute()
 	s_switch_property_widget_command().execute();
 }
 
+void s_update_mesh_data_command::execute()
+{
+	if (!mesh_ptr)
+	{
+		//出问题了
+		return;
+	}
+	stre_engine::get_instance()->update_mesh_gpu(mesh_ptr);
+}
 
 /// <summary>
 /// 选中了哪个组件
@@ -914,18 +1018,16 @@ void s_disconnect_resource_command::execute()
 {
 	disconnect_success = false;
 
-	const port_information connect_port1 = in_port1->port_inf;
-	const port_information connect_port2 = in_port2->port_inf;
 
-	switch (connect_port1.port_type)
+	switch (in_port1->port_type)
 	{
 	//texture不能单独作为SRV输入到pass里
-	//case port_information::TEXTURE_OUTPUT:
+	//case connect_port::TEXTURE_OUTPUT:
 	//{
 	//	//可以连到Pass的res输入口
 	//	switch (connect_port2.port_type)
 	//	{
-	//	case port_information::PASS_RES_PORT_GROUP:
+	//	case connect_port::PASS_RES_PORT_GROUP:
 	//	{
 	//		//贴图的port记录的是贴图控件的指针
 	//		texture_element_invoker* t_ptr = reinterpret_cast<texture_element_invoker*>(connect_port1.ptr);
@@ -936,17 +1038,17 @@ void s_disconnect_resource_command::execute()
 	//	}
 	//}
 	//break;
-	case port_information::TEXTURE_GROUP_INPUT:
+	case connect_port::TEXTURE_GROUP_INPUT:
 	{
 		//可以连到Pass的输出口
-		switch (connect_port2.port_type)
+		switch (in_port2->port_type)
 		{
-		case port_information::PASS_OUTPUT:
+		case connect_port::PASS_OUTPUT:
 		{
 			//贴图的port记录的是贴图控件的指针
-			texture_component_invoker* t_ptr = reinterpret_cast<texture_component_invoker*>(connect_port1.ptr);
+			texture_component_invoker* t_ptr = reinterpret_cast<texture_component_invoker*>(in_port1->ptr);
 
-			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(in_port2->ptr);
 
 			//正事
 			{
@@ -986,20 +1088,21 @@ void s_disconnect_resource_command::execute()
 		}
 	}
 	break;
-	case port_information::TEXTURE_GROUP_OUTPUT:
+	case connect_port::TEXTURE_GROUP_OUTPUT:
 	{
 		//可以连到Pass的res输入口
-		switch (connect_port2.port_type)
+		switch (in_port2->port_type)
 		{
-		case port_information::PASS_RES_PORT_GROUP:
+		case connect_port::PASS_RES_PORT_GROUP:
 		{
 			//贴图的port记录的是贴图控件的指针
-			texture_component_invoker* t_ptr = reinterpret_cast<texture_component_invoker*>(connect_port1.ptr);
+			texture_component_invoker* t_ptr = reinterpret_cast<texture_component_invoker*>(in_port1->ptr);
 
-			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(in_port2->ptr);
 
 			//正事
 			{
+				t_ptr->texture_instance->gpu_sr_ptr->register_index = -1;
 				disconnect_success = stre_engine::get_instance()->pass_remove_shader_resource<cpu_texture>(p_ptr->pass_instance, t_ptr->texture_instance);
 			}
 			//删除贴图和pass表中的记录
@@ -1032,63 +1135,106 @@ void s_disconnect_resource_command::execute()
 		}
 	}
 	break;
-	case port_information::CAMERA_OUTPUT:
+	case connect_port::CAMERA_OUTPUT:
 	{
-		switch (connect_port2.port_type)
+		switch (in_port2->port_type)
 		{
-		case port_information::PASS_RES_PORT_GROUP:
+		case connect_port::PASS_RES_PORT_GROUP:
 		{
-			cpu_camera* camera_ptr = reinterpret_cast<cpu_camera*>(connect_port1.ptr);
-			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			camera_component_invoker* camera_ptr = reinterpret_cast<camera_component_invoker*>(in_port1->ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(in_port2->ptr);
 			//正事
 			{
-				disconnect_success = stre_engine::get_instance()->pass_remove_shader_resource<cpu_camera>(p_ptr->pass_instance, camera_ptr);
+				camera_ptr->camera_instance->gpu_sr_ptr->register_index = -1;
+				disconnect_success = stre_engine::get_instance()->pass_remove_shader_resource<cpu_camera>(p_ptr->pass_instance, camera_ptr->camera_instance);
 			}
 		}
 		break;
 		}
 	}
 	break;
-	case port_information::LIGHT_OUTPUT:
+	case connect_port::LIGHT_OUTPUT:
 	{
-		switch (connect_port2.port_type)
+		switch (in_port2->port_type)
 		{
-		case port_information::PASS_RES_PORT_GROUP:
+		case connect_port::PASS_RES_PORT_GROUP:
 		{
-			cpu_light* light_ptr = reinterpret_cast<cpu_light*>(connect_port1.ptr);
-			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			light_component_invoker* light_ptr = reinterpret_cast<light_component_invoker*>(in_port1->ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(in_port2->ptr);
 			//正事
 			{
-				disconnect_success = stre_engine::get_instance()->pass_remove_shader_resource<cpu_light>(p_ptr->pass_instance, light_ptr);
+				light_ptr->light_instance->gpu_sr_ptr->register_index = -1;
+				disconnect_success = stre_engine::get_instance()->pass_remove_shader_resource<cpu_light>(p_ptr->pass_instance, light_ptr->light_instance);
 			}
 		}
 		break;
 		}
 	}
 	break;
-	case port_information::MESH_OUTPUT:
+	case connect_port::MESH_OUTPUT:
 	{
-		switch (connect_port2.port_type)
+		switch (in_port2->port_type)
 		{
-		case port_information::PASS_MESH_INPUT:
+		case connect_port::PASS_MESH_INPUT:
 		{
-			cpu_mesh* m_ptr = reinterpret_cast<cpu_mesh*>(connect_port1.ptr);
+			mesh_component_invoker* m_ptr = reinterpret_cast<mesh_component_invoker*>(in_port1->ptr);
 
-			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(in_port2->ptr);
 
-			disconnect_success = stre_engine::get_instance()->pass_remove_mesh(p_ptr->pass_instance, m_ptr);
+			disconnect_success = stre_engine::get_instance()->pass_remove_mesh(p_ptr->pass_instance, m_ptr->mesh_instance);
+		}
+		break;
+		}
+	}
+	case connect_port::MESH_CONTANTS_OUTPUT:
+	{
+		switch (in_port2->port_type)
+		{
+		case connect_port::PASS_RES_PORT_GROUP:
+		{
+			mesh_component_invoker* m_ptr = reinterpret_cast<mesh_component_invoker*>(in_port1->ptr);
+
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(in_port2->ptr);
+
+			//正事
+			{
+				//寄存器号置-1
+				m_ptr->mesh_instance->object_constant_ptr->gpu_sr_ptr->register_index = -1;
+			}
+			disconnect_success = true;
 		}
 		break;
 		}
 	}
 	break;
-	case port_information::SHADER_OUTPUT:
+	case connect_port::MESH_MATERIAL_OUTPUT:
 	{
-		switch (connect_port2.port_type)
+		switch (in_port2->port_type)
 		{
-		case port_information::PASS_SHADER_INPUT:
+		case connect_port::PASS_RES_PORT_GROUP:
 		{
-			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2.ptr);
+			mesh_component_invoker* m_ptr = reinterpret_cast<mesh_component_invoker*>(in_port1->ptr);
+
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(in_port2->ptr);
+
+			//正事
+			{
+				//寄存器号置-1
+				m_ptr->mesh_instance->material_ptr->gpu_sr_ptr->register_index = -1;
+			}
+			disconnect_success = true;
+		}
+		break;
+		}
+	}
+	break;
+	case connect_port::SHADER_OUTPUT:
+	{
+		switch (in_port2->port_type)
+		{
+		case connect_port::PASS_SHADER_INPUT:
+		{
+			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(in_port2->ptr);
 
 			disconnect_success = stre_engine::get_instance()->pass_remove_shader_layout(p_ptr->pass_instance);
 
@@ -1096,24 +1242,25 @@ void s_disconnect_resource_command::execute()
 			stre_engine::get_instance()->release_pass(p_ptr->pass_instance);
 			
 			reflect_pass_res_input(p_ptr);
+			disconnect_success = true;
 		}
 		break;
 		}
 	}
 	break;
-	//case port_information::PASS_RES_PORT_GROUP:
+	//case connect_port::PASS_RES_PORT_GROUP:
 	//{
 	//}
 	//break;
-	//case port_information::PASS_MESH_INPUT:
+	//case connect_port::PASS_MESH_INPUT:
 	//{
 	//}
 	//break;
-	//case port_information::PASS_SHADER_INPUT:
+	//case connect_port::PASS_SHADER_INPUT:
 	//{
 	//}
 	//break;
-	//case port_information::PASS_OUTPUT:
+	//case connect_port::PASS_OUTPUT:
 	//{
 	//}
 	//break;

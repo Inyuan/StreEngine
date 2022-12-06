@@ -57,10 +57,26 @@ public:
 *
 *********************************************/
 
-class s_change_mesh_data_command : public s_command
+class s_update_camera_command : public s_command
 {
 public:
 	virtual void execute() override;
+	RCamera* camera_helper_ptr = nullptr;
+	cpu_camera* camera_ptr = nullptr;
+};
+
+
+class s_change_mesh_type_command : public s_command
+{
+public:
+	virtual void execute() override;
+};
+
+class s_update_mesh_data_command : public s_command
+{
+public:
+	virtual void execute() override;
+	cpu_mesh* mesh_ptr = nullptr;
 };
 
 

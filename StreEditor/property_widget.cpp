@@ -76,6 +76,49 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
     type_select_comcobox->addItem(select_view_mesh_act->text(), QVariant::fromValue(select_view_mesh_act)); //add actions
     type_select_comcobox->addItem(select_fbx_mesh_act->text(), QVariant::fromValue(select_fbx_mesh_act));
 
+    //object_constants
+    transform_label = new QLabel(this);
+    transform_label->setObjectName("transform_label");
+    transform_label->setGeometry(QRect(30, 90, 53, 16));
+    transform_x_spinbox = new QDoubleSpinBox(this);
+    transform_x_spinbox->setObjectName("transform_x_spinbox");
+    transform_x_spinbox->setGeometry(QRect(30, 110, 62, 22));
+    transform_y_spinbox = new QDoubleSpinBox(this);
+    transform_y_spinbox->setObjectName("transform_y_spinbox");
+    transform_y_spinbox->setGeometry(QRect(100, 110, 62, 22));
+    transform_z_spinbox = new QDoubleSpinBox(this);
+    transform_z_spinbox->setObjectName("transform_z_spinbox");
+    transform_z_spinbox->setGeometry(QRect(170, 110, 62, 22));
+    transform_label->setText("transform");
+
+    rotation_label = new QLabel(this);
+    rotation_label->setObjectName("rotation_label");
+    rotation_label->setGeometry(QRect(30, 130, 53, 16));
+    rotation_x_spinbox = new QDoubleSpinBox(this);
+    rotation_x_spinbox->setObjectName("rotation_x_spinbox");
+    rotation_x_spinbox->setGeometry(QRect(30, 150, 62, 22));
+    rotation_y_spinbox = new QDoubleSpinBox(this);
+    rotation_y_spinbox->setObjectName("rotation_y_spinbox");
+    rotation_y_spinbox->setGeometry(QRect(100, 150, 62, 22));
+    rotation_z_spinbox = new QDoubleSpinBox(this);
+    rotation_z_spinbox->setObjectName("rotation_z_spinbox");
+    rotation_z_spinbox->setGeometry(QRect(170, 150, 62, 22));
+    rotation_label->setText("rotation");
+
+    scale_label = new QLabel(this);
+    scale_label->setObjectName("scale_label");
+    scale_label->setGeometry(QRect(30, 170, 53, 16));
+    scale_x_spinbox = new QDoubleSpinBox(this);
+    scale_x_spinbox->setObjectName("scale_x_spinbox");
+    scale_x_spinbox->setGeometry(QRect(30, 190, 62, 22));
+    scale_y_spinbox = new QDoubleSpinBox(this);
+    scale_y_spinbox->setObjectName("scale_y_spinbox");
+    scale_y_spinbox->setGeometry(QRect(100, 190, 62, 22));
+    scale_z_spinbox = new QDoubleSpinBox(this);
+    scale_z_spinbox->setObjectName("scale_z_spinbox");
+    scale_z_spinbox->setGeometry(QRect(170, 190, 62, 22));
+    scale_label->setText("scale");
+
     connect(type_select_comcobox, &QComboBox::currentIndexChanged, this, [&](int index)
         {
             QAction* selectedAction = type_select_comcobox->itemData(index, Qt::UserRole).value<QAction*>();
@@ -85,7 +128,6 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
             }
         }
     );
-
     connect(select_view_mesh_act, &QAction::triggered, this, 
         [&]() 
         {
@@ -95,36 +137,56 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
             {
                auto mesh_comp_ptr =  static_cast<mesh_component_invoker*>(current_component_ptr);
                mesh_comp_ptr->mesh_instance->is_view_mesh = true;
-               s_change_mesh_data_command().execute();
+               s_change_mesh_type_command().execute();
             }
 
         }
     );
-
     connect(select_fbx_mesh_act, &QAction::triggered, this, 
         [&]() 
         {
             path_select_pushbutton->setEnabled(true);
         }
     );
-
-    //
     connect(path_select_pushbutton, &QPushButton::clicked,this,
         [&]() 
         {
-            auto path_str = open_file_path(this, "FBX Files(*.fbx);;All(*.*)");
+            auto path_str = QFileDialog::getExistingDirectory() + "/";
             path_text->setText(path_str);
             if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
             {
                 auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
                 mesh_comp_ptr->mesh_instance->path = path_str.toStdWString();
                 mesh_comp_ptr->mesh_instance->is_view_mesh = false;
-                s_change_mesh_data_command().execute();
+                s_change_mesh_type_command().execute();
             }
         }
     );
 
+    connect(transform_x_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
+    connect(transform_y_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
+    connect(transform_z_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
+    connect(rotation_x_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
+    connect(rotation_y_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
+    connect(rotation_z_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
+    connect(scale_x_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
+    connect(scale_y_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
+    connect(scale_z_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
 
+
+}
+
+void mesh_property_widget::update_mesh()
+{
+    if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+    {
+        auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
+
+        s_update_mesh_data_command update_mesh_data_cmd;
+        update_mesh_data_cmd.mesh_ptr = mesh_comp_ptr->mesh_instance;
+        update_mesh_data_cmd.execute();
+        update_mesh_data_cmd.mesh_ptr = nullptr;
+    }
 }
 
 

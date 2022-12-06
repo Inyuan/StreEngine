@@ -23,7 +23,7 @@ struct gpu_shader_resource
 		SHADER_RESOURCE_TYPE_CUSTOM_BUFFER, // CSV
 		SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP, //SRV
 		//跟随mesh子物体顺序读取的CBV group ex:material
-		SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH,
+		SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_FOLLOW_MESH,//CSV 但directx_sr_custom_buffer_group,随mesh子物体选择数组内对应的csv导入
 		SHADER_RESOURCE_TYPE_TEXTURE, //SRV
 		SHADER_RESOURCE_TYPE_TEXTURE_GROUP, //TABLE //贴图组类型必须再用package_textures才能构建
 		SHADER_RESOURCE_TYPE_RENDER_TARGET, //SRV
@@ -36,9 +36,10 @@ struct gpu_shader_resource
 	
 	} shader_resource_type;
 
-	//使用的寄存器序号 ,和反射出来的接口自动连接？，并允许用户手动连接
-	uint32_t register_index = 0; 
-
+	//使用的寄存器序号
+	//-1pass不输入
+	//多个pass需要多个gpu_shader_resource管理？
+	int register_index = -1; 
 	std::string name;
 
 	uint32_t element_size = 0;
@@ -68,7 +69,7 @@ struct gpu_pass
 
 	};
 
-	std::vector<pass_resource> pass_res_group;
+	std::map<std::string,pass_resource> pass_res_group;
 
 	virtual ~gpu_pass()
 	{
@@ -180,4 +181,25 @@ public:
 		if (gpu_pass_ptr)delete(gpu_pass_ptr);
 		gpu_pass_ptr = nullptr;
 	}
+};
+
+//api提供快速计算方法
+struct camera_cal_helper
+{
+	// Camera coordinate system with coordinates relative to world space.
+	s_float3 world_position = { 0.0f, 0.0f, 0.0f };
+	s_float3 right_axi = { 1.0f, 0.0f, 0.0f };
+	s_float3 up_axi = { 0.0f, 1.0f, 0.0f };
+	s_float3 look_axi = { 0.0f, 0.0f, 1.0f };
+
+	// Cache frustum properties.
+	float near_z = 0.0f;
+	float far_z = 0.0f;
+	float aspect = 0.0f;
+	float fov_y = 0.0f;
+	float near_window_height = 0.0f;
+	float far_window_height = 0.0f;
+	// Cache View/Proj matrices.
+	s_float4x4 view_matrix = s_float4x4::identity4x4();
+	s_float4x4 project_matrix = s_float4x4::identity4x4();
 };

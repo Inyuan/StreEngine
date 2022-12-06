@@ -26,20 +26,23 @@ struct s_light
 
 struct s_camera
 {
-	s_float4x4 View = s_float4x4::identity4x4();
-	s_float4x4 InvView = s_float4x4::identity4x4();
-	s_float4x4 Proj = s_float4x4::identity4x4();
-	s_float4x4 InvProj = s_float4x4::identity4x4();
-	s_float4x4 ViewProj = s_float4x4::identity4x4();
-	s_float4x4 InvViewProj = s_float4x4::identity4x4();
-	s_float4x4 ShadowTransform = s_float4x4::identity4x4();
-	s_float3 EyePosW = { 0.0f, 0.0f, 0.0f };
-	s_float2 RenderTargetSize = { 0.0f, 0.0f };
-	s_float2 InvRenderTargetSize = { 0.0f, 0.0f };
-	s_float NearZ = 0.0f;
-	s_float FarZ = 0.0f;
+	s_float4x4 view = s_float4x4::identity4x4();
+	s_float4x4 inv_view = s_float4x4::identity4x4();
+	s_float4x4 project = s_float4x4::identity4x4();
+	s_float4x4 inv_project = s_float4x4::identity4x4();
 
-	s_float4 AmbientLight = { 0.0f, 0.0f, 0.0f, 1.0f };
+	s_float4x4 view_project = s_float4x4::identity4x4();
+	s_float4x4 inv_view_project = s_float4x4::identity4x4();
+	s_float4x4 shadow_transform = s_float4x4::identity4x4();
+
+	s_float3 eye_world_position = { 0.0f, 0.0f, 0.0f };
+	s_float2 render_target_size = { 0.0f, 0.0f };
+	s_float2 inv_render_target_size = { 0.0f, 0.0f };
+
+	s_float near_z = 0.0f;
+	s_float far_z = 0.0f;
+
+	s_float4 ambient_light = { 0.0f, 0.0f, 0.0f, 1.0f };
 	//...
 };
 
@@ -55,7 +58,7 @@ struct s_material
 
 struct s_object_constant
 {
-	s_float4x4 world_position = s_float4x4::identity4x4();
+	s_float4x4 world_transform = s_float4x4::identity4x4();
 	s_float4x4 tex_transform = s_float4x4::identity4x4();
 	struct 
 	{
@@ -80,7 +83,7 @@ struct cpu_resource
 
 	void* data = nullptr;
 
-	size_t count = 0;
+	size_t count = 1;//????
 
 	t_element* get_data() { return (t_element*)data; };
 

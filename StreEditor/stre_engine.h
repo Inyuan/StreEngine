@@ -1,7 +1,7 @@
 #pragma once
 #include <map>
 #include "stre_render.h"
-
+#include "RCamera.h"
 using std::map;
 using std::string;
 
@@ -85,14 +85,17 @@ public:
 
 	cpu_mesh* create_mesh_from_fbx(std::wstring path);
 
+	void update_mesh_gpu(cpu_mesh* in_mesh);
+
 	s_pass* create_pass();
 
 	template<class t_cpu_resource>
-	t_cpu_resource* create_custom_resource()
+	t_cpu_resource* create_custom_resource(size_t in_element_count, bool in_can_update = false)
 	{
+
 		s_custom_manager<t_cpu_resource>* custom_manager = res_manager_fy->create_manager<t_cpu_resource>();
-		auto instance_ptr = custom_manager->create_resource();
-		//
+		auto instance_ptr = custom_manager->create_resource(in_element_count, in_can_update);
+		//Ã»ÓÃCBV
 		custom_manager->dx_allocate_gpu_resource(instance_ptr, gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP);
 		
 		delete(custom_manager);
@@ -106,7 +109,6 @@ public:
 		custom_manager->update_gpu(in_res_ptr);
 		delete(custom_manager);
 	}
-
 
 	template<class t_cpu_resource>
 	bool pass_add_shader_resource(s_pass* in_out_pass,const t_cpu_resource * in_sr)
@@ -141,3 +143,4 @@ public:
 	bool check_pass(s_pass* in_out_pass);
 
 };
+

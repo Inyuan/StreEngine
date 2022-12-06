@@ -17,6 +17,7 @@ int pipeline_w_mouse_position_y = 0;
 pipeline_window_invoker* pipeline_window_widget_ptr = nullptr;
 debug_text_invoker* debug_text_ptr = nullptr;
 component_invoker* current_component_ptr = nullptr;
+view_port_invoker* view_port_widget_ptr = nullptr;
 
 pipeline_window_invoker::pipeline_window_invoker(
 	QWidget* in_parent): QWidget(in_parent)
@@ -191,21 +192,41 @@ mesh_component_invoker::mesh_component_invoker(
 	comp_type = COMPONENT_TYPE_MESH;
 	//构建组件
 	setObjectName("mesh_component");
-	setGeometry(QRect(pipeline_w_mouse_position_x, pipeline_w_mouse_position_y, 120, 51));
+	setGeometry(QRect(pipeline_w_mouse_position_x, pipeline_w_mouse_position_y, 120, 100));
 	setAlignment(Qt::AlignCenter);
+	setTitle(QCoreApplication::translate("stre_editorClass", "mesh", nullptr));
 
 	//构建端口
 	output_port = new connect_port(
 		this,
-		port_information(
-			port_information::MESH_OUTPUT,
-			mesh_instance));
+		connect_port::MESH_OUTPUT,
+			this);
 	output_port->setObjectName("mesh_output_port");
-	output_port->setGeometry(QRect(54, 30, 61, 20));
+	output_port->setGeometry(QRect(0, 30, 120, 20));
 	output_port->setLayoutDirection(Qt::RightToLeft);
 	output_port->setAutoExclusive(false);
-	setTitle(QCoreApplication::translate("stre_editorClass", "mesh", nullptr));
+	
 	output_port->setText(QCoreApplication::translate("stre_editorClass", "output", nullptr));
+
+	constants_output_port = new connect_port(
+		this,
+		connect_port::MESH_CONTANTS_OUTPUT,
+			this);
+	constants_output_port->setObjectName("constants_output_port");
+	constants_output_port->setGeometry(QRect(0, 50, 120, 20));
+	constants_output_port->setLayoutDirection(Qt::RightToLeft);
+	constants_output_port->setAutoExclusive(false);
+	constants_output_port->setText(QCoreApplication::translate("stre_editorClass", "constants output", nullptr));
+
+	material_output_port = new connect_port(
+		this,
+		connect_port::MESH_MATERIAL_OUTPUT,
+			this);
+	material_output_port->setObjectName("material_output_port");
+	material_output_port->setGeometry(QRect(0, 70, 120, 20));
+	material_output_port->setLayoutDirection(Qt::RightToLeft);
+	material_output_port->setAutoExclusive(false);
+	material_output_port->setText(QCoreApplication::translate("stre_editorClass", "material output", nullptr));
 
 }
 
@@ -283,27 +304,24 @@ pass_component_invoker::pass_component_invoker(
 
 	mesh_port = new connect_port(
 		this, 
-		port_information(
-			port_information::PASS_MESH_INPUT, 
-			this));
+		connect_port::PASS_MESH_INPUT,
+			this);
 	mesh_port->setObjectName("pass_mesh_port");
 	mesh_port->setGeometry(QRect(10, 80, 95, 20));
 	mesh_port->setAutoExclusive(false);
 
 	shader_port = new connect_port(
 		this,
-		port_information(
-			port_information::PASS_SHADER_INPUT,
-			this));
+		connect_port::PASS_SHADER_INPUT,
+			this);
 	shader_port->setObjectName("pass_shade_port");
 	shader_port->setGeometry(QRect(10, 100, 95, 20));
 	shader_port->setAutoExclusive(false);
 
 	output_port = new connect_port(
 		this,
-		port_information(
-			port_information::PASS_OUTPUT,
-			this));
+		connect_port::PASS_OUTPUT,
+			this);
 	output_port->setObjectName("pass_output_port");
 	output_port->setGeometry(QRect(144, 100, 61, 20));
 	output_port->setLayoutDirection(Qt::RightToLeft);
@@ -419,14 +437,14 @@ texture_component_invoker::texture_component_invoker(
 	setTitle(QCoreApplication::translate("stre_editorClass", "ds texture", nullptr));
 
 	//构建端口
-	input_port = new connect_port(this, port_information(port_information::TEXTURE_GROUP_INPUT, this));
+	input_port = new connect_port(this, connect_port::TEXTURE_GROUP_INPUT, this);
 	input_port->setObjectName("texture_input_port");
 	input_port->setGeometry(QRect(0, 20, 51, 20));
 	input_port->setLayoutDirection(Qt::LeftToRight);
 	input_port->setAutoExclusive(false);
 	input_port->setText(QCoreApplication::translate("stre_editorClass", "input", nullptr));
 
-	output_port = new connect_port(this, port_information(port_information::TEXTURE_GROUP_OUTPUT, this));
+	output_port = new connect_port(this, connect_port::TEXTURE_GROUP_OUTPUT, this);
 	output_port->setObjectName("texture_output_port");
 	output_port->setGeometry(QRect(60, 20, 61, 20));
 	output_port->setLayoutDirection(Qt::RightToLeft);
@@ -606,7 +624,7 @@ shader_component_invoker::shader_component_invoker(
 	setAlignment(Qt::AlignCenter);
 
 	//构建端口
-	output_port = new connect_port(this, port_information(port_information::SHADER_OUTPUT, &shader_layout_instance));
+	output_port = new connect_port(this, connect_port::SHADER_OUTPUT, this);
 	output_port->setObjectName("shader_output_port");
 	output_port->setGeometry(QRect(54, 30, 61, 20));
 	output_port->setLayoutDirection(Qt::RightToLeft);
@@ -649,7 +667,7 @@ camera_component_invoker::camera_component_invoker(
 	setAlignment(Qt::AlignCenter);
 
 	//构建端口
-	output_port = new connect_port(this, port_information(port_information::CAMERA_OUTPUT, &camera_instance));
+	output_port = new connect_port(this, connect_port::CAMERA_OUTPUT, this);
 	output_port->setObjectName("camera_output_port");
 	output_port->setGeometry(QRect(54, 30, 61, 20));
 	output_port->setLayoutDirection(Qt::RightToLeft);
@@ -697,7 +715,7 @@ light_component_invoker::light_component_invoker(
 	setAlignment(Qt::AlignCenter);
 
 	//构建端口
-	output_port = new connect_port(this, port_information(port_information::LIGHT_OUTPUT, &light_instance));
+	output_port = new connect_port(this, connect_port::LIGHT_OUTPUT, this);
 	output_port->setObjectName("light_output_port");
 	output_port->setGeometry(QRect(54, 30, 61, 20));
 	output_port->setLayoutDirection(Qt::RightToLeft);
@@ -736,9 +754,13 @@ int connect_port::select_port_index = 0;
 
 connect_port::connect_port(
 	QWidget* in_parent,
-	port_information in_port_inf):
+	PORT_TYPE in_port_type,
+	void* in_ptr,
+	int in_port_index) :
 	QRadioButton(in_parent),
-	port_inf(in_port_inf)
+	port_type(in_port_type),
+	ptr(in_ptr),
+	port_index(in_port_index)
 {
 }
 
@@ -859,6 +881,77 @@ view_port_invoker::view_port_invoker(QWidget* in_parent):QWidget(in_parent)
 
 	setObjectName("rendering_view_widget");
 	setGeometry(QRect(1100, 10, 311, 241));
+}
+
+/// <summary>
+/// 移动摄像机
+/// </summary>
+/// <param name="in_event"></param>
+void view_port_invoker::keyPressEvent(QKeyEvent* in_event)
+{
+	if (current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
+	{
+		auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
+		if (in_event->key() == Qt::Key_W)
+		{
+			camera_comp_ptr->camera_cal_helper.Walk(10.0f * 0.00001);
+		}
+		if (in_event->key() == Qt::Key_S)
+		{
+			camera_comp_ptr->camera_cal_helper.Walk(-10.0f * 0.00001);
+		}
+		if (in_event->key() == Qt::Key_A)
+		{
+			camera_comp_ptr->camera_cal_helper.Strafe(-10.0f * 0.00001);
+		}
+		if (in_event->key() == Qt::Key_D)
+		{
+			camera_comp_ptr->camera_cal_helper.Strafe(10.0f * 0.00001);
+		}
+
+		camera_comp_ptr->camera_cal_helper.UpdateViewMatrix();
+		s_update_camera_command update_camera_cmd;
+		update_camera_cmd.camera_helper_ptr = &camera_comp_ptr->camera_cal_helper;
+		update_camera_cmd.camera_ptr = camera_comp_ptr->camera_instance;
+		update_camera_cmd.execute();
+		update_camera_cmd.camera_helper_ptr = nullptr;
+		update_camera_cmd.camera_ptr = nullptr;
+		update();
+	}
+}
+
+void view_port_invoker::mousePressEvent(QMouseEvent* in_event)
+{
+	mouse_point = in_event->pos();
+	is_mouse_down = true;
+	update();
+}
+
+void view_port_invoker::mouseMoveEvent(QMouseEvent* in_event)
+{
+	if (current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
+	{
+		auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
+		camera_comp_ptr->camera_cal_helper.Pitch((in_event->y() - mouse_point.y())*0.00001);
+		camera_comp_ptr->camera_cal_helper.RotateY((in_event->x() - mouse_point.x()) * 0.00001);
+		mouse_point = in_event->pos();
+
+		camera_comp_ptr->camera_cal_helper.UpdateViewMatrix();
+		s_update_camera_command update_camera_cmd;
+		update_camera_cmd.camera_helper_ptr = &camera_comp_ptr->camera_cal_helper;
+		update_camera_cmd.camera_ptr = camera_comp_ptr->camera_instance;
+		update_camera_cmd.execute();
+		update_camera_cmd.camera_helper_ptr = nullptr;
+		update_camera_cmd.camera_ptr = nullptr;
+		update();
+	}
+}
+
+void view_port_invoker::mouseReleaseEvent(QMouseEvent* in_event)
+{
+	mouse_point = in_event->pos();
+	is_mouse_down = false;
+	update();
 }
 
 /// <summary>

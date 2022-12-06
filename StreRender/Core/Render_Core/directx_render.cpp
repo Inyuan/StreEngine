@@ -109,12 +109,12 @@ bool directx_render::create_rootsignature(gpu_pass* in_gpu_pass)
 	//用反射得到的数据自动构建根签名
 	for (auto it : in_gpu_pass->pass_res_group)
 	{
-		switch (it.type)//反射出来的种类
+		switch (it.second.type)//反射出来的种类
 		{
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
 		{
 			CD3DX12_ROOT_PARAMETER r_p;
-			r_p.InitAsConstantBufferView(it.bind_point);
+			r_p.InitAsConstantBufferView(it.second.bind_point);
 			slotRootParameter.push_back(r_p);
 		}
 		break;
@@ -122,7 +122,7 @@ bool directx_render::create_rootsignature(gpu_pass* in_gpu_pass)
 
 		{
 			CD3DX12_ROOT_PARAMETER r_p;
-			r_p.InitAsShaderResourceView(it.bind_point);
+			r_p.InitAsShaderResourceView(it.second.bind_point);
 			slotRootParameter.push_back(r_p);
 		}
 		break;
@@ -130,7 +130,7 @@ bool directx_render::create_rootsignature(gpu_pass* in_gpu_pass)
 		{
 			//局部状态下在根签名构造完成前不能被销毁
 			CD3DX12_DESCRIPTOR_RANGE texTable;
-			texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, it.bind_count, it.bind_point, it.register_space);
+			texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, it.second.bind_count, it.second.bind_point, it.second.register_space);
 			CD3DX12_ROOT_PARAMETER texture_rp;
 			texture_rp.InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_ALL);
 			slotRootParameter.push_back(texture_rp);
@@ -386,30 +386,32 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	//auto gpu_shader_res_allocater = memory_allocater_group["gpu_shader_res_allocater"];
 	switch (in_shader_res_type)
 	{
-		//结构体 CBV
+		//结构体
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER:
 	{
 		std::shared_ptr<directx_frame_resource> frame_res(new directx_frame_resource());
 		frame_res->shader_resource_type = in_shader_res_type;
+		frame_res->register_index = -1;
 		for (int i = 0; i < FRAME_BUFFER_COUNT; i++)
 		{
 			frame_res->frame_resource_group[i] = std::make_shared<directx_sr_custom_buffer>();
-			//分配空间时才提供CSV描述符
+			//分配空间时才提供CSV/SRV描述符
 		}
 		return std::dynamic_pointer_cast<gpu_shader_resource>(frame_res);
 	}
 	break;
 
 	//结构体组 SRV
-	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH:
+	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_FOLLOW_MESH:
 	case gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP:
 	{
 		std::shared_ptr<directx_frame_resource> frame_res( new directx_frame_resource());
 		frame_res->shader_resource_type = in_shader_res_type;
+		frame_res->register_index = -1;
 		for (int i = 0; i < FRAME_BUFFER_COUNT; i++)
 		{
 			frame_res->frame_resource_group[i] = std::make_shared <directx_sr_custom_buffer_group>();
-			//分配空间时才提供CSV描述符
+			//分配空间时才提供CSV/SRV描述符
 		}
 		return std::dynamic_pointer_cast<gpu_shader_resource>(frame_res);;
 	}
@@ -420,6 +422,7 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	{
 		std::shared_ptr<directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
+		texture_res->register_index = -1;
 		texture_res->resource = std::make_shared <directx_sr_texture>();
 		std::shared_ptr<directx_sr_texture> gpu_ptr = std::static_pointer_cast<directx_sr_texture>(texture_res->resource);
 
@@ -439,6 +442,7 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	{
 		std::shared_ptr < directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
+		texture_res->register_index = -1;
 		texture_res->resource = std::make_shared<directx_sr_texture_group>();
 
 		return std::dynamic_pointer_cast<gpu_shader_resource>(texture_res);
@@ -449,6 +453,7 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	{
 		std::shared_ptr < directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
+		texture_res->register_index = -1;
 		texture_res->resource = std::make_shared<directx_sr_render_target>();
 		std::shared_ptr < directx_sr_render_target> gpu_ptr = std::static_pointer_cast<directx_sr_render_target>(texture_res->resource);
 
@@ -471,6 +476,7 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	{
 		std::shared_ptr<directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
+		texture_res->register_index = -1;
 		texture_res->resource = std::make_shared<directx_sr_render_target_group>();
 
 		return std::dynamic_pointer_cast<gpu_shader_resource>(texture_res);
@@ -481,6 +487,7 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	{
 		std::shared_ptr < directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
+		texture_res->register_index = -1;
 		texture_res->resource = std::make_shared <directx_sr_depth_stencil>();
 		std::shared_ptr < directx_sr_depth_stencil> gpu_ptr = std::static_pointer_cast<directx_sr_depth_stencil>(texture_res->resource);
 
@@ -501,6 +508,7 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	{
 		std::shared_ptr < directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
+		texture_res->register_index = -1;
 		texture_res->resource = std::make_shared<directx_sr_depth_stencil_group>();
 
 		return std::dynamic_pointer_cast<gpu_shader_resource>(texture_res);
@@ -609,9 +617,9 @@ bool directx_render::allocate_upload_resource(
 		);
 
 		//描述符建了也只有被集中进table时才有用
-		create_descriptor(
-			DIRECTX_RESOURCE_DESC_TYPE::DX_CBV,
-			in_res_elem, memory_size);
+		//create_descriptor(
+		//	DIRECTX_RESOURCE_DESC_TYPE::DX_CBV,
+		//	in_res_elem, memory_size);
 
 		ThrowIfFailed(in_res_elem->dx_resource->Map(0, nullptr, reinterpret_cast<void**>(&(in_res_elem->mapped_data))));
 
@@ -637,7 +645,7 @@ bool directx_render::update_gpu_resource(
 	//只允许自定义资源更新
 	if (in_out_gpu_res->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER
 		&& in_out_gpu_res->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP
-		&& in_out_gpu_res->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH)
+		&& in_out_gpu_res->shader_resource_type != gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_FOLLOW_MESH)
 	{
 		stre_exception::exception_output_str_group.push_back("update_gpu_resource in_out_gpu_res->shader_resource_type is not suitable");
 		return false;
@@ -1025,7 +1033,10 @@ void directx_render::load_resource(
 	UINT output_rt_size = 0;
 	for (auto gpu_res : in_gpu_res_group)
 	{
-		
+		if (gpu_res.second->register_index < 0)
+		{
+			continue;
+		}
 
 		switch (gpu_res.second->shader_resource_type)
 		{
@@ -1034,10 +1045,18 @@ void directx_render::load_resource(
 		{
 			const directx_frame_resource* frame_res = static_cast<const directx_frame_resource*>(gpu_res.second);
 			auto gpu_sr = static_cast<const directx_sr_custom_buffer*>(get_current_frame_resource(frame_res));
+			
+				//dx_command_list->
+				//	SetGraphicsRootConstantBufferView(
+				//		gpu_res.second->register_index,
+				//		gpu_sr->dx_resource.Get()->GetGPUVirtualAddress());
+			//!!! 没有用CBV
 			dx_command_list->
-				SetGraphicsRootConstantBufferView(
+				SetGraphicsRootShaderResourceView(
 					gpu_res.second->register_index,
 					gpu_sr->dx_resource.Get()->GetGPUVirtualAddress());
+
+		
 		}
 		break;
 
@@ -1046,10 +1065,12 @@ void directx_render::load_resource(
 		{
 			const directx_frame_resource* frame_res = static_cast<const directx_frame_resource*>(gpu_res.second);
 			auto gpu_sr = static_cast<const directx_sr_custom_buffer_group*>(get_current_frame_resource(frame_res));
-			dx_command_list->
-				SetGraphicsRootShaderResourceView(
-					gpu_res.second->register_index,
-					gpu_sr->dx_resource.Get()->GetGPUVirtualAddress());
+
+				dx_command_list->
+					SetGraphicsRootShaderResourceView(
+						gpu_res.second->register_index,
+						gpu_sr->dx_resource.Get()->GetGPUVirtualAddress());
+
 		}
 		break;
 
@@ -1134,7 +1155,7 @@ void directx_render::draw_call(
 
 	for (auto it : in_gpu_mesh->gpu_mesh_resource_ptr)
 	{
-		if(it.second->shader_resource_type == gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH)
+		if(it.second->shader_resource_type == gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_FOLLOW_MESH)
 		{
 			refresh_group.push_back(static_cast<const directx_frame_resource*>(it.second));
 		}
@@ -1144,9 +1165,17 @@ void directx_render::draw_call(
 	{
 		for (auto it : refresh_group)
 		{
+			//寄存器号为-1就不能插入
+			if (it->register_index < 0)
+			{
+				continue;
+			}
 			const directx_sr_custom_buffer_group* dx_sr_cb_group = static_cast<const directx_sr_custom_buffer_group*>(get_current_frame_resource(it));
 			D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = dx_sr_cb_group->dx_resource->GetGPUVirtualAddress() + i * it->element_size;
-			dx_command_list->SetGraphicsRootConstantBufferView(0, objCBAddress);
+			//!!! 没有用CBV
+			//dx_command_list->SetGraphicsRootConstantBufferView(it->register_index, objCBAddress);
+			dx_command_list->SetGraphicsRootShaderResourceView(it->register_index, objCBAddress);
+
 		}
 
 		dx_command_list->DrawIndexedInstanced(
@@ -1564,7 +1593,7 @@ ID3DBlob* directx_render::complie_shader(
 
 void directx_render::reflect_shader(
 	ComPtr<ID3DBlob>& in_shader_data, 
-	std::vector<gpu_pass::pass_resource>& out_res_group)
+	std::map<std::string,gpu_pass::pass_resource>& out_res_group)
 {
 	typedef gpu_shader_resource::SHADER_RESOURCE_TYPE SHADER_RES_TYPE;
 	//反射生成对应接口
@@ -1596,11 +1625,13 @@ void directx_render::reflect_shader(
 		switch (resource_desc.Type)
 		{
 		case D3D_SIT_CBUFFER:
-		case D3D_SIT_STRUCTURED:
+		case D3D_SIT_TBUFFER:
 			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER;
 			break;
+		case D3D_SIT_STRUCTURED:
+			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP;
+			break;
 		case D3D_SIT_TEXTURE:
-		case D3D_SIT_TBUFFER:
 			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_TEXTURE_GROUP;
 			break;
 		case D3D_SIT_SAMPLER:
@@ -1614,7 +1645,7 @@ void directx_render::reflect_shader(
 			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_NONE;
 			break;
 		}
-		out_res_group.push_back(pass_res);
+		out_res_group[pass_res.name] = pass_res;
 	}
 }
 

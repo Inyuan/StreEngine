@@ -220,6 +220,7 @@ bool pass_factory::add_shader_resource<cpu_light>(s_pass* in_out_pass, const cpu
 	return true;
 }
 
+
 bool pass_factory::add_render_target(s_pass* in_out_pass, const cpu_texture* in_gpu_rt)
 {
 	if (!in_out_pass)

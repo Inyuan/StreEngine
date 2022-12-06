@@ -68,5 +68,4 @@ public:
 		UINT in_update_element_index,
 		size_t int_update_element_count) = 0;
 
-
 };

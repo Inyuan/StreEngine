@@ -5,6 +5,8 @@
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QTextEdit>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QLabel>
 
 class property_widget;
 class mesh_property_widget;
@@ -40,6 +42,35 @@ public:
 	QComboBox* type_select_comcobox = nullptr;
 	QTextEdit* path_text = nullptr;
 	QPushButton* path_select_pushbutton = nullptr;
+
+	QLabel* transform_label = nullptr;
+	QDoubleSpinBox* transform_x_spinbox = nullptr;
+	QDoubleSpinBox* transform_y_spinbox = nullptr;
+	QDoubleSpinBox* transform_z_spinbox = nullptr;
+	
+	QLabel* rotation_label = nullptr;
+	QDoubleSpinBox* rotation_x_spinbox = nullptr;
+	QDoubleSpinBox* rotation_y_spinbox = nullptr;
+	QDoubleSpinBox* rotation_z_spinbox = nullptr;
+	
+	QLabel* scale_label = nullptr;
+	QDoubleSpinBox* scale_x_spinbox = nullptr;
+	QDoubleSpinBox* scale_y_spinbox = nullptr;
+	QDoubleSpinBox* scale_z_spinbox = nullptr;
+	
+	void update_mesh();
+};
+
+class camera_property_widget : public QWidget
+{
+public:
+
+};
+
+class light_property_widget : public QWidget
+{
+public:
+
 };
 
 class shader_property_widget : public QWidget
@@ -55,10 +86,9 @@ public:
 	QCheckBox* hs_check_box = nullptr;
 	QCheckBox* gs_check_box = nullptr;
 	QCheckBox* ps_check_box = nullptr;
-
-	
-
 };
+
+
 
 class texture_property_widget : public QWidget
 {

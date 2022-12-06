@@ -324,7 +324,7 @@ private:
         const std::string& target,
         bool& out_successed);
 
-    void reflect_shader(ComPtr<ID3DBlob>&  in_shader_data, std::vector<gpu_pass::pass_resource>& out_res_group);
+    void reflect_shader(ComPtr<ID3DBlob>&  in_shader_data, std::map<std::string, gpu_pass::pass_resource>& out_res_group);
 
     void create_pso(
         D3D12_GRAPHICS_PIPELINE_STATE_DESC& in_pso_desc,

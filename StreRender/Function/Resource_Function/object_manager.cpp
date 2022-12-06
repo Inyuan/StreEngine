@@ -39,12 +39,12 @@ void mesh_manager::dx_allocate_gpu_resource(cpu_mesh* in_cpu_data)
     if (in_cpu_data->material_ptr)
     custom_manager<cpu_material>().dx_allocate_gpu_resource(
         in_cpu_data->material_ptr,
-        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH);
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_FOLLOW_MESH);
 
     if (in_cpu_data->object_constant_ptr)
     custom_manager<cpu_object_constant>().dx_allocate_gpu_resource(
         in_cpu_data->object_constant_ptr,
-        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER);
+        GPU_SR_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_FOLLOW_MESH);
 
     //custom_manager<cpu_texture>::dx_allocate_gpu_resource(
     //    in_cpu_data->texture_ptr,
@@ -256,7 +256,7 @@ cpu_mesh* mesh_manager::load_fbx(const wchar_t* in_path)
 
     cpu_mesh* out_resource = create_resource();
 
-
+    out_resource->path = in_path;
 
 
     //获取fbx数据信息
@@ -267,27 +267,51 @@ cpu_mesh* mesh_manager::load_fbx(const wchar_t* in_path)
     const int controlPointCount = myFbx.pMesh->GetControlPointsCount();
     int PolygonType = myFbx.pMesh->GetPolygonSize(0);
     fbxsdk::FbxLayerElementArrayTemplate<int>* pMaterialIndices = &myFbx.pMesh->GetElementMaterial()->GetIndexArray();
-    const int material_size = myFbx.pMesh->GetElementMaterialCount();
+    int material_size = 2;
+    int mat_count = 0;
+    //???不知道怎么获得mesh的材质数量，只能遍历一遍
+    
+    for (int polygon = 0; polygon < polygonCount; polygon++)
+    {
+        //由于相同材质的点群可能被错开，只能当作分别的材质处理
+        auto current_mat_index = pMaterialIndices->GetAt(polygon);
+        if (current_mat_index != mat_count)
+        {
+            material_size++;
+            mat_count = current_mat_index;
+        }
+    }
+
     
     
     //为资源分配空间
     {
 
-        out_resource->vertex_ptr = custom_manager<cpu_vertex>().create_resource(controlPointCount);
-        out_resource->index_ptr = custom_manager<cpu_index>().create_resource((int)polygonCount * PolygonType);
-        out_resource->material_ptr = custom_manager<cpu_material>().create_resource(material_size);
-        out_resource->object_constant_ptr = custom_manager<cpu_object_constant>().create_resource(material_size);
+        out_resource->vertex_ptr = custom_manager<cpu_vertex>().create_resource(controlPointCount,true);
+        out_resource->index_ptr = custom_manager<cpu_index>().create_resource((int)polygonCount * PolygonType, true);
+        out_resource->material_ptr = custom_manager<cpu_material>().create_resource(material_size, true);
+        out_resource->object_constant_ptr = custom_manager<cpu_object_constant>().create_resource(material_size, true);
         out_resource->mesh_element_index_count.assign(material_size,0);
         //贴图得自己更新了
         //out_resource->texture_ptr.assign();
+
+
+
     }
 
     auto vertices = out_resource->vertex_ptr->get_data();
     auto indices = out_resource->index_ptr->get_data();
-    auto indeices_offset = out_resource->mesh_element_index_count;
+    auto& indeices_offset = out_resource->mesh_element_index_count;
     auto object_constant = out_resource->object_constant_ptr->get_data();
-    s_float3 vMin = object_constant->object_bound_box.min_position;
-    s_float3 vMax = object_constant->object_bound_box.max_position;
+    s_float3& vMin = object_constant->object_bound_box.min_position;
+    s_float3& vMax = object_constant->object_bound_box.max_position;
+
+    //初始化object_constants
+    for (int i = 0; i < material_size; i++)
+    {
+        object_constant[i] = s_object_constant();
+        object_constant[i].material_index = i;
+    }
 
     //读取数据
     bool HasNormal = myFbx.pMesh->GetElementNormalCount() > 0;

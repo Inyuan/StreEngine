@@ -52,6 +52,9 @@
     <ClCompile Include="property_widget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="RCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="s_command.h">
@@ -73,6 +76,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Rendering\stre_render.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RCamera.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -15,6 +15,8 @@
 #include <set>
 #include <list>
 #include "s_command.h"
+#include "stre_engine.h"
+
 
 using std::set;
 using std::vector;
@@ -244,6 +246,8 @@ public:
 	}
 
 	connect_port* output_port = nullptr;
+	connect_port* constants_output_port = nullptr;
+	connect_port* material_output_port = nullptr;
 	cpu_mesh* mesh_instance = nullptr;
 protected:
 	mesh_component_invoker() = delete;
@@ -374,6 +378,8 @@ public:
 
 	connect_port* output_port = nullptr;
 
+	RCamera camera_cal_helper;
+
 	cpu_camera* camera_instance = nullptr;
 
 protected:
@@ -415,18 +421,24 @@ private:
 *
 *********************************************/
 
-//???硬转换？
-struct port_information
+class connect_port : public QRadioButton
 {
-	
+public:
+
+	//这个好像只能全局  //执行命令时装入命令的局部执行
+	//由于两个不同类型的接口相连所以不能用模板
+	static connect_port* select_connect_port[2]; 
+	static int select_port_index;
 
 	enum PORT_TYPE
-	{	
+	{
 		TEXTURE_INPUT,
 		TEXTURE_OUTPUT,
 		TEXTURE_GROUP_INPUT,
 		TEXTURE_GROUP_OUTPUT,
 		MESH_OUTPUT,
+		MESH_CONTANTS_OUTPUT,
+		MESH_MATERIAL_OUTPUT,
 		SHADER_OUTPUT,
 		CAMERA_OUTPUT,
 		LIGHT_OUTPUT,
@@ -440,37 +452,14 @@ struct port_information
 
 
 
-	void* ptr =  nullptr;
+	void* ptr = nullptr;
 
 	const int port_index = 0;
 
-	port_information() {};
-
-	port_information(
+	connect_port(QWidget* in_parent, 
 		PORT_TYPE in_port_type,
 		void* in_ptr,
-		int in_port_index = 0) :
-		port_type(in_port_type),
-		ptr(in_ptr),
-		port_index(in_port_index) {};
-
-	~port_information()
-	{
-
-	}
-
-};
-
-class connect_port : public QRadioButton
-{
-public:
-	//这个好像只能全局  //执行命令时装入命令的局部执行
-	static connect_port* select_connect_port[2];
-	static int select_port_index;
-
-	const port_information port_inf;
-	connect_port(QWidget* in_parent, 
-		port_information in_port_inf);
+		int in_port_index = 0);
 
 	~connect_port()
 	{
@@ -536,7 +525,12 @@ public:
 
 private:
 	virtual void paintEvent(QPaintEvent*);
-
+	virtual void keyPressEvent(QKeyEvent* in_event);
+	virtual void mousePressEvent(QMouseEvent* in_event);
+	virtual void mouseReleaseEvent(QMouseEvent* in_event);
+	virtual void mouseMoveEvent(QMouseEvent* in_event);
+	QPoint mouse_point = QPoint(0,0);
+	bool is_mouse_down = false;
 	s_command* draw_cmd = nullptr;
 };
 
