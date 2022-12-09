@@ -22,9 +22,9 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxguid.lib")
-
+//缓存帧的数量使得分配器刷新正常处理？？？？
 #define SWAP_CHAIN_BUFFER_COUNT 2
-#define FRAME_BUFFER_COUNT SWAP_CHAIN_BUFFER_COUNT
+#define FRAME_BUFFER_COUNT 5 
 
 using Microsoft::WRL::ComPtr;
 // WRL

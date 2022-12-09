@@ -1,4 +1,4 @@
-#include "RCamera.h"
+#include "RObject.h"
 #include <memory>
 using namespace DirectX;
 
@@ -12,6 +12,8 @@ DirectX::XMFLOAT4X4 Identity4x4()
 
 	return I;
 }
+
+
 
 RCamera::RCamera()
 {
@@ -351,3 +353,26 @@ void RCamera::UpdateViewMatrix()
 
 
 
+void RObject::UpdateWorldMatrix()
+{
+	DirectX::XMMATRIX world = DirectX::XMMatrixTranslation(Transform[0],
+		Transform[1],
+		Transform[2])
+		* DirectX::XMMatrixRotationY(Rotation[0])
+		* DirectX::XMMatrixRotationZ(Rotation[1])
+		* DirectX::XMMatrixRotationX(Rotation[2])
+		* DirectX::XMMatrixScaling(Scale[0],
+			Scale[1],
+			Scale[2]);
+
+	XMStoreFloat4x4(&WorldMatrix, XMMatrixTranspose(world));
+}
+
+/// <summary>
+/// 只粘贴世界矩阵 
+/// </summary>
+/// <param name="out_s_object_contants">世界矩阵指针</param>
+void RObject::convert_to_object_contants_data(void* out_s_object_contants)
+{
+	memcpy(out_s_object_contants, &WorldMatrix, sizeof(WorldMatrix));
+}

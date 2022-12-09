@@ -211,6 +211,14 @@ void reflect_pass_res_input(pass_component_invoker* in_pass_cmp)
 		int root_sign_index = 0;
 		for (auto it : shader_res)
 		{
+			if(    it.second.type != gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER 
+				&& it.second.type != gpu_shader_resource::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP
+				&& it.second.type != gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE
+				&& it.second.type != gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP)
+			{
+				continue;
+			}
+
 			auto res_port = new connect_port(
 				current_pass_component_ptr,
 				connect_port::PASS_RES_PORT_GROUP,
@@ -688,6 +696,16 @@ void s_reconnect_resource_command::execute()
 void s_draw_command::execute()
 {
 
+
+
+	s_update_gpu_command update_gpu_cmd;
+	update_gpu_cmd.execute();
+	if (!update_gpu_cmd.execute_success)
+	{
+		return;
+	}
+	//stre_engine::get_instance()->reset_command();
+
 	auto pass_group = pipeline_window_widget_ptr->pass_comp_level_map;
 	//按照0->n的优先级顺序 遍历执行每层pass
 	for (auto it : pass_group)
@@ -698,8 +716,6 @@ void s_draw_command::execute()
 			{
 				continue;
 			}
-
-			stre_engine::get_instance()->update_gpu_memory();
 
 			stre_engine::get_instance()->draw_pass(itt->pass_instance);
 		}
@@ -801,7 +817,15 @@ void s_update_mesh_data_command::execute()
 		//出问题了
 		return;
 	}
-	stre_engine::get_instance()->update_mesh_gpu(mesh_ptr);
+	mesh_ptr->object_helper.UpdateWorldMatrix();
+	auto object_constants_ptr = mesh_ptr->mesh_instance->object_constant_ptr->get_data();
+	//每个子物体常量都要刷新
+	for (int i = 0; i < mesh_ptr->mesh_instance->object_constant_ptr->count; i++)
+	{
+		mesh_ptr->object_helper.convert_to_object_contants_data(&object_constants_ptr[i].world_transform);
+	}
+
+	stre_engine::get_instance()->update_mesh_gpu(mesh_ptr->mesh_instance);
 }
 
 /// <summary>
@@ -854,6 +878,7 @@ void s_switch_property_widget_command::execute()
 		}
 		else
 		{
+			current_mesh_property_widget->refresh_spin_box();
 			current_mesh_property_widget->type_select_comcobox->setCurrentIndex(1);
 			current_mesh_property_widget->path_select_pushbutton->setEnabled(true);
 			QString path_str;

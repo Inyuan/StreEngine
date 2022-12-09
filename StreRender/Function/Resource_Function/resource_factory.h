@@ -25,7 +25,7 @@ struct custom_manager :public s_custom_manager<t_cpu_res_type>
 	virtual t_cpu_res_type* create_resource(size_t in_element_number, bool in_can_update = false) override
 	{
 		t_cpu_res_type* cpu_ptr = create_resource(in_can_update);
-		cpu_ptr->data = custom_allocate(in_element_number * sizeof(t_cpu_res_type));
+		cpu_ptr->data = custom_allocate(in_element_number * cpu_ptr->get_element_size());
 		cpu_ptr->count = in_element_number;
 
 		return cpu_ptr;

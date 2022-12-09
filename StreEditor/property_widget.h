@@ -57,7 +57,7 @@ public:
 	QDoubleSpinBox* scale_x_spinbox = nullptr;
 	QDoubleSpinBox* scale_y_spinbox = nullptr;
 	QDoubleSpinBox* scale_z_spinbox = nullptr;
-	
+	void refresh_spin_box();
 	void update_mesh();
 };
 
@@ -118,6 +118,8 @@ public:
 	pass_property_widget(QTabWidget* in_parent_tab_widget);
 
 	QCheckBox* is_output_check_box = nullptr;
+	QCheckBox * is_depth_check_box = nullptr;
+	QCheckBox* is_translate_check_box = nullptr;
 	
 	QComboBox* pass_level_comcobox = nullptr;
 

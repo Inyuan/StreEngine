@@ -37,6 +37,7 @@ public:
 
 	virtual void execute_command() override;
 
+	virtual void reset_command() override;
 private:
 	virtual void init_in_HWND(HWND in_HWND, UINT in_width, UINT in_height) override;
 

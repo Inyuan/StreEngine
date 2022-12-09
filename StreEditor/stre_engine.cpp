@@ -33,6 +33,11 @@ void stre_engine::execute_command()
 	render_system_instance->execute_command();
 }
 
+void stre_engine::reset_command()
+{
+	render_system_instance->reset_command();
+}
+
 bool stre_engine::allocate_pass(s_pass* in_out_pass)
 {
 	pass_fy->dx_allocate_gpu_pass(in_out_pass);

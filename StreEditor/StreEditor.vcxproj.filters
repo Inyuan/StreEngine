@@ -52,7 +52,7 @@
     <ClCompile Include="property_widget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RCamera.cpp">
+    <ClCompile Include="RObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -78,7 +78,7 @@
     <ClInclude Include="Rendering\stre_render.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="RCamera.h">
+    <ClInclude Include="RObject.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

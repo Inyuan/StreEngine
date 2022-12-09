@@ -109,6 +109,10 @@ void render_system<directx_render>::execute_command()
 	renderer->reset_command_allocator();
 }
 
+void render_system<directx_render>::reset_command() 
+{
+	renderer->reset_command_allocator();
+}
 
 
 

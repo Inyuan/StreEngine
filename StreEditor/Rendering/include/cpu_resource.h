@@ -85,7 +85,7 @@ struct cpu_resource
 
 	size_t count = 1;//????
 
-	t_element* get_data() { return (t_element*)data; };
+	t_element* get_data() { if (data)return (t_element*)data; return nullptr; };
 
 	size_t get_element_size() { return sizeof(t_element); };
 
@@ -99,7 +99,7 @@ struct cpu_resource
 	
 	~cpu_resource()
 	{
-		if(data)free(data);
+		if (data) free(data);
 		data = nullptr;
 	}
 	
@@ -137,6 +137,21 @@ template<
 	t_object_constant* object_constant_ptr;
 	t_material* material_ptr;
 	std::map<std::string, t_texture*> texture_ptr;
+
+	~s_mesh()
+	{
+		if (vertex_ptr) delete(vertex_ptr);
+		if (index_ptr) delete(index_ptr);
+		if (object_constant_ptr) delete(object_constant_ptr);
+		if (material_ptr) delete(material_ptr);
+		for (auto it : texture_ptr)
+		{
+			if (it.second)
+			{
+				delete(it.second);
+			}
+		}
+	};
 };
 
 

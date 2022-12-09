@@ -4,19 +4,10 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
-
-
 //Window的API更快
 class RCamera
 {
 public:
-
-	struct CameraData 
-	{
-		DirectX::XMFLOAT4X4 MVP;
-		DirectX::XMFLOAT4X4 InvPV;
-		DirectX::XMFLOAT3 CamPos;
-	} Cameradata;
 
 	RCamera();
 	~RCamera();
@@ -108,7 +99,24 @@ private:
 
 };
 
+//Window的API更快
+class RObject
+{
+public:
+	void UpdateWorldMatrix();
 
+	void convert_to_object_contants_data(void* out_s_object_contants);
+
+	float Transform[3] = { 0,0,0 };
+	float Rotation[3] = { 0,0,0 };
+	float Scale[3] = { 0,0,0 };
+	// Cache View/Proj matrices.
+	DirectX::XMFLOAT4X4 WorldMatrix = DirectX::XMFLOAT4X4(
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f);
+};
 
 //自己写一个 但利用window的APi计算应该更快
 //class simple_camera

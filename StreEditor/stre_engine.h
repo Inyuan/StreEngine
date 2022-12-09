@@ -1,7 +1,6 @@
 #pragma once
 #include <map>
 #include "stre_render.h"
-#include "RCamera.h"
 using std::map;
 using std::string;
 
@@ -74,7 +73,8 @@ public:
 	void draw_pass(s_pass* in_pass);
 
 	void execute_command();
-	
+
+	void reset_command();
 	//一大堆被调用的功能函数 
 
 	cpu_texture* create_texture(gpu_shader_resource::SHADER_RESOURCE_TYPE in_sr_type);

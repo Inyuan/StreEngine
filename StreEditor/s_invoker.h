@@ -16,6 +16,7 @@
 #include <list>
 #include "s_command.h"
 #include "stre_engine.h"
+#include "RObject.h"
 
 
 using std::set;
@@ -249,6 +250,7 @@ public:
 	connect_port* constants_output_port = nullptr;
 	connect_port* material_output_port = nullptr;
 	cpu_mesh* mesh_instance = nullptr;
+	RObject object_helper;
 protected:
 	mesh_component_invoker() = delete;
 
@@ -525,7 +527,6 @@ public:
 
 private:
 	virtual void paintEvent(QPaintEvent*);
-	virtual void keyPressEvent(QKeyEvent* in_event);
 	virtual void mousePressEvent(QMouseEvent* in_event);
 	virtual void mouseReleaseEvent(QMouseEvent* in_event);
 	virtual void mouseMoveEvent(QMouseEvent* in_event);

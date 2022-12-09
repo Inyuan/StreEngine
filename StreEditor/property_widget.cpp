@@ -163,27 +163,130 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
         }
     );
 
-    connect(transform_x_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
-    connect(transform_y_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
-    connect(transform_z_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
-    connect(rotation_x_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
-    connect(rotation_y_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
-    connect(rotation_z_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
-    connect(scale_x_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
-    connect(scale_y_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
-    connect(scale_z_spinbox, &QDoubleSpinBox::valueChanged, this, &mesh_property_widget::update_mesh);
+    connect(transform_x_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            {
+                auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
+                mesh_comp_ptr->object_helper.Transform[0] = transform_x_spinbox->value();
+            }
+            update_mesh();
+        });
+    connect(transform_y_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            {
+                auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
+                mesh_comp_ptr->object_helper.Transform[1] = transform_y_spinbox->value();
+            }
+            update_mesh();
+        });
+    connect(transform_z_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            {
+                auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
+                mesh_comp_ptr->object_helper.Transform[2] = transform_z_spinbox->value();
+            }
+            update_mesh();
+        });
+    connect(rotation_x_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            {
+                auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
+                mesh_comp_ptr->object_helper.Rotation[0] = rotation_x_spinbox->value();
+            }
+            update_mesh();
+        });
+    connect(rotation_y_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            {
+                auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
+                mesh_comp_ptr->object_helper.Rotation[1] = rotation_y_spinbox->value();
+            }
+            update_mesh();
+        });
+    connect(rotation_z_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            {
+                auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
+                mesh_comp_ptr->object_helper.Rotation[2] = rotation_z_spinbox->value();
+            }
+            update_mesh();
+        });
+    connect(scale_x_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            {
+                auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
+                mesh_comp_ptr->object_helper.Scale[0] = scale_x_spinbox->value();
+            }
+            update_mesh();
+        });
+    connect(scale_y_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            {
+                auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
+                mesh_comp_ptr->object_helper.Scale[1] = scale_y_spinbox->value();
+            }
+            update_mesh();
+        });
+    connect(scale_z_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            {
+                auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
+                mesh_comp_ptr->object_helper.Scale[2] = scale_z_spinbox->value();
+            }
+            update_mesh();
+        });
 
 
 }
-
-void mesh_property_widget::update_mesh()
+void mesh_property_widget::refresh_spin_box()
 {
     if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
     {
         auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
 
+        transform_x_spinbox->setValue(mesh_comp_ptr->object_helper.Transform[0]);
+        transform_y_spinbox->setValue(mesh_comp_ptr->object_helper.Transform[1]);
+        transform_z_spinbox->setValue(mesh_comp_ptr->object_helper.Transform[2]);
+        
+        rotation_x_spinbox->setValue(mesh_comp_ptr->object_helper.Rotation[0]);
+        rotation_y_spinbox->setValue(mesh_comp_ptr->object_helper.Rotation[1]);
+        rotation_z_spinbox->setValue(mesh_comp_ptr->object_helper.Rotation[2]);
+        
+        scale_x_spinbox->setValue(mesh_comp_ptr->object_helper.Scale[0]);
+        scale_y_spinbox->setValue(mesh_comp_ptr->object_helper.Scale[1]);
+        scale_z_spinbox->setValue(mesh_comp_ptr->object_helper.Scale[2]);
+    }
+}
+void mesh_property_widget::update_mesh()
+{
+    if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+    {
+        auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
+        if (mesh_comp_ptr->mesh_instance->is_view_mesh)
+        {
+            return;
+        }
+
         s_update_mesh_data_command update_mesh_data_cmd;
-        update_mesh_data_cmd.mesh_ptr = mesh_comp_ptr->mesh_instance;
+        update_mesh_data_cmd.mesh_ptr = mesh_comp_ptr;
         update_mesh_data_cmd.execute();
         update_mesh_data_cmd.mesh_ptr = nullptr;
     }
@@ -523,20 +626,57 @@ pass_property_widget::pass_property_widget(QTabWidget* in_parent_tab_widget)
     is_output_check_box->setObjectName("is_output_check_box");
     is_output_check_box->setGeometry(QRect(20, 90, 100, 31));
     is_output_check_box->setText("is output");
+
+    is_depth_check_box = new QCheckBox(this);
+    is_depth_check_box->setObjectName("is_depth_check_box");
+    is_depth_check_box->setGeometry(QRect(20, 120, 100, 31));
+    is_depth_check_box->setText("check depth");
+
+    is_translate_check_box = new QCheckBox(this);
+    is_translate_check_box->setObjectName("is_translate_check_box");
+    is_translate_check_box->setGeometry(QRect(20, 150, 100, 31));
+    is_translate_check_box->setText("is translate");
+
     connect(is_output_check_box, &QCheckBox::clicked, this,
         [&]()
         {
             if (current_component_ptr->comp_type == COMPONENT_TYPE_PASS)
             {
                 auto pass_comp_ptr = static_cast<pass_component_invoker*>(current_component_ptr);
-                
+
                 pass_comp_ptr->pass_instance->is_output = is_output_check_box->isChecked();
                 had_output_pass = is_output_check_box->isChecked();
+                
             }
 
         }
     );
 
+    connect(is_depth_check_box, &QCheckBox::clicked, this,
+        [&]()
+        {
+            if (current_component_ptr->comp_type == COMPONENT_TYPE_PASS)
+            {
+                auto pass_comp_ptr = static_cast<pass_component_invoker*>(current_component_ptr);
+
+                pass_comp_ptr->pass_instance->is_depth_check = is_depth_check_box->isChecked();
+            }
+
+        }
+    );
+
+    connect(is_translate_check_box, &QCheckBox::clicked, this,
+        [&]()
+        {
+            if (current_component_ptr->comp_type == COMPONENT_TYPE_PASS)
+            {
+                auto pass_comp_ptr = static_cast<pass_component_invoker*>(current_component_ptr);
+
+                pass_comp_ptr->pass_instance->is_translate = is_translate_check_box->isChecked();
+            }
+
+        }
+    );
     
 
     //is_start_check_box = new QCheckBox(this);

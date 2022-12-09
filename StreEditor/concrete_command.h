@@ -76,7 +76,7 @@ class s_update_mesh_data_command : public s_command
 {
 public:
 	virtual void execute() override;
-	cpu_mesh* mesh_ptr = nullptr;
+	mesh_component_invoker* mesh_ptr = nullptr;
 };
 
 

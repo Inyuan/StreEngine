@@ -691,8 +691,40 @@ void camera_component_invoker::keyPressEvent(QKeyEvent* in_event)
 		remove_camera_cmd.camera_component_delete_ptr = nullptr;
 
 	}
+
+	if (current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
+	{
+		auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
+		if (in_event->key() == Qt::Key_W)
+		{
+			camera_comp_ptr->camera_cal_helper.Walk(10.0f * 0.1);
+		}
+		if (in_event->key() == Qt::Key_S)
+		{
+			camera_comp_ptr->camera_cal_helper.Walk(-10.0f * 0.1);
+		}
+		if (in_event->key() == Qt::Key_A)
+		{
+			camera_comp_ptr->camera_cal_helper.Strafe(-10.0f * 0.1);
+		}
+		if (in_event->key() == Qt::Key_D)
+		{
+			camera_comp_ptr->camera_cal_helper.Strafe(10.0f * 0.1);
+		}
+
+		camera_comp_ptr->camera_cal_helper.UpdateViewMatrix();
+		s_update_camera_command update_camera_cmd;
+		update_camera_cmd.camera_helper_ptr = &camera_comp_ptr->camera_cal_helper;
+		update_camera_cmd.camera_ptr = camera_comp_ptr->camera_instance;
+		update_camera_cmd.execute();
+		update_camera_cmd.camera_helper_ptr = nullptr;
+		update_camera_cmd.camera_ptr = nullptr;
+		update();
+	}
+
 	return QWidget::keyPressEvent(in_event);
 }
+
 
 
 
@@ -883,42 +915,6 @@ view_port_invoker::view_port_invoker(QWidget* in_parent):QWidget(in_parent)
 	setGeometry(QRect(1100, 10, 311, 241));
 }
 
-/// <summary>
-/// ÒÆ¶¯ÉãÏñ»ú
-/// </summary>
-/// <param name="in_event"></param>
-void view_port_invoker::keyPressEvent(QKeyEvent* in_event)
-{
-	if (current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
-	{
-		auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
-		if (in_event->key() == Qt::Key_W)
-		{
-			camera_comp_ptr->camera_cal_helper.Walk(10.0f * 0.00001);
-		}
-		if (in_event->key() == Qt::Key_S)
-		{
-			camera_comp_ptr->camera_cal_helper.Walk(-10.0f * 0.00001);
-		}
-		if (in_event->key() == Qt::Key_A)
-		{
-			camera_comp_ptr->camera_cal_helper.Strafe(-10.0f * 0.00001);
-		}
-		if (in_event->key() == Qt::Key_D)
-		{
-			camera_comp_ptr->camera_cal_helper.Strafe(10.0f * 0.00001);
-		}
-
-		camera_comp_ptr->camera_cal_helper.UpdateViewMatrix();
-		s_update_camera_command update_camera_cmd;
-		update_camera_cmd.camera_helper_ptr = &camera_comp_ptr->camera_cal_helper;
-		update_camera_cmd.camera_ptr = camera_comp_ptr->camera_instance;
-		update_camera_cmd.execute();
-		update_camera_cmd.camera_helper_ptr = nullptr;
-		update_camera_cmd.camera_ptr = nullptr;
-		update();
-	}
-}
 
 void view_port_invoker::mousePressEvent(QMouseEvent* in_event)
 {
@@ -932,8 +928,8 @@ void view_port_invoker::mouseMoveEvent(QMouseEvent* in_event)
 	if (current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
 	{
 		auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
-		camera_comp_ptr->camera_cal_helper.Pitch((in_event->y() - mouse_point.y())*0.00001);
-		camera_comp_ptr->camera_cal_helper.RotateY((in_event->x() - mouse_point.x()) * 0.00001);
+		camera_comp_ptr->camera_cal_helper.Pitch((in_event->y() - mouse_point.y())*0.1);
+		camera_comp_ptr->camera_cal_helper.RotateY((in_event->x() - mouse_point.x()) * 0.1);
 		mouse_point = in_event->pos();
 
 		camera_comp_ptr->camera_cal_helper.UpdateViewMatrix();

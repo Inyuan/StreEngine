@@ -174,7 +174,7 @@ bool directx_render::create_pso(
 
 		CD3DX12_RASTERIZER_DESC RastDesc(D3D12_DEFAULT);
 		RastDesc.CullMode = D3D12_CULL_MODE_NONE;
-		RastDesc.DepthClipEnable = in_gpu_pass->is_depth_check;//???
+		//RastDesc.DepthClipEnable = in_gpu_pass->is_depth_check;//???
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC PsoDesc;
 		ZeroMemory(&PsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
@@ -183,7 +183,7 @@ bool directx_render::create_pso(
 		PsoDesc.RasterizerState = RastDesc;
 		PsoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 		PsoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-		PsoDesc.DepthStencilState.DepthEnable = in_gpu_pass->is_depth_check;//???
+		PsoDesc.DepthStencilState.DepthEnable = in_gpu_pass->is_depth_check;
 
 		PsoDesc.SampleMask = UINT_MAX;
 		PsoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
@@ -973,7 +973,7 @@ void directx_render::set_render_target(
 
 			switch_gpu_resource_state(it, D3D12_RESOURCE_STATE_RENDER_TARGET);
 			
-			float clearValue[] = { 0.0f, 0.0f, 1.0f, 0.0f };
+			float clearValue[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 			dx_command_list->ClearRenderTargetView(handle_c, clearValue, 0, nullptr);
 
 			
