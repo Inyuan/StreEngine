@@ -80,25 +80,82 @@ void pipeline_window_invoker::mousePressEvent(QMouseEvent* in_event)
 	return QWidget::mousePressEvent(in_event);
 }
 
+void pipeline_window_invoker::mouseMoveEvent(QMouseEvent* in_event)
+{
+
+		if (current_component_ptr && current_component_ptr->is_mouse_down)
+		{
+			current_component_ptr->setGeometry(
+				QRect(
+					current_component_ptr->geometry().x() + (in_event->x() - current_component_ptr->mouse_point.x()),
+					current_component_ptr->geometry().y() + (in_event->y() - current_component_ptr->mouse_point.y()),
+					current_component_ptr->geometry().width(),
+					current_component_ptr->geometry().height()));
+
+			current_component_ptr->mouse_point = in_event->pos();
+
+			for (auto it : connect_curve_group)
+			{
+				if (it->port1->parent() == current_component_ptr || it->port2->parent() == current_component_ptr)
+				{
+					QPoint start = it->port1->mapToGlobal(QPoint(0, 0));
+
+					QPoint end = it->port2->mapToGlobal(QPoint(0, 0));
+
+					//默认sart组件在end组件的左边
+					int local_start_x = it->port1->width();
+					int local_end_x = 0;
+					//如果在右边就起始位置修改一下
+					if (start.x() > end.x())
+					{
+						local_start_x = 0;
+						local_end_x = it->port2->width();
+					}
+
+					start = it->port1->mapToGlobal(QPoint(local_start_x, it->port1->height() / 2));
+					start = pipeline_window_widget_ptr->mapFromGlobal(start);
+
+					end = it->port2->mapToGlobal(QPoint(local_end_x, it->port2->height() / 2));
+					end = pipeline_window_widget_ptr->mapFromGlobal(end);
+
+					it->curve->change_start(start);
+					it->curve->change_end(end);
+				}
+			}
+
+			update();
+		}
+
+}
+
+
 /// <summary>
 /// 绘制曲线
 /// </summary>
 /// <param name=""></param>
-void pipeline_window_invoker::paintEvent(QPaintEvent*)
+void pipeline_window_invoker::paintEvent(QPaintEvent* in_event)
 {
-	//绘制连线
+	
+
+
+	
 	{	
 		QColor line_color = QColor(0x20, 0x20, 0x20, 0xff);
 		QPen pen;
 		pen.setColor(line_color);
 		pen.setWidth(2);
-
+		
 		QPainter p(this);
+		//清理区域
+		//const QRect& rect = in_event->rect();
+		//p.eraseRect(rect);
 
+		//绘制连线
 		for (auto it : connect_curve_group)
 		{
 			p.drawPath(it->curve->get_curve());
 		}
+		
 	}
 
 }
@@ -139,18 +196,18 @@ void component_invoker::mousePressEvent(QMouseEvent* in_event)
 		current_component_ptr = this;
 		current_component_ptr->setStyleSheet("border: 2px solid gray; border - radius: 5px; ");
 		s_switch_property_widget_command().execute();
-	}
-	//else if (in_event->button() == Qt::RightButton)
-	//{
-	//	for (auto it : selected_components)
-	//	{
 
-	//	}
-	//}
-	
+		mouse_point = mapToParent(in_event->pos());
+		is_mouse_down = true;
+	}
+
+
+
 	// 不许沿父节点往上传递点击事件
 	//return QWidget::mousePressEvent(in_event);
 }
+
+
 
 /// <summary>
 /// useless
@@ -158,16 +215,19 @@ void component_invoker::mousePressEvent(QMouseEvent* in_event)
 /// <param name="in_event"></param>
 void component_invoker::mouseReleaseEvent(QMouseEvent* in_event)
 {
-	//if (in_event->button() == Qt::LeftButton)
-	//{
-	//	//QPoint mouse_pos = in_event->pos();
-	//	//setGeometry(
-	//	//	QRect(
-	//	//		mouse_pos.x(),
-	//	//		mouse_pos.y(),
-	//	//		geometry().width(), 
-	//	//		geometry().height()));
-	//}
+	if (in_event->button() == Qt::LeftButton)
+	{
+		//QPoint mouse_pos = in_event->pos();
+		//setGeometry(
+		//	QRect(
+		//		mouse_pos.x(),
+		//		mouse_pos.y(),
+		//		geometry().width(), 
+		//		geometry().height()));
+
+		mouse_point = mapToParent(in_event->pos());
+		is_mouse_down = false;
+	}
 	//else if (in_event->button() == Qt::RightButton)
 	//{
 
@@ -683,15 +743,6 @@ camera_component_invoker::camera_component_invoker(
 /// <param name="in_event"></param>
 void camera_component_invoker::keyPressEvent(QKeyEvent* in_event)
 {
-	if (in_event->key() == Qt::Key_Delete)
-	{
-		s_remove_camera_command remove_camera_cmd;
-		remove_camera_cmd.camera_component_delete_ptr = this;
-		remove_camera_cmd.execute();
-		remove_camera_cmd.camera_component_delete_ptr = nullptr;
-
-	}
-
 	if (current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
 	{
 		auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
@@ -712,14 +763,22 @@ void camera_component_invoker::keyPressEvent(QKeyEvent* in_event)
 			camera_comp_ptr->camera_cal_helper.Strafe(10.0f * 0.1);
 		}
 
-		camera_comp_ptr->camera_cal_helper.UpdateViewMatrix();
 		s_update_camera_command update_camera_cmd;
 		update_camera_cmd.camera_helper_ptr = &camera_comp_ptr->camera_cal_helper;
 		update_camera_cmd.camera_ptr = camera_comp_ptr->camera_instance;
 		update_camera_cmd.execute();
 		update_camera_cmd.camera_helper_ptr = nullptr;
 		update_camera_cmd.camera_ptr = nullptr;
-		update();
+
+	}
+
+	if (in_event->key() == Qt::Key_Delete)
+	{
+		s_remove_camera_command remove_camera_cmd;
+		remove_camera_cmd.camera_component_delete_ptr = this;
+		remove_camera_cmd.execute();
+		remove_camera_cmd.camera_component_delete_ptr = nullptr;
+
 	}
 
 	return QWidget::keyPressEvent(in_event);
@@ -897,7 +956,7 @@ void curve_tool::update()
 {
 
 	QPoint mid_pos = (start + end) / 2;
-
+	curve.clear();//会自己留下痕迹，所以得先清理
 	curve.moveTo(start);
 	curve.cubicTo(QPointF(mid_pos.x(), start.y()), mid_pos, end);
 }
@@ -909,6 +968,7 @@ void curve_tool::update()
 
 view_port_invoker::view_port_invoker(QWidget* in_parent):QWidget(in_parent)
 {
+	view_port_widget_ptr = this;
 	draw_cmd = new s_draw_command();
 
 	setObjectName("rendering_view_widget");
@@ -920,7 +980,6 @@ void view_port_invoker::mousePressEvent(QMouseEvent* in_event)
 {
 	mouse_point = in_event->pos();
 	is_mouse_down = true;
-	update();
 }
 
 void view_port_invoker::mouseMoveEvent(QMouseEvent* in_event)
@@ -932,14 +991,13 @@ void view_port_invoker::mouseMoveEvent(QMouseEvent* in_event)
 		camera_comp_ptr->camera_cal_helper.RotateY((in_event->x() - mouse_point.x()) * 0.1);
 		mouse_point = in_event->pos();
 
-		camera_comp_ptr->camera_cal_helper.UpdateViewMatrix();
 		s_update_camera_command update_camera_cmd;
 		update_camera_cmd.camera_helper_ptr = &camera_comp_ptr->camera_cal_helper;
 		update_camera_cmd.camera_ptr = camera_comp_ptr->camera_instance;
 		update_camera_cmd.execute();
 		update_camera_cmd.camera_helper_ptr = nullptr;
 		update_camera_cmd.camera_ptr = nullptr;
-		update();
+
 	}
 }
 
@@ -947,7 +1005,6 @@ void view_port_invoker::mouseReleaseEvent(QMouseEvent* in_event)
 {
 	mouse_point = in_event->pos();
 	is_mouse_down = false;
-	update();
 }
 
 /// <summary>

@@ -116,9 +116,9 @@ ps_output PS(vs_out pin)
 	float3 world_position = pin.world_position;
 
 	//float Mat_id_store = gMaterialIndex & 0xff;
-	OUT.GBufferC = base_color;
+	OUT.GBufferA = base_color;
 	OUT.GBufferB = float4(world_position, obj_buffer[0].material_index);
-	OUT.GBufferA = float4(world_normal, 1.0f);//profilefactor
+	OUT.GBufferC = float4(world_normal, 1.0f);
 	//OUT.GBufferD = float4(shadowFactor, 1.0f);
 	//OUT.GBufferE = float4(1.0f, 1.0f, 1.0f, 1.0f);
 

@@ -66,8 +66,6 @@ public:
 	// After modifying camera position/orientation, call to rebuild the view matrix.
 	void UpdateViewMatrix();
 
-private:
-
 	// Camera coordinate system with coordinates relative to world space.
 	DirectX::XMFLOAT3 mPosition = { 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 mRight = { 1.0f, 0.0f, 0.0f };
@@ -109,7 +107,7 @@ public:
 
 	float Transform[3] = { 0,0,0 };
 	float Rotation[3] = { 0,0,0 };
-	float Scale[3] = { 0,0,0 };
+	float Scale[3] = { 1.0,1.0,1.0 };
 	// Cache View/Proj matrices.
 	DirectX::XMFLOAT4X4 WorldMatrix = DirectX::XMFLOAT4X4(
 		1.0f, 0.0f, 0.0f, 0.0f,

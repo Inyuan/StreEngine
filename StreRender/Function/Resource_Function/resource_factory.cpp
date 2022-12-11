@@ -10,7 +10,7 @@ s_custom_manager<t_cpu_res_type>* resource_manager_factory::create_manager()
 {
 	return new custom_manager<t_cpu_res_type>();
 }
-
+ 
 s_material_manager* resource_manager_factory::create_material_manager()
 {
 	return new material_manager();

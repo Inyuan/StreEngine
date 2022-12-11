@@ -355,15 +355,11 @@ void RCamera::UpdateViewMatrix()
 
 void RObject::UpdateWorldMatrix()
 {
-	DirectX::XMMATRIX world = DirectX::XMMatrixTranslation(Transform[0],
-		Transform[1],
-		Transform[2])
+	DirectX::XMMATRIX world = DirectX::XMMatrixScaling(Scale[0], Scale[1], Scale[2])
 		* DirectX::XMMatrixRotationY(Rotation[0])
 		* DirectX::XMMatrixRotationZ(Rotation[1])
 		* DirectX::XMMatrixRotationX(Rotation[2])
-		* DirectX::XMMatrixScaling(Scale[0],
-			Scale[1],
-			Scale[2]);
+		* DirectX::XMMatrixTranslation(Transform[0], Transform[1], Transform[2]);
 
 	XMStoreFloat4x4(&WorldMatrix, XMMatrixTranspose(world));
 }

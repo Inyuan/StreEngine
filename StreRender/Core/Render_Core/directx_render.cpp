@@ -190,10 +190,17 @@ bool directx_render::create_pso(
 		PsoDesc.SampleDesc.Count = MSAAX4_STATE ? 4 : 1;
 		PsoDesc.SampleDesc.Quality = MSAAX4_STATE ? (MSAAX4_QUALITY - 1) : 0;
 		PsoDesc.DSVFormat = depth_stencil_format;
-		PsoDesc.NumRenderTargets = rt_number;
-		for (UINT i = 0; i < rt_number; i++)
-			PsoDesc.RTVFormats[i] = back_buffer_format;
-
+		if (in_gpu_pass->is_output)
+		{
+			PsoDesc.NumRenderTargets = 1;
+			PsoDesc.RTVFormats[0] = back_buffer_format;
+		}
+		else
+		{
+			PsoDesc.NumRenderTargets = rt_number;
+			for (UINT i = 0; i < rt_number; i++)
+				PsoDesc.RTVFormats[i] = back_buffer_format;
+		}
 
 		if (in_shader_layout.shader_vaild[SHADER_TYPE::VS])
 		{
@@ -987,6 +994,13 @@ void directx_render::set_render_target(
 		dsv_desc = depth_stencil_ptr->dsv_heap.Get()->GetCPUDescriptorHandleForHeapStart();
 		//×ª»»DS×´Ì¬
 		switch_gpu_resource_state(depth_stencil_ptr->ds_ptr, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
+		dx_command_list->ClearDepthStencilView(dsv_desc,
+			D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
+			1.0f,
+			0,
+			0,
+			nullptr);
 	}
 
 	if (output_rt_size > 0)
@@ -1655,7 +1669,7 @@ void directx_render::create_pso(
 {
 	ThrowIfFailed(dx_device->CreateGraphicsPipelineState(
 		&in_pso_desc,
-		IID_PPV_ARGS(in_pso.GetAddressOf())));
+		IID_PPV_ARGS(&in_pso)));
 
 }
 

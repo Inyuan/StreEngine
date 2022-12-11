@@ -37,7 +37,14 @@ bool pass_factory::check_pass(s_pass* in_out_pass)
 		stre_exception::exception_output_str_group.push_back("pass_factory::check_pass gpu_pass_ptr is nullptr");
 		return false;
 	}
-
+	//检查着色器资源输入情况，不充足就不对
+	if(in_out_pass->gpu_pass_ptr->pass_res_group.size() != in_out_pass->gpu_pass_resource_ptr.size())
+	{
+		//!!!出问题了
+		stre_exception::exception_output_str_group.push_back("pass_factory::check_pass unmatch shader resource size");
+		return false;
+	}
+	
 	return true;
 
 }

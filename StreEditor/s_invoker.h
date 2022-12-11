@@ -175,8 +175,9 @@ protected:
 private:
 
 	virtual void mousePressEvent(QMouseEvent* in_event);
+	virtual void mouseMoveEvent(QMouseEvent* in_event);
 
-	virtual void paintEvent(QPaintEvent*);
+	virtual void paintEvent(QPaintEvent* in_event);
 };
 
 class component_invoker : public QGroupBox
@@ -185,10 +186,16 @@ public:
 	COMPONENT_TYPE comp_type = COMPONENT_TYPE_NONE;
 	component_invoker(QWidget* in_parent);
 	virtual ~component_invoker();
+
+	QPoint mouse_point = QPoint(0, 0);
+	bool is_mouse_down = false;
 protected:
 	component_invoker() {  };
+
 	virtual void mousePressEvent(QMouseEvent* in_event);
 	virtual void mouseReleaseEvent(QMouseEvent* in_event);
+
+	
 };
 
 

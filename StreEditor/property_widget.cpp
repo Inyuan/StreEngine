@@ -81,12 +81,18 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
     transform_label->setObjectName("transform_label");
     transform_label->setGeometry(QRect(30, 90, 53, 16));
     transform_x_spinbox = new QDoubleSpinBox(this);
+    transform_x_spinbox->setSingleStep(0.1);
+    transform_x_spinbox->setRange(-9999, 9999);
     transform_x_spinbox->setObjectName("transform_x_spinbox");
     transform_x_spinbox->setGeometry(QRect(30, 110, 62, 22));
     transform_y_spinbox = new QDoubleSpinBox(this);
+    transform_y_spinbox->setSingleStep(0.1);
+    transform_y_spinbox->setRange(-9999, 9999);
     transform_y_spinbox->setObjectName("transform_y_spinbox");
     transform_y_spinbox->setGeometry(QRect(100, 110, 62, 22));
     transform_z_spinbox = new QDoubleSpinBox(this);
+    transform_z_spinbox->setSingleStep(0.1);
+    transform_z_spinbox->setRange(-9999, 9999);
     transform_z_spinbox->setObjectName("transform_z_spinbox");
     transform_z_spinbox->setGeometry(QRect(170, 110, 62, 22));
     transform_label->setText("transform");
@@ -95,12 +101,18 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
     rotation_label->setObjectName("rotation_label");
     rotation_label->setGeometry(QRect(30, 130, 53, 16));
     rotation_x_spinbox = new QDoubleSpinBox(this);
+    rotation_x_spinbox->setSingleStep(0.1);
+    rotation_x_spinbox->setRange(-9999, 9999);
     rotation_x_spinbox->setObjectName("rotation_x_spinbox");
     rotation_x_spinbox->setGeometry(QRect(30, 150, 62, 22));
     rotation_y_spinbox = new QDoubleSpinBox(this);
+    rotation_y_spinbox->setSingleStep(0.1);
+    rotation_y_spinbox->setRange(-9999, 9999);
     rotation_y_spinbox->setObjectName("rotation_y_spinbox");
     rotation_y_spinbox->setGeometry(QRect(100, 150, 62, 22));
     rotation_z_spinbox = new QDoubleSpinBox(this);
+    rotation_z_spinbox->setSingleStep(0.1);
+    rotation_z_spinbox->setRange(-9999, 9999);
     rotation_z_spinbox->setObjectName("rotation_z_spinbox");
     rotation_z_spinbox->setGeometry(QRect(170, 150, 62, 22));
     rotation_label->setText("rotation");
@@ -109,12 +121,18 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
     scale_label->setObjectName("scale_label");
     scale_label->setGeometry(QRect(30, 170, 53, 16));
     scale_x_spinbox = new QDoubleSpinBox(this);
+    rotation_x_spinbox->setSingleStep(0.1);
+    rotation_x_spinbox->setRange(-9999, 9999);
     scale_x_spinbox->setObjectName("scale_x_spinbox");
     scale_x_spinbox->setGeometry(QRect(30, 190, 62, 22));
     scale_y_spinbox = new QDoubleSpinBox(this);
+    rotation_x_spinbox->setSingleStep(0.1);
+    rotation_x_spinbox->setRange(-9999, 9999);
     scale_y_spinbox->setObjectName("scale_y_spinbox");
     scale_y_spinbox->setGeometry(QRect(100, 190, 62, 22));
     scale_z_spinbox = new QDoubleSpinBox(this);
+    rotation_x_spinbox->setSingleStep(0.1);
+    rotation_x_spinbox->setRange(-9999, 9999);
     scale_z_spinbox->setObjectName("scale_z_spinbox");
     scale_z_spinbox->setGeometry(QRect(170, 190, 62, 22));
     scale_label->setText("scale");
@@ -153,7 +171,7 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
         {
             auto path_str = QFileDialog::getExistingDirectory() + "/";
             path_text->setText(path_str);
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
             {
                 auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
                 mesh_comp_ptr->mesh_instance->path = path_str.toStdWString();
@@ -166,7 +184,7 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
     connect(transform_x_spinbox, &QDoubleSpinBox::valueChanged, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
             {
                 auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
                 mesh_comp_ptr->object_helper.Transform[0] = transform_x_spinbox->value();
@@ -176,7 +194,7 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
     connect(transform_y_spinbox, &QDoubleSpinBox::valueChanged, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
             {
                 auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
                 mesh_comp_ptr->object_helper.Transform[1] = transform_y_spinbox->value();
@@ -186,7 +204,7 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
     connect(transform_z_spinbox, &QDoubleSpinBox::valueChanged, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
             {
                 auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
                 mesh_comp_ptr->object_helper.Transform[2] = transform_z_spinbox->value();
@@ -196,7 +214,7 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
     connect(rotation_x_spinbox, &QDoubleSpinBox::valueChanged, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
             {
                 auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
                 mesh_comp_ptr->object_helper.Rotation[0] = rotation_x_spinbox->value();
@@ -206,7 +224,7 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
     connect(rotation_y_spinbox, &QDoubleSpinBox::valueChanged, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
             {
                 auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
                 mesh_comp_ptr->object_helper.Rotation[1] = rotation_y_spinbox->value();
@@ -216,7 +234,7 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
     connect(rotation_z_spinbox, &QDoubleSpinBox::valueChanged, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
             {
                 auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
                 mesh_comp_ptr->object_helper.Rotation[2] = rotation_z_spinbox->value();
@@ -226,7 +244,7 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
     connect(scale_x_spinbox, &QDoubleSpinBox::valueChanged, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
             {
                 auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
                 mesh_comp_ptr->object_helper.Scale[0] = scale_x_spinbox->value();
@@ -236,7 +254,7 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
     connect(scale_y_spinbox, &QDoubleSpinBox::valueChanged, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
             {
                 auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
                 mesh_comp_ptr->object_helper.Scale[1] = scale_y_spinbox->value();
@@ -246,7 +264,7 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
     connect(scale_z_spinbox, &QDoubleSpinBox::valueChanged, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
             {
                 auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
                 mesh_comp_ptr->object_helper.Scale[2] = scale_z_spinbox->value();
@@ -258,7 +276,7 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
 }
 void mesh_property_widget::refresh_spin_box()
 {
-    if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+    if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
     {
         auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
 
@@ -277,14 +295,9 @@ void mesh_property_widget::refresh_spin_box()
 }
 void mesh_property_widget::update_mesh()
 {
-    if (current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
+    if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
     {
         auto mesh_comp_ptr = static_cast<mesh_component_invoker*>(current_component_ptr);
-        if (mesh_comp_ptr->mesh_instance->is_view_mesh)
-        {
-            return;
-        }
-
         s_update_mesh_data_command update_mesh_data_cmd;
         update_mesh_data_cmd.mesh_ptr = mesh_comp_ptr;
         update_mesh_data_cmd.execute();
@@ -314,7 +327,7 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
         {
             auto path_str = open_file_path(this, "Shader Files(*.hlsl);;All(*.*)");
             path_text->setText(path_str);
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_SHADER)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_SHADER)
             {
                 auto shader_comp_ptr = static_cast<shader_component_invoker*>(current_component_ptr);
                 shader_comp_ptr->shader_layout_instance.shader_path[0] = path_str.toStdWString();
@@ -362,7 +375,7 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
     connect(vs_check_box, &QCheckBox::clicked, this,
         [&]() 
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_SHADER)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_SHADER)
             {
                 auto shader_comp_ptr = static_cast<shader_component_invoker*>(current_component_ptr);
                 shader_comp_ptr->shader_layout_instance.shader_vaild[0] = vs_check_box->isChecked();
@@ -378,7 +391,7 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
     connect(ds_check_box, &QCheckBox::clicked, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_SHADER)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_SHADER)
             {
                 auto shader_comp_ptr = static_cast<shader_component_invoker*>(current_component_ptr);
                 shader_comp_ptr->shader_layout_instance.shader_vaild[1] = ds_check_box->isChecked();
@@ -394,7 +407,7 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
     connect(hs_check_box, &QCheckBox::clicked, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_SHADER)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_SHADER)
             {
                 auto shader_comp_ptr = static_cast<shader_component_invoker*>(current_component_ptr);
                 shader_comp_ptr->shader_layout_instance.shader_vaild[2] = hs_check_box->isChecked();
@@ -410,7 +423,7 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
     connect(gs_check_box, &QCheckBox::clicked, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_SHADER)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_SHADER)
             {
                 auto shader_comp_ptr = static_cast<shader_component_invoker*>(current_component_ptr);
                 shader_comp_ptr->shader_layout_instance.shader_vaild[3] = gs_check_box->isChecked();
@@ -426,7 +439,7 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
     connect(ps_check_box, &QCheckBox::clicked, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_SHADER)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_SHADER)
             {
                 auto shader_comp_ptr = static_cast<shader_component_invoker*>(current_component_ptr);
                 shader_comp_ptr->shader_layout_instance.shader_vaild[4] = ps_check_box->isChecked();
@@ -478,7 +491,7 @@ texture_property_widget::texture_property_widget(QTabWidget * in_parent_tab_widg
         {
             auto path_str = open_file_path(this, "Shader Files(*.hlsl);;All(*.*)");
             path_text->setText(path_str);
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_TEXTURE)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_TEXTURE)
             {
                 auto texture_comp_ptr = static_cast<texture_element_invoker*>(current_component_ptr);
                 texture_comp_ptr->texture_instance->path = path_str.toStdWString();
@@ -490,7 +503,7 @@ texture_property_widget::texture_property_widget(QTabWidget * in_parent_tab_widg
 
 void texture_property_widget::change_combobox_index(int index)
 {
-    if (current_component_ptr->comp_type != COMPONENT_TYPE_TEXTURE)
+    if (!current_component_ptr && current_component_ptr->comp_type != COMPONENT_TYPE_TEXTURE)
     {
         return;
     }
@@ -555,7 +568,7 @@ texture_group_property_widget::texture_group_property_widget(QTabWidget* in_pare
 
 void texture_group_property_widget::change_combobox_index(int index)
 {
-    if (current_component_ptr->comp_type != COMPONENT_TYPE_TEXTURE_GROUP)
+    if (!current_component_ptr && current_component_ptr->comp_type != COMPONENT_TYPE_TEXTURE_GROUP)
     {
         return;
     }
@@ -609,7 +622,7 @@ pass_property_widget::pass_property_widget(QTabWidget* in_parent_tab_widget)
 
     connect(pass_level_comcobox, &QComboBox::currentIndexChanged, this, [&](int index)
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_PASS)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_PASS)
             {
                 auto pass_comp_ptr = static_cast<pass_component_invoker*>(current_component_ptr);
                 
@@ -640,7 +653,7 @@ pass_property_widget::pass_property_widget(QTabWidget* in_parent_tab_widget)
     connect(is_output_check_box, &QCheckBox::clicked, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_PASS)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_PASS)
             {
                 auto pass_comp_ptr = static_cast<pass_component_invoker*>(current_component_ptr);
 
@@ -655,7 +668,7 @@ pass_property_widget::pass_property_widget(QTabWidget* in_parent_tab_widget)
     connect(is_depth_check_box, &QCheckBox::clicked, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_PASS)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_PASS)
             {
                 auto pass_comp_ptr = static_cast<pass_component_invoker*>(current_component_ptr);
 
@@ -668,7 +681,7 @@ pass_property_widget::pass_property_widget(QTabWidget* in_parent_tab_widget)
     connect(is_translate_check_box, &QCheckBox::clicked, this,
         [&]()
         {
-            if (current_component_ptr->comp_type == COMPONENT_TYPE_PASS)
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_PASS)
             {
                 auto pass_comp_ptr = static_cast<pass_component_invoker*>(current_component_ptr);
 

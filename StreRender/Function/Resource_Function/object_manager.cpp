@@ -492,6 +492,8 @@ cpu_mesh* mesh_manager::load_fbx(const wchar_t* in_path)
     materialCount++;
     indeices_offset[materialCount] = IndeicesCount - frontCount;
 
+    //std::vector<s_vertex> debug_see(vertices, vertices+ controlPointCount);
+
     //包围盒需要再建？？？
     //XMStoreFloat3(&bounds.Center, 0.5f * (vMin + vMax));
     //XMStoreFloat3(&bounds.Extents, 0.5f * (vMax - vMin));
