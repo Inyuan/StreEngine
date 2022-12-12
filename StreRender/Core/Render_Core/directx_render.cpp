@@ -199,7 +199,7 @@ bool directx_render::create_pso(
 		{
 			PsoDesc.NumRenderTargets = rt_number;
 			for (UINT i = 0; i < rt_number; i++)
-				PsoDesc.RTVFormats[i] = back_buffer_format;
+				PsoDesc.RTVFormats[i] = render_target_format;
 		}
 
 		if (in_shader_layout.shader_vaild[SHADER_TYPE::VS])
@@ -464,7 +464,7 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 		texture_res->resource = std::make_shared<directx_sr_render_target>();
 		std::shared_ptr < directx_sr_render_target> gpu_ptr = std::static_pointer_cast<directx_sr_render_target>(texture_res->resource);
 
-		gpu_ptr->dx_format = back_buffer_format;
+		gpu_ptr->dx_format = render_target_format;
 		create_gpu_texture(gpu_ptr, in_shader_res_type);
 
 		create_descriptor(

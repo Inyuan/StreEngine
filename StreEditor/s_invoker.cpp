@@ -197,8 +197,11 @@ void component_invoker::mousePressEvent(QMouseEvent* in_event)
 		current_component_ptr->setStyleSheet("border: 2px solid gray; border - radius: 5px; ");
 		s_switch_property_widget_command().execute();
 
-		mouse_point = mapToParent(in_event->pos());
-		is_mouse_down = true;
+		if (comp_type != COMPONENT_TYPE_TEXTURE)
+		{
+			mouse_point = mapToParent(in_event->pos());
+			is_mouse_down = true;
+		}
 	}
 
 
@@ -225,8 +228,11 @@ void component_invoker::mouseReleaseEvent(QMouseEvent* in_event)
 		//		geometry().width(), 
 		//		geometry().height()));
 
-		mouse_point = mapToParent(in_event->pos());
-		is_mouse_down = false;
+		if (comp_type != COMPONENT_TYPE_TEXTURE)
+		{
+			mouse_point = mapToParent(in_event->pos());
+			is_mouse_down = false;
+		}
 	}
 	//else if (in_event->button() == Qt::RightButton)
 	//{

@@ -253,7 +253,7 @@ private:
 
     //??? 精度控制
     DXGI_FORMAT back_buffer_format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    
+    DXGI_FORMAT render_target_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     DXGI_FORMAT depth_stencil_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
     //DS作为SR时按R24_UNORM_X8_TYPELESS解析

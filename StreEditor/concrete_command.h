@@ -65,6 +65,12 @@ public:
 	cpu_camera* camera_ptr = nullptr;
 };
 
+class s_update_light_command : public s_command
+{
+public:
+	virtual void execute() override;
+	light_component_invoker* light_ptr = nullptr;
+};
 
 class s_change_mesh_type_command : public s_command
 {

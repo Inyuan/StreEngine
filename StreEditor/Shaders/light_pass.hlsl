@@ -122,7 +122,7 @@ float4 PhysicalRender(vs_out pIn)
 float4 PS(vs_out pIn) : SV_TARGET
 {
     float4 Color = float4(1.0f, 1.0f, 1.0f, 1.0f);
-    Color = PhysicalRender(pIn);
+    Color = max(PhysicalRender(pIn), camera_buffer[0].ambient_light);
 
     return Color;
 }

@@ -14,13 +14,16 @@ class shader_property_widget;
 class texture_property_widget;
 class texture_group_property_widget;
 class pass_property_widget;
-
+class camera_property_widget;
+class light_property_widget;
 
 class property_tab_widget : public QTabWidget
 {
 public:
 	property_tab_widget(QWidget* inparent);
 	property_widget* empty_property_window_instance = nullptr;
+	camera_property_widget* camera_property_window_instance = nullptr;
+	light_property_widget* light_property_window_instance = nullptr;
 	mesh_property_widget* mesh_property_window_instance = nullptr;
 	shader_property_widget* shader_property_window_instance = nullptr;
 	texture_property_widget* texture_property_window_instance = nullptr;
@@ -64,12 +67,50 @@ public:
 class camera_property_widget : public QWidget
 {
 public:
+	camera_property_widget(QTabWidget* in_parent_tab_widget);
+	void refresh_spin_box();
+	QLabel* position_label = nullptr;
+	QDoubleSpinBox* position_x_spinbox = nullptr;
+	QDoubleSpinBox* position_y_spinbox = nullptr;
+	QDoubleSpinBox* position_z_spinbox = nullptr;
+
+	QLabel* look_at_label = nullptr;
+	QDoubleSpinBox* look_at_x_spinbox = nullptr;
+	QDoubleSpinBox* look_at_y_spinbox = nullptr;
+	QDoubleSpinBox* look_at_z_spinbox = nullptr;
+
+	void update_camera();
 
 };
 
 class light_property_widget : public QWidget
 {
 public:
+	light_property_widget(QTabWidget* in_parent_tab_widget);
+	void refresh_spin_box();
+	QLabel* strength_label = nullptr;
+	QDoubleSpinBox* strength_r_spinbox = nullptr;
+	QDoubleSpinBox* strength_g_spinbox = nullptr;
+	QDoubleSpinBox* strength_b_spinbox = nullptr;
+
+	QLabel* direction_label = nullptr;
+	QDoubleSpinBox* direction_x_spinbox = nullptr;
+	QDoubleSpinBox* direction_y_spinbox = nullptr;
+	QDoubleSpinBox* direction_z_spinbox = nullptr;
+
+	QLabel* position_label = nullptr;
+	QDoubleSpinBox* position_x_spinbox = nullptr;
+	QDoubleSpinBox* position_y_spinbox = nullptr;
+	QDoubleSpinBox* position_z_spinbox = nullptr;
+
+	QLabel* fall_off_start_label = nullptr;
+	QDoubleSpinBox* fall_off_start_spinbox = nullptr;
+	QLabel* fall_off_end_label = nullptr;
+	QDoubleSpinBox* fall_off_end_spinbox = nullptr;
+	QLabel* spot_power_label = nullptr;
+	QDoubleSpinBox* spot_power_spinbox = nullptr;
+
+	void update_light();
 
 };
 

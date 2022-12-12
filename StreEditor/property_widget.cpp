@@ -19,6 +19,8 @@ shader_property_widget* current_shader_property_widget = nullptr;
 texture_property_widget* current_texture_property_widget = nullptr;
 texture_group_property_widget* current_texture_group_property_widget = nullptr;
 pass_property_widget* current_pass_property_widget = nullptr;
+camera_property_widget* current_camera_property_widget = nullptr;
+light_property_widget* current_light_property_widget = nullptr;
 
 bool had_output_pass = false;
 
@@ -36,6 +38,8 @@ property_tab_widget::property_tab_widget(QWidget* in_parent) :QTabWidget(in_pare
     texture_property_window_instance = new texture_property_widget(this);
     texture_group_property_window_instance = new texture_group_property_widget(this);
     pass_property_window_instance = new pass_property_widget(this);
+    camera_property_window_instance = new camera_property_widget(this);
+    light_property_window_instance = new light_property_widget(this);
 
     addTab(empty_property_window_instance,"");
     addTab(mesh_property_window_instance, "mesh property");
@@ -43,11 +47,380 @@ property_tab_widget::property_tab_widget(QWidget* in_parent) :QTabWidget(in_pare
     addTab(texture_property_window_instance, "texture property");
     addTab(texture_group_property_window_instance, "texture group property");
     addTab(pass_property_window_instance, "pass property");
+    addTab(camera_property_window_instance, "camera property");
+    addTab(light_property_window_instance, "light property");
 }
 
 property_widget::property_widget(QTabWidget* in_parent_tab_widget) : QWidget(in_parent_tab_widget)
 {
     current_empty_property_widget = this;
+}
+
+camera_property_widget::camera_property_widget(QTabWidget* in_parent_tab_widget)
+{
+
+    current_camera_property_widget = this;
+
+    position_label = new QLabel(this);
+    position_label->setObjectName("position_label");
+    position_label->setGeometry(QRect(30, 10, 53, 16));
+    position_label->setText("position");
+    position_x_spinbox = new QDoubleSpinBox(this);
+    position_x_spinbox->setSingleStep(0.1);
+    position_x_spinbox->setRange(-9999, 9999);
+    position_x_spinbox->setObjectName("position_x_spinbox");
+    position_x_spinbox->setGeometry(QRect(30, 30, 62, 22));
+    position_y_spinbox = new QDoubleSpinBox(this);
+    position_y_spinbox->setSingleStep(0.1);
+    position_y_spinbox->setRange(-9999, 9999);
+    position_y_spinbox->setObjectName("position_y_spinbox");
+    position_y_spinbox->setGeometry(QRect(100, 30, 62, 22));
+    position_z_spinbox = new QDoubleSpinBox(this);
+    position_z_spinbox->setSingleStep(0.1);
+    position_z_spinbox->setRange(-9999, 9999);
+    position_z_spinbox->setObjectName("position_z_spinbox");
+    position_z_spinbox->setGeometry(QRect(170, 30, 62, 22));
+
+    look_at_label = new QLabel(this);
+    look_at_label->setObjectName("look_at_label");
+    look_at_label->setGeometry(QRect(30, 50, 53, 16));
+    look_at_label->setText("look at");
+    look_at_x_spinbox = new QDoubleSpinBox(this);
+    look_at_x_spinbox->setSingleStep(0.1);
+    look_at_x_spinbox->setRange(-9999, 9999);
+    look_at_x_spinbox->setObjectName("look_at_x_spinbox");
+    look_at_x_spinbox->setGeometry(QRect(30, 70, 62, 22));
+    look_at_y_spinbox = new QDoubleSpinBox(this);
+    look_at_y_spinbox->setSingleStep(0.1);
+    look_at_y_spinbox->setRange(-9999, 9999);
+    look_at_y_spinbox->setObjectName("look_at_y_spinbox");
+    look_at_y_spinbox->setGeometry(QRect(100, 70, 62, 22));
+    look_at_z_spinbox = new QDoubleSpinBox(this);
+    look_at_z_spinbox->setSingleStep(0.1);
+    look_at_z_spinbox->setRange(-9999, 9999);
+    look_at_z_spinbox->setObjectName("look_at_z_spinbox");
+    look_at_z_spinbox->setGeometry(QRect(170, 70, 62, 22));
+
+    connect(position_x_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
+            {
+                auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
+                camera_comp_ptr->camera_cal_helper.mPosition.x = position_x_spinbox->value();
+                update_camera();
+            }
+            
+        });
+    connect(position_y_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
+            {
+                auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
+                camera_comp_ptr->camera_cal_helper.mPosition.y = position_y_spinbox->value();
+                update_camera();
+            }
+            
+        });
+    connect(position_z_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
+            {
+                auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
+                camera_comp_ptr->camera_cal_helper.mPosition.z = position_z_spinbox->value();
+                update_camera();
+            }
+            
+        });
+}
+
+void camera_property_widget::update_camera()
+{
+    if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+    {
+        auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
+        s_update_camera_command update_light_data_cmd;
+        update_light_data_cmd.camera_ptr = camera_comp_ptr->camera_instance;
+        update_light_data_cmd.camera_helper_ptr = &camera_comp_ptr->camera_cal_helper;
+        update_light_data_cmd.execute();
+        update_light_data_cmd.camera_ptr = nullptr;
+        update_light_data_cmd.camera_helper_ptr = nullptr;
+    }
+}
+
+void camera_property_widget::refresh_spin_box()
+{
+    if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
+    {
+        auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
+        auto position = camera_comp_ptr->camera_cal_helper.GetPosition3f();
+        auto look_at = camera_comp_ptr->camera_cal_helper.GetLook3f();
+        position_x_spinbox->setValue(position.x);
+        position_y_spinbox->setValue(position.y);
+        position_z_spinbox->setValue(position.z);
+
+        look_at_x_spinbox->setValue(look_at.x);
+        look_at_y_spinbox->setValue(look_at.y);
+        look_at_z_spinbox->setValue(look_at.z);
+    }
+}
+
+light_property_widget::light_property_widget(QTabWidget* in_parent_tab_widget)
+{
+
+    current_light_property_widget = this;
+
+    strength_label = new QLabel(this);
+    strength_label->setObjectName("strength_label");
+    strength_label->setGeometry(QRect(30, 10, 53, 16));
+    strength_label->setText("strength");
+    strength_r_spinbox = new QDoubleSpinBox(this);
+    strength_r_spinbox->setSingleStep(0.1);
+    strength_r_spinbox->setRange(-9999, 9999);
+    strength_r_spinbox->setObjectName("strength_r_spinbox");
+    strength_r_spinbox->setGeometry(QRect(30, 30, 62, 22));
+    strength_g_spinbox = new QDoubleSpinBox(this);
+    strength_g_spinbox->setSingleStep(0.1);
+    strength_g_spinbox->setRange(-9999, 9999);
+    strength_g_spinbox->setObjectName("strength_g_spinbox");
+    strength_g_spinbox->setGeometry(QRect(100, 30, 62, 22));
+    strength_b_spinbox = new QDoubleSpinBox(this);
+    strength_b_spinbox->setSingleStep(0.1);
+    strength_b_spinbox->setRange(-9999, 9999);
+    strength_b_spinbox->setObjectName("strength_b_spinbox");
+    strength_b_spinbox->setGeometry(QRect(170, 30, 62, 22));
+
+    direction_label = new QLabel(this);
+    direction_label->setObjectName("direction_label");
+    direction_label->setGeometry(QRect(30, 50, 53, 16));
+    direction_label->setText("direction");
+    direction_x_spinbox = new QDoubleSpinBox(this);
+    direction_x_spinbox->setSingleStep(0.1);
+    direction_x_spinbox->setRange(-9999, 9999);
+    direction_x_spinbox->setObjectName("direction_x_spinbox");
+    direction_x_spinbox->setGeometry(QRect(30, 70, 62, 22));
+    direction_y_spinbox = new QDoubleSpinBox(this);
+    direction_y_spinbox->setSingleStep(0.1);
+    direction_y_spinbox->setRange(-9999, 9999);
+    direction_y_spinbox->setObjectName("direction_y_spinbox");
+    direction_y_spinbox->setGeometry(QRect(100, 70, 62, 22));
+    direction_z_spinbox = new QDoubleSpinBox(this);
+    direction_z_spinbox->setSingleStep(0.1);
+    direction_z_spinbox->setRange(-9999, 9999);
+    direction_z_spinbox->setObjectName("direction_z_spinbox");
+    direction_z_spinbox->setGeometry(QRect(170, 70, 62, 22));
+
+    position_label = new QLabel(this);
+    position_label->setObjectName("position_label");
+    position_label->setGeometry(QRect(30, 90, 53, 16));
+    position_label->setText("position");
+    position_x_spinbox = new QDoubleSpinBox(this);
+    position_x_spinbox->setSingleStep(0.1);
+    position_x_spinbox->setRange(-9999, 9999);
+    position_x_spinbox->setObjectName("position_x_spinbox");
+    position_x_spinbox->setGeometry(QRect(30, 110, 62, 22));
+    position_y_spinbox = new QDoubleSpinBox(this);
+    position_y_spinbox->setSingleStep(0.1);
+    position_y_spinbox->setRange(-9999, 9999);
+    position_y_spinbox->setObjectName("position_y_spinbox");
+    position_y_spinbox->setGeometry(QRect(100, 110, 62, 22));
+    position_z_spinbox = new QDoubleSpinBox(this);
+    position_z_spinbox->setSingleStep(0.1);
+    position_z_spinbox->setRange(-9999, 9999);
+    position_z_spinbox->setObjectName("position_z_spinbox");
+    position_z_spinbox->setGeometry(QRect(170, 110, 62, 22));
+
+    fall_off_start_label = new QLabel(this);
+    fall_off_start_label->setObjectName("fall_off_start_label");
+    fall_off_start_label->setGeometry(QRect(30, 140, 100, 16));
+    fall_off_start_label->setText("fall off start");
+    fall_off_start_spinbox = new QDoubleSpinBox(this);
+    fall_off_start_spinbox->setSingleStep(0.1);
+    fall_off_start_spinbox->setRange(-9999, 9999);
+    fall_off_start_spinbox->setObjectName("fall_off_start_spinbox");
+    fall_off_start_spinbox->setGeometry(QRect(170, 140, 62, 22));
+
+    fall_off_end_label = new QLabel(this);
+    fall_off_end_label->setObjectName("fall_off_end_label");
+    fall_off_end_label->setGeometry(QRect(30, 170, 100, 16));
+    fall_off_end_label->setText("fall off end");
+    fall_off_end_spinbox = new QDoubleSpinBox(this);
+    fall_off_end_spinbox->setSingleStep(0.1);
+    fall_off_end_spinbox->setRange(-9999, 9999);
+    fall_off_end_spinbox->setObjectName("fall_off_end_spinbox");
+    fall_off_end_spinbox->setGeometry(QRect(170, 170, 62, 22));
+
+    spot_power_label = new QLabel(this);
+    spot_power_label->setObjectName("spot_power_label");
+    spot_power_label->setGeometry(QRect(30, 200, 100, 16));
+    spot_power_label->setText("spot power");
+    spot_power_spinbox = new QDoubleSpinBox(this);
+    spot_power_spinbox->setSingleStep(0.1);
+    spot_power_spinbox->setRange(-9999, 9999);
+    spot_power_spinbox->setObjectName("spot_power_spinbox");
+    spot_power_spinbox->setGeometry(QRect(170, 200, 62, 22));
+
+
+    connect(strength_r_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+            {
+                auto light_comp_ptr = static_cast<light_component_invoker*>(current_component_ptr);
+                light_comp_ptr->light_instance->get_data()->strength.x = strength_r_spinbox->value();
+            }
+            update_light();
+        });
+    connect(strength_g_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+            {
+                auto light_comp_ptr = static_cast<light_component_invoker*>(current_component_ptr);
+                light_comp_ptr->light_instance->get_data()->strength.y = strength_g_spinbox->value();
+            }
+            update_light();
+        });
+    connect(strength_b_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+            {
+                auto light_comp_ptr = static_cast<light_component_invoker*>(current_component_ptr);
+                light_comp_ptr->light_instance->get_data()->strength.z = strength_b_spinbox->value();
+            }
+            update_light();
+        });
+    connect(direction_x_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+            {
+                auto light_comp_ptr = static_cast<light_component_invoker*>(current_component_ptr);
+                light_comp_ptr->light_instance->get_data()->Direction.x = direction_x_spinbox->value();
+            }
+            update_light();
+        });
+    connect(direction_y_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+            {
+                auto light_comp_ptr = static_cast<light_component_invoker*>(current_component_ptr);
+                light_comp_ptr->light_instance->get_data()->Direction.y = direction_y_spinbox->value();
+            }
+            update_light();
+        });
+    connect(direction_z_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+            {
+                auto light_comp_ptr = static_cast<light_component_invoker*>(current_component_ptr);
+                light_comp_ptr->light_instance->get_data()->Direction.z = direction_z_spinbox->value();
+            }
+            update_light();
+        });
+    connect(position_x_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+            {
+                auto light_comp_ptr = static_cast<light_component_invoker*>(current_component_ptr);
+                light_comp_ptr->light_instance->get_data()->position.x = position_x_spinbox->value();
+            }
+            update_light();
+        });
+    connect(position_y_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+            {
+                auto light_comp_ptr = static_cast<light_component_invoker*>(current_component_ptr);
+                light_comp_ptr->light_instance->get_data()->position.y = position_y_spinbox->value();
+            }
+            update_light();
+        });
+    connect(position_z_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+            {
+                auto light_comp_ptr = static_cast<light_component_invoker*>(current_component_ptr);
+                light_comp_ptr->light_instance->get_data()->position.z = position_z_spinbox->value();
+            }
+            update_light();
+        });
+    connect(fall_off_start_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+            {
+                auto light_comp_ptr = static_cast<light_component_invoker*>(current_component_ptr);
+                light_comp_ptr->light_instance->get_data()->fall_off_start = fall_off_start_spinbox->value();
+            }
+            update_light();
+        });
+    connect(fall_off_end_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+            {
+                auto light_comp_ptr = static_cast<light_component_invoker*>(current_component_ptr);
+                light_comp_ptr->light_instance->get_data()->fall_off_end = fall_off_end_spinbox->value();
+            }
+            update_light();
+        });
+    connect(spot_power_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+            {
+                auto light_comp_ptr = static_cast<light_component_invoker*>(current_component_ptr);
+                light_comp_ptr->light_instance->get_data()->spot_power = spot_power_spinbox->value();
+            }
+            update_light();
+        });
+}
+
+void light_property_widget::update_light()
+{
+    if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+    {
+        auto light_comp_ptr = static_cast<light_component_invoker*>(current_component_ptr);
+        s_update_light_command update_light_data_cmd;
+        update_light_data_cmd.light_ptr = light_comp_ptr;
+        update_light_data_cmd.execute();
+        update_light_data_cmd.light_ptr = nullptr;
+    }
+}
+
+
+void light_property_widget::refresh_spin_box()
+{
+    if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+    {
+        auto light_comp_ptr = static_cast<light_component_invoker*>(current_component_ptr);
+        auto light_data = light_comp_ptr->light_instance->get_data();
+
+        strength_r_spinbox->setValue(light_data->strength.x);
+        strength_g_spinbox->setValue(light_data->strength.y);
+        strength_b_spinbox->setValue(light_data->strength.z);
+
+        direction_x_spinbox->setValue(light_data->Direction.x);
+        direction_y_spinbox->setValue(light_data->Direction.y);
+        direction_z_spinbox->setValue(light_data->Direction.z);
+
+        position_x_spinbox->setValue(light_data->position.x);
+        position_y_spinbox->setValue(light_data->position.y);
+        position_z_spinbox->setValue(light_data->position.z);
+
+        fall_off_start_spinbox->setValue(light_data->fall_off_start.x);
+        fall_off_end_spinbox->setValue(light_data->fall_off_end.x);
+        spot_power_spinbox->setValue(light_data->spot_power.x);
+    }
 }
 
 mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : QWidget(in_parent_tab_widget)
@@ -271,9 +644,8 @@ mesh_property_widget::mesh_property_widget(QTabWidget* in_parent_tab_widget) : Q
             }
             update_mesh();
         });
-
-
 }
+
 void mesh_property_widget::refresh_spin_box()
 {
     if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
@@ -293,6 +665,7 @@ void mesh_property_widget::refresh_spin_box()
         scale_z_spinbox->setValue(mesh_comp_ptr->object_helper.Scale[2]);
     }
 }
+
 void mesh_property_widget::update_mesh()
 {
     if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_MESH)
@@ -456,6 +829,7 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
 
 }
 
+
 texture_property_widget::texture_property_widget(QTabWidget * in_parent_tab_widget) : QWidget(in_parent_tab_widget)
 {
     current_texture_property_widget = this;
@@ -544,6 +918,7 @@ void texture_property_widget::change_combobox_index(int index)
     s_update_gpu_command().execute();
 }
 
+
 texture_group_property_widget::texture_group_property_widget(QTabWidget* in_parent_tab_widget) : QWidget(in_parent_tab_widget)
 {
     current_texture_group_property_widget = this;
@@ -603,6 +978,7 @@ void texture_group_property_widget::change_combobox_index(int index)
     //ÏÈË¢ÐÂ
     s_update_gpu_command().execute();
 }
+
 
 pass_property_widget::pass_property_widget(QTabWidget* in_parent_tab_widget)
 {

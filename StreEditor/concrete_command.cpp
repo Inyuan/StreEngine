@@ -21,6 +21,9 @@ extern shader_property_widget* current_shader_property_widget;
 extern texture_property_widget* current_texture_property_widget;
 extern texture_group_property_widget* current_texture_group_property_widget;
 extern pass_property_widget* current_pass_property_widget;
+extern camera_property_widget* current_camera_property_widget;
+extern light_property_widget* current_light_property_widget;
+
 
 extern bool had_output_pass;
 
@@ -91,8 +94,6 @@ void s_create_mesh_command::execute()
 	//构造蓝图组件
 	pipeline_window_widget_ptr->mesh_comp_group[mesh_ptr->uid.name] = mesh_comp;
 	
-
-
 	mesh_comp->show();
 
 }
@@ -165,8 +166,11 @@ void s_create_camera_command::execute()
 	//init camera
 	//Debug
 	//new_camera_comp->camera_cal_helper.SetLens(0.25f * 3.1415926535f, 1.0f, 1.0f, 1000.0f);
+	//先刷新，怕camera没分配gpu
+	s_update_gpu_command local_update_request;
+	local_update_request.execute();
+
 	s_update_camera_command update_camera_cmd;
-	
 	update_camera_cmd.camera_helper_ptr = &new_camera_comp->camera_cal_helper;
 	update_camera_cmd.camera_ptr = new_camera_comp->camera_instance;
 	update_camera_cmd.execute();
@@ -515,7 +519,11 @@ void s_connect_resource_command::execute()
 
 			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2->ptr);
 			//只记录寄存器号
-
+			if (m_cb_ptr->mesh_instance->is_view_mesh)
+			{
+				connect_success = false;
+				return;
+			}
 			m_cb_ptr->mesh_instance->object_constant_ptr->gpu_sr_ptr->register_index = connect_port2->port_index;
 			connect_success = true;
 		}
@@ -690,43 +698,11 @@ void s_reconnect_resource_command::execute()
 *
 ************************************************************
 */
-
-/// <summary>
-/// useless
-/// </summary>
-//void s_update_pass_tree_command::execute()
-//{
-//	//auto pass_group = pipeline_window_widget_ptr->pass_comp_group;
-//
-//	//pass_component_invoker* output_pass_comp;
-//
-//	////先找到输出的pass
-//	//for (auto it : pass_group)
-//	//{
-//	//	if (it.second->pass_instance->is_output)
-//	//	{
-//	//		output_pass_comp = it.second;
-//	//		break;
-//	//	}
-//	//}
-//
-//	//auto connect_group = pipeline_window_widget_ptr->connect_curve_group;
-//
-//	//for (auto it : connect_group)
-//	//{
-//
-//	//}
-//
-//
-//}
-
 /// <summary>
 /// 遍历pass表执行pass
 /// </summary>
 void s_draw_command::execute()
 {
-
-
 
 	s_update_gpu_command update_gpu_cmd;
 	update_gpu_cmd.execute();
@@ -747,7 +723,6 @@ void s_draw_command::execute()
 				s_debug_output_refresh_command().execute();
 				continue;
 			}
-
 			stre_engine::get_instance()->draw_pass(itt->pass_instance);
 		}
 	}
@@ -797,20 +772,13 @@ void s_update_camera_command::execute()
 	camera_helper_ptr->UpdateViewMatrix();
 	camera_helper_ptr->convert_to_camera_data(camera_ptr->data);
 
-	//先刷新，怕camera没分配gpu
-	s_update_gpu_command local_update_request;
-	local_update_request.execute();
-	if (!local_update_request.execute_success)
-	{
-		//!!!出问题了，阻止连线
-		//return;
-	}
 	stre_engine::get_instance()->update_custom_gpu_resource<cpu_camera>(camera_ptr);
 
 	if (view_port_widget_ptr)
 		view_port_widget_ptr->repaint();
 
 }
+
 
 void s_change_mesh_type_command::execute()
 {
@@ -828,6 +796,15 @@ void s_change_mesh_type_command::execute()
 		}
 		mesh_comp_ptr->mesh_instance = nullptr;
 		mesh_comp_ptr->mesh_instance = stre_engine::get_instance()->create_viewport_mesh();
+		mesh_comp_ptr->object_helper.Transform[0] = 0.0f;
+		mesh_comp_ptr->object_helper.Transform[1] = 0.0f;
+		mesh_comp_ptr->object_helper.Transform[2] = 0.0f;
+		mesh_comp_ptr->object_helper.Rotation[0] = 0.0f;
+		mesh_comp_ptr->object_helper.Rotation[1] = 0.0f;
+		mesh_comp_ptr->object_helper.Rotation[2] = 0.0f;
+		mesh_comp_ptr->object_helper.Scale[0] = 1.0f;
+		mesh_comp_ptr->object_helper.Scale[1] = 1.0f;
+		mesh_comp_ptr->object_helper.Scale[2] = 1.0f;
 	}
 	else
 	{
@@ -845,9 +822,10 @@ void s_change_mesh_type_command::execute()
 	s_switch_property_widget_command().execute();
 }
 
+//默认已经存在GPU内存
 void s_update_mesh_data_command::execute()
 {
-	if (!mesh_ptr)
+	if (!mesh_ptr|| !mesh_ptr->mesh_instance)
 	{
 		//出问题了
 		return;
@@ -855,28 +833,7 @@ void s_update_mesh_data_command::execute()
 
 	if (mesh_ptr->mesh_instance->is_view_mesh)
 	{
-		mesh_ptr->object_helper.Transform[0] = 0.0f;
-		mesh_ptr->object_helper.Transform[1] = 0.0f;
-		mesh_ptr->object_helper.Transform[2] = 0.0f;
-		mesh_ptr->object_helper.Rotation[0] = 0.0f;
-		mesh_ptr->object_helper.Rotation[1] = 0.0f;
-		mesh_ptr->object_helper.Rotation[2] = 0.0f;
-		mesh_ptr->object_helper.Scale[0] = 1.0f;
-		mesh_ptr->object_helper.Scale[1] = 1.0f;
-		mesh_ptr->object_helper.Scale[2] = 1.0f;
-	}
-	else
-	{
-		//Debug
-		//mesh_ptr->object_helper.Transform[0] = 0.0f;
-		//mesh_ptr->object_helper.Transform[1] = 40.0f;
-		//mesh_ptr->object_helper.Transform[2] = 0.0f;
-		//mesh_ptr->object_helper.Rotation[0] = 0.0f;
-		//mesh_ptr->object_helper.Rotation[1] = 3.15f;
-		//mesh_ptr->object_helper.Rotation[2] = 4.50f;
-		//mesh_ptr->object_helper.Scale[0] = 0.1f;
-		//mesh_ptr->object_helper.Scale[1] = 0.1f;
-		//mesh_ptr->object_helper.Scale[2] = 0.1f;
+		return;
 	}
 
 	mesh_ptr->object_helper.UpdateWorldMatrix();
@@ -888,6 +845,21 @@ void s_update_mesh_data_command::execute()
 	}
 
 	stre_engine::get_instance()->update_mesh_gpu(mesh_ptr->mesh_instance);
+
+	if (view_port_widget_ptr)
+		view_port_widget_ptr->repaint();
+}
+
+//默认已经存在GPU内存
+void s_update_light_command::execute()
+{
+	if(!light_ptr)
+	{
+		//出问题了
+		return;
+	}
+
+	stre_engine::get_instance()->update_custom_gpu_resource<cpu_light>(light_ptr->light_instance);
 
 	if (view_port_widget_ptr)
 		view_port_widget_ptr->repaint();
@@ -906,19 +878,25 @@ void s_switch_property_widget_command::execute()
 	//2:shader
 	//3:texture
 	//4:texture group
-	//4:pass
+	//5:pass
+	//6:camera
+	//7:light
 	current_property_tab_widget->setTabEnabled(0, false);
 	current_property_tab_widget->setTabEnabled(1, false);
 	current_property_tab_widget->setTabEnabled(2, false);
 	current_property_tab_widget->setTabEnabled(3, false);
 	current_property_tab_widget->setTabEnabled(4, false);
 	current_property_tab_widget->setTabEnabled(5, false);
+	current_property_tab_widget->setTabEnabled(6, false);
+	current_property_tab_widget->setTabEnabled(7, false);
 	current_property_tab_widget->setTabVisible(0, false);
 	current_property_tab_widget->setTabVisible(1, false);
 	current_property_tab_widget->setTabVisible(2, false);
 	current_property_tab_widget->setTabVisible(3, false);
 	current_property_tab_widget->setTabVisible(4, false);
 	current_property_tab_widget->setTabVisible(5, false);
+	current_property_tab_widget->setTabVisible(6, false);
+	current_property_tab_widget->setTabVisible(7, false);
 	if (!current_component_ptr)
 	{
 		//显示空窗口
@@ -941,6 +919,7 @@ void s_switch_property_widget_command::execute()
 			current_mesh_property_widget->type_select_comcobox->setCurrentIndex(0);
 			current_mesh_property_widget->path_select_pushbutton->setEnabled(false);
 			current_mesh_property_widget->path_text->setText("");
+			current_mesh_property_widget->refresh_spin_box();
 		}
 		else
 		{
@@ -1028,7 +1007,6 @@ void s_switch_property_widget_command::execute()
 
 	}
 	break;
-
 	case COMPONENT_TYPE_PASS:
 	{
 		current_property_tab_widget->setTabEnabled(5, true);
@@ -1059,6 +1037,23 @@ void s_switch_property_widget_command::execute()
 		}
 
 		current_pass_property_widget->is_output_check_box->setChecked(pass_comp_ptr->pass_instance->is_output);
+	}
+	break;
+	case COMPONENT_TYPE_CAMERA:
+	{
+		current_property_tab_widget->setTabEnabled(6, true);
+		current_property_tab_widget->setTabVisible(6, true);
+
+		current_camera_property_widget->refresh_spin_box();
+
+	}
+	break;
+	case COMPONENT_TYPE_LIGHT:
+	{
+		current_property_tab_widget->setTabEnabled(7, true);
+		current_property_tab_widget->setTabVisible(7, true);
+
+		current_light_property_widget->refresh_spin_box();
 	}
 	break;
 	}

@@ -38,7 +38,27 @@ bool pass_factory::check_pass(s_pass* in_out_pass)
 		return false;
 	}
 	//检查着色器资源输入情况，不充足就不对
-	if(in_out_pass->gpu_pass_ptr->pass_res_group.size() != in_out_pass->gpu_pass_resource_ptr.size())
+	int res_number = 0;
+	for (auto it : in_out_pass->gpu_pass_resource_ptr)
+	{
+		if (it.second->register_index != -1)
+		{
+			res_number++;
+		}
+	}
+	if (!in_out_pass->gpu_mesh.empty())
+	{
+		auto it = in_out_pass->gpu_mesh.begin();
+		for (auto itt : it->second.gpu_mesh_resource_ptr)
+		{
+			if (itt.second->register_index != -1)
+			{
+				res_number++;
+			}
+		}
+	}
+
+	if(in_out_pass->gpu_pass_ptr->pass_res_group.size() != res_number)
 	{
 		//!!!出问题了
 		stre_exception::exception_output_str_group.push_back("pass_factory::check_pass unmatch shader resource size");
