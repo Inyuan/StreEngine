@@ -41,7 +41,7 @@ bool pass_factory::check_pass(s_pass* in_out_pass)
 	int res_number = 0;
 	for (auto it : in_out_pass->gpu_pass_resource_ptr)
 	{
-		if (it.second->register_index != -1)
+		if (it.second->register_index_map.find(in_out_pass->uid.name) != it.second->register_index_map.end())
 		{
 			res_number++;
 		}
@@ -51,13 +51,12 @@ bool pass_factory::check_pass(s_pass* in_out_pass)
 		auto it = in_out_pass->gpu_mesh.begin();
 		for (auto itt : it->second.gpu_mesh_resource_ptr)
 		{
-			if (itt.second->register_index != -1)
+			if (itt.second->register_index_map.find(in_out_pass->uid.name) != itt.second->register_index_map.end())
 			{
 				res_number++;
 			}
 		}
 	}
-
 	if(in_out_pass->gpu_pass_ptr->pass_res_group.size() != res_number)
 	{
 		//!!!出问题了

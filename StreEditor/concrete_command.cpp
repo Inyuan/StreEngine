@@ -390,7 +390,8 @@ void s_connect_resource_command::execute()
 				//打包由texture_comp独立完成
 				// 
 				//寄存器号
-				t_ptr->texture_instance->gpu_sr_ptr->register_index = connect_port2->port_index;
+				auto pass_uid = p_ptr->pass_instance->uid.name;
+				t_ptr->texture_instance->gpu_sr_ptr->register_index_map[pass_uid] = connect_port2->port_index;
 
 				connect_success = stre_engine::get_instance()->pass_add_shader_resource<cpu_texture>(p_ptr->pass_instance, t_ptr->texture_instance);
 			}
@@ -442,7 +443,8 @@ void s_connect_resource_command::execute()
 			else
 			//正事
 			{
-				camera_ptr->camera_instance->gpu_sr_ptr->register_index = connect_port2->port_index;
+				auto pass_uid = p_ptr->pass_instance->uid.name;
+				camera_ptr->camera_instance->gpu_sr_ptr->register_index_map[pass_uid] = connect_port2->port_index;
 				
 				
 				connect_success = stre_engine::get_instance()->pass_add_shader_resource<cpu_camera>(p_ptr->pass_instance, camera_ptr->camera_instance);
@@ -472,7 +474,8 @@ void s_connect_resource_command::execute()
 			else
 			//正事
 			{
-				light_ptr->light_instance->gpu_sr_ptr->register_index = connect_port2->port_index;
+				auto pass_uid = p_ptr->pass_instance->uid.name;
+				light_ptr->light_instance->gpu_sr_ptr->register_index_map[pass_uid] = connect_port2->port_index;
 				connect_success = stre_engine::get_instance()->pass_add_shader_resource<cpu_light>(p_ptr->pass_instance, light_ptr->light_instance);
 			}
 		}
@@ -524,7 +527,8 @@ void s_connect_resource_command::execute()
 				connect_success = false;
 				return;
 			}
-			m_cb_ptr->mesh_instance->object_constant_ptr->gpu_sr_ptr->register_index = connect_port2->port_index;
+			auto pass_uid = p_ptr->pass_instance->uid.name;
+			m_cb_ptr->mesh_instance->object_constant_ptr->gpu_sr_ptr->register_index_map[pass_uid] = connect_port2->port_index;
 			connect_success = true;
 		}
 		break;
@@ -542,7 +546,8 @@ void s_connect_resource_command::execute()
 			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(connect_port2->ptr);
 
 			//只记录寄存器号
-			m_mat_ptr->mesh_instance->material_ptr->gpu_sr_ptr->register_index = connect_port2->port_index;
+			auto pass_uid = p_ptr->pass_instance->uid.name;
+			m_mat_ptr->mesh_instance->material_ptr->gpu_sr_ptr->register_index_map[pass_uid] = connect_port2->port_index;
 			connect_success = true;
 		}
 		break;
@@ -1191,7 +1196,8 @@ void s_disconnect_resource_command::execute()
 
 			//正事
 			{
-				t_ptr->texture_instance->gpu_sr_ptr->register_index = -1;
+				auto pass_uid = p_ptr->pass_instance->uid.name;
+				t_ptr->texture_instance->gpu_sr_ptr->register_index_map.erase(pass_uid);
 				disconnect_success = stre_engine::get_instance()->pass_remove_shader_resource<cpu_texture>(p_ptr->pass_instance, t_ptr->texture_instance);
 			}
 			//删除贴图和pass表中的记录
@@ -1234,7 +1240,8 @@ void s_disconnect_resource_command::execute()
 			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(in_port2->ptr);
 			//正事
 			{
-				camera_ptr->camera_instance->gpu_sr_ptr->register_index = -1;
+				auto pass_uid = p_ptr->pass_instance->uid.name;
+				camera_ptr->camera_instance->gpu_sr_ptr->register_index_map.erase(pass_uid);
 				disconnect_success = stre_engine::get_instance()->pass_remove_shader_resource<cpu_camera>(p_ptr->pass_instance, camera_ptr->camera_instance);
 			}
 		}
@@ -1252,7 +1259,8 @@ void s_disconnect_resource_command::execute()
 			pass_component_invoker* p_ptr = reinterpret_cast<pass_component_invoker*>(in_port2->ptr);
 			//正事
 			{
-				light_ptr->light_instance->gpu_sr_ptr->register_index = -1;
+				auto pass_uid = p_ptr->pass_instance->uid.name;
+				light_ptr->light_instance->gpu_sr_ptr->register_index_map.erase(pass_uid);
 				disconnect_success = stre_engine::get_instance()->pass_remove_shader_resource<cpu_light>(p_ptr->pass_instance, light_ptr->light_instance);
 			}
 		}
@@ -1287,8 +1295,9 @@ void s_disconnect_resource_command::execute()
 
 			//正事
 			{
-				//寄存器号置-1
-				m_ptr->mesh_instance->object_constant_ptr->gpu_sr_ptr->register_index = -1;
+				//删除寄存器号
+				auto pass_uid = p_ptr->pass_instance->uid.name;
+				m_ptr->mesh_instance->object_constant_ptr->gpu_sr_ptr->register_index_map.erase(pass_uid);
 			}
 			disconnect_success = true;
 		}
@@ -1308,8 +1317,9 @@ void s_disconnect_resource_command::execute()
 
 			//正事
 			{
-				//寄存器号置-1
-				m_ptr->mesh_instance->material_ptr->gpu_sr_ptr->register_index = -1;
+				//删除寄存器号
+				auto pass_uid = p_ptr->pass_instance->uid.name;
+				m_ptr->mesh_instance->material_ptr->gpu_sr_ptr->register_index_map.erase(pass_uid);
 			}
 			disconnect_success = true;
 		}

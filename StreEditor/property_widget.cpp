@@ -1036,6 +1036,12 @@ pass_property_widget::pass_property_widget(QTabWidget* in_parent_tab_widget)
                 pass_comp_ptr->pass_instance->is_output = is_output_check_box->isChecked();
                 had_output_pass = is_output_check_box->isChecked();
                 
+                //重连 保证pass重新编译
+                s_reconnect_resource_command reconnect_cmd;
+                reconnect_cmd.reconnect_port = pass_comp_ptr->shader_port;
+                reconnect_cmd.execute();
+                reconnect_cmd.reconnect_port = nullptr;
+
             }
 
         }
@@ -1049,6 +1055,12 @@ pass_property_widget::pass_property_widget(QTabWidget* in_parent_tab_widget)
                 auto pass_comp_ptr = static_cast<pass_component_invoker*>(current_component_ptr);
 
                 pass_comp_ptr->pass_instance->is_depth_check = is_depth_check_box->isChecked();
+
+                //重连 保证pass重新编译
+                s_reconnect_resource_command reconnect_cmd;
+                reconnect_cmd.reconnect_port = pass_comp_ptr->shader_port;
+                reconnect_cmd.execute();
+                reconnect_cmd.reconnect_port = nullptr;
             }
 
         }
@@ -1062,6 +1074,12 @@ pass_property_widget::pass_property_widget(QTabWidget* in_parent_tab_widget)
                 auto pass_comp_ptr = static_cast<pass_component_invoker*>(current_component_ptr);
 
                 pass_comp_ptr->pass_instance->is_translate = is_translate_check_box->isChecked();
+
+                //重连 保证pass重新编译
+                s_reconnect_resource_command reconnect_cmd;
+                reconnect_cmd.reconnect_port = pass_comp_ptr->shader_port;
+                reconnect_cmd.execute();
+                reconnect_cmd.reconnect_port = nullptr;
             }
 
         }

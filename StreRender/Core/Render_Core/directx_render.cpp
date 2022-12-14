@@ -398,7 +398,6 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	{
 		std::shared_ptr<directx_frame_resource> frame_res(new directx_frame_resource());
 		frame_res->shader_resource_type = in_shader_res_type;
-		frame_res->register_index = -1;
 		for (int i = 0; i < FRAME_BUFFER_COUNT; i++)
 		{
 			frame_res->frame_resource_group[i] = std::make_shared<directx_sr_custom_buffer>();
@@ -414,7 +413,6 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	{
 		std::shared_ptr<directx_frame_resource> frame_res( new directx_frame_resource());
 		frame_res->shader_resource_type = in_shader_res_type;
-		frame_res->register_index = -1;
 		for (int i = 0; i < FRAME_BUFFER_COUNT; i++)
 		{
 			frame_res->frame_resource_group[i] = std::make_shared <directx_sr_custom_buffer_group>();
@@ -429,7 +427,6 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	{
 		std::shared_ptr<directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
-		texture_res->register_index = -1;
 		texture_res->resource = std::make_shared <directx_sr_texture>();
 		std::shared_ptr<directx_sr_texture> gpu_ptr = std::static_pointer_cast<directx_sr_texture>(texture_res->resource);
 
@@ -449,7 +446,6 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	{
 		std::shared_ptr < directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
-		texture_res->register_index = -1;
 		texture_res->resource = std::make_shared<directx_sr_texture_group>();
 
 		return std::dynamic_pointer_cast<gpu_shader_resource>(texture_res);
@@ -460,7 +456,6 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	{
 		std::shared_ptr < directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
-		texture_res->register_index = -1;
 		texture_res->resource = std::make_shared<directx_sr_render_target>();
 		std::shared_ptr < directx_sr_render_target> gpu_ptr = std::static_pointer_cast<directx_sr_render_target>(texture_res->resource);
 
@@ -483,7 +478,6 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	{
 		std::shared_ptr<directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
-		texture_res->register_index = -1;
 		texture_res->resource = std::make_shared<directx_sr_render_target_group>();
 
 		return std::dynamic_pointer_cast<gpu_shader_resource>(texture_res);
@@ -494,7 +488,6 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	{
 		std::shared_ptr < directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
-		texture_res->register_index = -1;
 		texture_res->resource = std::make_shared <directx_sr_depth_stencil>();
 		std::shared_ptr < directx_sr_depth_stencil> gpu_ptr = std::static_pointer_cast<directx_sr_depth_stencil>(texture_res->resource);
 
@@ -515,7 +508,6 @@ std::shared_ptr<gpu_shader_resource> directx_render::allocate_shader_resource(gp
 	{
 		std::shared_ptr < directx_texture_resource> texture_res(new directx_texture_resource());
 		texture_res->shader_resource_type = in_shader_res_type;
-		texture_res->register_index = -1;
 		texture_res->resource = std::make_shared<directx_sr_depth_stencil_group>();
 
 		return std::dynamic_pointer_cast<gpu_shader_resource>(texture_res);
@@ -888,7 +880,7 @@ void directx_render::draw_pass(s_pass* in_pass)
 	dx_command_list->RSSetViewports(1, &screen_view_port);
 	dx_command_list->RSSetScissorRects(1, &scissor_rect);
 
-	load_resource(in_pass->gpu_pass_resource_ptr);
+	load_resource(in_pass->uid.name,in_pass->gpu_pass_resource_ptr);
 
 	std::shared_ptr<directx_sr_render_target_group> render_targets_ptr = nullptr;
 	std::shared_ptr < directx_sr_depth_stencil_group> depth_stencil_ptr = nullptr;
@@ -898,9 +890,9 @@ void directx_render::draw_pass(s_pass* in_pass)
 	for (auto gpu_mesh : in_pass->gpu_mesh)
 	{
 		//加载模型的贴图等总体数据，不加载SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP_FOLLOW_MESH数据
-		load_resource(gpu_mesh.second.gpu_mesh_resource_ptr);
+		load_resource(in_pass->uid.name, gpu_mesh.second.gpu_mesh_resource_ptr);
 
-		draw_call(&gpu_mesh.second);
+		draw_call(in_pass->uid.name, &gpu_mesh.second);
 	}
 
 	if (render_targets_ptr)
@@ -1040,6 +1032,7 @@ void directx_render::set_render_target(
 
 //读取当前帧索引的帧资源
 void directx_render::load_resource(
+	std::string in_pass_uid,
 	const std::map < std::string, const gpu_shader_resource*>&  in_gpu_res_group)
 {
 	D3D12_CPU_DESCRIPTOR_HANDLE rtv_descs;
@@ -1047,10 +1040,13 @@ void directx_render::load_resource(
 	UINT output_rt_size = 0;
 	for (auto gpu_res : in_gpu_res_group)
 	{
-		if (gpu_res.second->register_index < 0)
+		//检查资源有没有被装载到当前pass中
+		auto register_index_it = gpu_res.second->register_index_map.find(in_pass_uid);
+		if (register_index_it == gpu_res.second->register_index_map.end())
 		{
 			continue;
 		}
+		int register_index = register_index_it->second;
 
 		switch (gpu_res.second->shader_resource_type)
 		{
@@ -1067,7 +1063,7 @@ void directx_render::load_resource(
 			//!!! 没有用CBV
 			dx_command_list->
 				SetGraphicsRootShaderResourceView(
-					gpu_res.second->register_index,
+					register_index,
 					gpu_sr->dx_resource.Get()->GetGPUVirtualAddress());
 
 		
@@ -1082,7 +1078,7 @@ void directx_render::load_resource(
 
 				dx_command_list->
 					SetGraphicsRootShaderResourceView(
-						gpu_res.second->register_index,
+						register_index,
 						gpu_sr->dx_resource.Get()->GetGPUVirtualAddress());
 
 		}
@@ -1106,7 +1102,7 @@ void directx_render::load_resource(
 			auto gpu_sr = static_cast<const directx_sr_texture_group*>(texture_res->resource.get());
 			ID3D12DescriptorHeap* descriptorHeaps[] = { gpu_sr->srv_heap.Get() };
 			dx_command_list->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-			dx_command_list->SetGraphicsRootDescriptorTable(gpu_res.second->register_index, gpu_sr->srv_heap->GetGPUDescriptorHandleForHeapStart());
+			dx_command_list->SetGraphicsRootDescriptorTable(register_index, gpu_sr->srv_heap->GetGPUDescriptorHandleForHeapStart());
 		}
 		break;
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_TARGET_GROUP:
@@ -1115,7 +1111,7 @@ void directx_render::load_resource(
 			auto gpu_sr = static_cast<const directx_sr_render_target_group*>(rt_res->resource.get());
 			ID3D12DescriptorHeap* descriptorHeaps[] = { gpu_sr->srv_heap.Get() };
 			dx_command_list->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-			dx_command_list->SetGraphicsRootDescriptorTable(gpu_res.second->register_index, gpu_sr->srv_heap->GetGPUDescriptorHandleForHeapStart());
+			dx_command_list->SetGraphicsRootDescriptorTable(register_index, gpu_sr->srv_heap->GetGPUDescriptorHandleForHeapStart());
 		}
 		break;
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_RENDER_DEPTH_STENCIL_GROUP:
@@ -1124,7 +1120,7 @@ void directx_render::load_resource(
 			auto gpu_sr = static_cast<const directx_sr_depth_stencil_group*>(ds_res->resource.get());
 			ID3D12DescriptorHeap* descriptorHeaps[] = { gpu_sr->srv_heap.Get() };
 			dx_command_list->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-			dx_command_list->SetGraphicsRootDescriptorTable(gpu_res.second->register_index, gpu_sr->srv_heap->GetGPUDescriptorHandleForHeapStart());
+			dx_command_list->SetGraphicsRootDescriptorTable(register_index, gpu_sr->srv_heap->GetGPUDescriptorHandleForHeapStart());
 		}
 		break;
 		}
@@ -1133,6 +1129,7 @@ void directx_render::load_resource(
 }
 
 void directx_render::draw_call(
+	std::string in_pass_uid,
 	const s_pass::gpu_mesh_resource* in_gpu_mesh)
 {
 	auto* vertex_buffer = static_cast<const directx_sr_custom_buffer*>(get_current_frame_resource(in_gpu_mesh->vertex));
@@ -1179,16 +1176,19 @@ void directx_render::draw_call(
 	{
 		for (auto it : refresh_group)
 		{
-			//寄存器号为-1就不能插入
-			if (it->register_index < 0)
+			//检查资源有没有被装载到当前pass中
+			auto register_index_it = it->register_index_map.find(in_pass_uid);
+			if (register_index_it == it->register_index_map.end())
 			{
 				continue;
 			}
+			int register_index = register_index_it->second;
+
 			const directx_sr_custom_buffer_group* dx_sr_cb_group = static_cast<const directx_sr_custom_buffer_group*>(get_current_frame_resource(it));
 			D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = dx_sr_cb_group->dx_resource->GetGPUVirtualAddress() + i * it->element_size;
 			//!!! 没有用CBV
 			//dx_command_list->SetGraphicsRootConstantBufferView(it->register_index, objCBAddress);
-			dx_command_list->SetGraphicsRootShaderResourceView(it->register_index, objCBAddress);
+			dx_command_list->SetGraphicsRootShaderResourceView(register_index, objCBAddress);
 
 		}
 

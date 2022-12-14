@@ -173,9 +173,9 @@ private:
         std::shared_ptr < directx_sr_render_target_group>& render_targets_ptr,
         std::shared_ptr < directx_sr_depth_stencil_group>& depth_stencil_ptr);
 
-    void load_resource(const std::map < std::string, const gpu_shader_resource*>& in_gpu_res_group);
+    void load_resource(std::string in_pass_uid, const std::map < std::string, const gpu_shader_resource*>& in_gpu_res_group);
 
-    void draw_call(const s_pass::gpu_mesh_resource* in_gpu_mesh);
+    void draw_call(std::string in_pass_uid, const s_pass::gpu_mesh_resource* in_gpu_mesh);
 
 public:
     void init(HWND in_main_wnd, UINT in_width, UINT in_height);

@@ -38,8 +38,10 @@ struct gpu_shader_resource
 
 	//使用的寄存器序号
 	//-1pass不输入
-	//多个pass需要多个gpu_shader_resource管理？
-	int register_index = -1; 
+	//多个pass需要记录多个根索引位置，不然会爆炸
+	std::map<std::string, int> register_index_map;
+
+
 	std::string name;
 
 	uint32_t element_size = 0;

@@ -105,10 +105,10 @@ float4 PhysicalRender(vs_out pIn)
     float4 gbufferc = GBuffer[2][pIn.position.xy];// w_normal
 
     float3 DiffuseAlbedo = gbuffera.rgb;
-    float3  worldnormal = gbufferb.rgb;
-    float3  worldposition = gbufferc.rgb;
-
-    float3 lightVec = -light_buffer[0].Direction;
+    float3  worldposition = gbufferb.rgb;
+    float3  worldnormal = gbufferc.rgb;
+    
+    float3 lightVec = -normalize(light_buffer[0].Direction);
     float3 toEye = normalize(camera_buffer[0].eye_world_position - worldposition);
 
     // Scale light down by Lambert's cosine law.
@@ -121,8 +121,8 @@ float4 PhysicalRender(vs_out pIn)
 
 float4 PS(vs_out pIn) : SV_TARGET
 {
-    float4 Color = float4(1.0f, 1.0f, 1.0f, 1.0f);
-    Color = max(PhysicalRender(pIn), camera_buffer[0].ambient_light);
+    float4 Color = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    Color = PhysicalRender(pIn) * camera_buffer[0].ambient_light;
 
     return Color;
 }

@@ -86,9 +86,6 @@ struct custom_manager :public s_custom_manager<t_cpu_res_type>
 			default:
 				break;
 			}
-			//³õÊ¼»¯¼Ä´æÆ÷Îª-1
-			in_cpu_data->gpu_sr_ptr->register_index = -1;
-			
 			return execute_successed;
 		};
 

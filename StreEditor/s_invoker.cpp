@@ -319,7 +319,7 @@ void mesh_component_invoker::keyPressEvent(QKeyEvent* in_event)
 
 
 /// <summary>
-/// 删除原有，更新 pass组件上的shader资源端口
+/// 删除原有，并断开所有连接，更新 pass组件上的shader资源端口
 /// </summary>
 /// <param name="in_res_port_group"></param>
 void pass_component_invoker::update_res_port(vector<connect_port*>& in_res_port_group)
