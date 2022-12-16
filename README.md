@@ -11,7 +11,7 @@
 
 
 **Abstract：**
-
+introduction video: https://youtu.be/NvC688qAJrk
 to practice rendering API and design patterns,I create a simple visual system that allow to easily build DirextX pipeline by blueprint. 
 
 练习和巩固渲染和设计模式,实现一个通过蓝图连线直接构建渲染流水线的工具。
