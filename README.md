@@ -10,10 +10,15 @@
 
 
 
+**Introduction Video：**
+https://youtu.be/NvC688qAJrk
+
+
+
 **Abstract：**
 
 
-introduction video: https://youtu.be/NvC688qAJrk
+
 
 
 to practice rendering API and design patterns,I create a simple visual system that allow to easily build DirextX pipeline by blueprint. 
