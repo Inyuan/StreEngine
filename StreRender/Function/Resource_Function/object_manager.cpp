@@ -174,7 +174,7 @@ std::string GetFbxFile(std::wstring DirPath)
 //    //    FbxAMatrix lGlobalPosition = pNode->EvaluateGlobalTransform(time);
 //    //    FbxAMatrix lGlobalOffPosition = lGlobalPosition * lGeometryOffset;
 //    //    lGlobalOffPosition = lGlobalOffPosition.Inverse();
-//    //    //保存物体变换矩阵
+//    //    //保存蝸E灞浠痪卣丒
 //    //    ConvertFBXMatrix(lGlobalOffPosition, IOSkeletonmodel->GlobalOffPosition[i]);
 //    //}
 //
@@ -211,7 +211,7 @@ std::string GetFbxFile(std::wstring DirPath)
 //        return false;
 //    }
 //
-//    //检查有无动画
+//    //紒E橛形薅?
 //    const bool lHasVertexCache = IFbxMesh->GetDeformerCount(FbxDeformer::eVertexCache) &&
 //        (static_cast<FbxVertexCacheDeformer*>(IFbxMesh->GetDeformer(0, FbxDeformer::eVertexCache)))->Active.Get();
 //    const bool lHasShape = IFbxMesh->GetShapeCount() > 0;
@@ -222,7 +222,7 @@ std::string GetFbxFile(std::wstring DirPath)
 //    if (lHasDeformation)
 //    {
 //        if (lHasVertexCache)
-//        {//顶点缓存（帧动画）//？？？没返回结果
+//        {//顶点缓存（帧动画）//？？？没返回结箒E
 //            //ReadVertexCacheData(IFbxMesh);
 //        }
 //        else
@@ -240,7 +240,7 @@ std::string GetFbxFile(std::wstring DirPath)
 //
 //}
 
-//fbx解包
+//fbx解皝E
 
 cpu_mesh* mesh_manager::load_fbx(const wchar_t* in_path)
 {
@@ -248,7 +248,7 @@ cpu_mesh* mesh_manager::load_fbx(const wchar_t* in_path)
 
     //路径
     std::wstring IDictionary(in_path);
-    //FBX解析
+    //FBX解蝸E
     s_fbx myFbx;
     std::string Fbxpath = GetFbxFile(IDictionary);
     if (Fbxpath.empty()) return nullptr;
@@ -269,11 +269,11 @@ cpu_mesh* mesh_manager::load_fbx(const wchar_t* in_path)
     fbxsdk::FbxLayerElementArrayTemplate<int>* pMaterialIndices = &myFbx.pMesh->GetElementMaterial()->GetIndexArray();
     int material_size = 2;
     int mat_count = 0;
-    //???不知道怎么获得mesh的材质数量，只能遍历一遍
+    //???不知道怎么获得mesh的材质数量，只能遍历一眮E
     
     for (int polygon = 0; polygon < polygonCount; polygon++)
     {
-        //由于相同材质的点群可能被错开，只能当作分别的材质处理
+        //由于相同材质的点群可能被代郦，只能当作分别的材质处纴E
         auto current_mat_index = pMaterialIndices->GetAt(polygon);
         if (current_mat_index != mat_count)
         {
@@ -284,7 +284,7 @@ cpu_mesh* mesh_manager::load_fbx(const wchar_t* in_path)
 
     
     
-    //为资源分配空间
+    //为资源分配空紒E
     {
 
         out_resource->vertex_ptr = custom_manager<cpu_vertex>().create_resource(controlPointCount,true);
@@ -292,7 +292,7 @@ cpu_mesh* mesh_manager::load_fbx(const wchar_t* in_path)
         out_resource->material_ptr = custom_manager<cpu_material>().create_resource(material_size, true);
         out_resource->object_constant_ptr = custom_manager<cpu_object_constant>().create_resource(material_size, true);
         out_resource->mesh_element_index_count.assign(material_size,0);
-        //贴图得自己更新了
+        //贴图得自己竵E铝?
         //out_resource->texture_ptr.assign();
 
 
@@ -494,7 +494,7 @@ cpu_mesh* mesh_manager::load_fbx(const wchar_t* in_path)
 
     //std::vector<s_vertex> debug_see(vertices, vertices+ controlPointCount);
 
-    //包围盒需要再建？？？
+    //皝EШ行枰俳ǎ浚浚?
     //XMStoreFloat3(&bounds.Center, 0.5f * (vMin + vMax));
     //XMStoreFloat3(&bounds.Extents, 0.5f * (vMax - vMin));
 
@@ -503,7 +503,7 @@ cpu_mesh* mesh_manager::load_fbx(const wchar_t* in_path)
     //{
     //    auto* Skeletonmodel = (RSkeleton_Model*)IOObjectmodel;
     //    GetAnimationData(Skeletonmodel, &myFbx);
-    //    //多做一个动画顶点缓存
+    //    //多做一个动画顶点缓磥E
     //    Skeletonmodel->Verticescurrent.assign(controlPointCount, GVertex());
     //    const UINT vbByteSize = (UINT)Objectmodel->CPUMeshdata.Vertices.size() * sizeof(GVertex);
     //    void* StaVectorptr = Objectmodel->CPUMeshdata.Vertices.data();

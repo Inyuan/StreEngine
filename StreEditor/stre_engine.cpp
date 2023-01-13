@@ -90,7 +90,14 @@ cpu_mesh* stre_engine::create_viewport_mesh()
 
 cpu_mesh* stre_engine::create_mesh_from_fbx(std::wstring path)
 {
+
 	auto mesh_ptr = mesh_manager->load_fbx(path.c_str());
+	//读取不到就默认返回到viewportmesh
+	if (!mesh_ptr)
+	{
+		return create_viewport_mesh();
+	}
+
 	mesh_ptr->is_view_mesh = false;
 	mesh_manager->dx_allocate_gpu_resource(mesh_ptr);
 	update_mesh_gpu(mesh_ptr);

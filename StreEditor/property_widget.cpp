@@ -5,7 +5,12 @@
 
 QString open_file_path(QWidget* in_widget, const QString file_param);
 
-//属性面板代码设计
+//Property panel code design Property panel code design
+//Property panel class Add yourself in property_tab_widget
+//Write the control in the constructor
+//add extern global variable
+//Add your own reflection information in s_switch_property_widget_command
+//属性面板代码设计 Property panel code design
 //属性面板类 在property_tab_widget 添加自己
 //在构造函数 写控制控件
 //加extern全局变量
@@ -397,7 +402,6 @@ void light_property_widget::update_light()
     }
 }
 
-
 void light_property_widget::refresh_spin_box()
 {
     if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
@@ -678,7 +682,6 @@ void mesh_property_widget::update_mesh()
     }
 }
 
-
 shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget) : QWidget(in_parent_tab_widget)
 {
     current_shader_property_widget = this;
@@ -829,7 +832,6 @@ shader_property_widget::shader_property_widget(QTabWidget* in_parent_tab_widget)
 
 }
 
-
 texture_property_widget::texture_property_widget(QTabWidget * in_parent_tab_widget) : QWidget(in_parent_tab_widget)
 {
     current_texture_property_widget = this;
@@ -918,7 +920,6 @@ void texture_property_widget::change_combobox_index(int index)
     s_update_gpu_command().execute();
 }
 
-
 texture_group_property_widget::texture_group_property_widget(QTabWidget* in_parent_tab_widget) : QWidget(in_parent_tab_widget)
 {
     current_texture_group_property_widget = this;
@@ -979,13 +980,16 @@ void texture_group_property_widget::change_combobox_index(int index)
     s_update_gpu_command().execute();
 }
 
-
 pass_property_widget::pass_property_widget(QTabWidget* in_parent_tab_widget)
 {
     current_pass_property_widget = this;
     setObjectName("pass_property_tab");
 
     //类型选择
+    pass_level_label = new QLabel(this);
+    pass_level_label->setObjectName("pass_level_label");
+    pass_level_label->setGeometry(QRect(20, 10, 271, 22));
+    pass_level_label->setText("level");
     pass_level_comcobox = new QComboBox(this);
     pass_level_comcobox->setObjectName("pass_level_comcobox");
     pass_level_comcobox->setGeometry(QRect(20, 30, 271, 22));
@@ -1108,8 +1112,6 @@ pass_property_widget::pass_property_widget(QTabWidget* in_parent_tab_widget)
     //    }
     //);
 }
-
-
 
 QString open_file_path(QWidget* in_widget,const QString file_param)
 {

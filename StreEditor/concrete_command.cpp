@@ -28,7 +28,8 @@ extern light_property_widget* current_light_property_widget;
 extern bool had_output_pass;
 
 /// <summary>
-/// 生成唯一标识符
+/// Generate a unique identifier
+/// 生成唯一标识符 
 /// </summary>
 /// <typeparam name="t_type"></typeparam>
 /// <param name="in_out_uid"></param>
@@ -52,6 +53,7 @@ void generate_unique_identifier(s_uid& in_out_uid)
 */
 
 /// <summary>
+/// Add textures to the texture component
 /// 在贴图组件中添加贴图
 /// </summary>
 void s_create_texture_command::execute()
@@ -67,6 +69,7 @@ void s_create_texture_command::execute()
 }
 
 /// <summary>
+/// Build texture group components
 /// 构建texture group组件
 /// </summary>
 void s_create_texture_group_command::execute()
@@ -81,6 +84,7 @@ void s_create_texture_group_command::execute()
 }
 
 /// <summary>
+/// Create objects Create CPU resources + component ontology
 /// 创建物体 创建CPU资源 + 组件本体
 /// </summary>
 void s_create_mesh_command::execute()
@@ -100,6 +104,7 @@ void s_create_mesh_command::execute()
 
 
 /// <summary>
+/// Build shaders
 /// 构建shader
 /// </summary>
 void s_create_shader_command::execute()
@@ -127,6 +132,7 @@ void s_create_shader_command::execute()
 }
 
 /// <summary>
+/// build pass
 /// 构建pass
 /// </summary>
 /// <param name=""></param>
@@ -150,6 +156,10 @@ void s_create_pass_command::execute()
 	
 }
 
+/// <summary>
+/// Build camera
+/// 构建 camera
+/// </summary>
 void s_create_camera_command::execute()
 {
 	auto camera_ptr = stre_engine::get_instance()->create_custom_resource<cpu_camera>(1,true);
@@ -183,6 +193,10 @@ void s_create_camera_command::execute()
 
 }
 
+/// <summary>
+/// Create light
+/// 构建 light
+/// </summary>
 void s_create_light_command::execute()
 {
 	auto light_ptr = stre_engine::get_instance()->create_custom_resource<cpu_light>(1,true);
@@ -223,6 +237,7 @@ void s_create_light_command::execute()
 */
 
 /// <summary>
+/// Reflect the shader resource interface of the pass to the component
 /// 反射pass的shader资源接口到组件上
 /// </summary>
 void reflect_pass_res_input(pass_component_invoker* in_pass_cmp)
@@ -288,6 +303,7 @@ void reflect_pass_res_input(pass_component_invoker* in_pass_cmp)
 
 
 /// <summary>
+/// Two port connection, check, add resources
 /// 两个端口连接，检查，添加资源
 /// </summary>
 void s_connect_resource_command::execute()
@@ -654,6 +670,7 @@ void s_connect_resource_command::execute()
 
 
 /// <summary>
+/// Delete and connect again Perform the connection operation again
 /// 删除后再连接 重新执行一遍连接操作
 /// </summary>
 void s_reconnect_resource_command::execute()
@@ -704,6 +721,7 @@ void s_reconnect_resource_command::execute()
 ************************************************************
 */
 /// <summary>
+/// Traverse pass table to execute pass
 /// 遍历pass表执行pass
 /// </summary>
 void s_draw_command::execute()
@@ -736,6 +754,7 @@ void s_draw_command::execute()
 }
 
 /// <summary>
+/// Refresh the debug_output window
 /// 刷新debug_output 窗口
 /// </summary>
 void s_debug_output_refresh_command::execute()
@@ -750,6 +769,10 @@ void s_debug_output_refresh_command::execute()
 	debug_text_ptr->setText(QString::fromStdString(current_output));
 }
 
+/// <summary>
+/// refresh gpu
+/// 刷新gpu
+/// </summary>
 void s_update_gpu_command::execute()
 {
 	
@@ -768,6 +791,10 @@ void s_update_gpu_command::execute()
 ************************************************************
 */
 
+/// <summary>
+/// refresh camera
+/// 刷新 相机
+/// </summary>
 void s_update_camera_command::execute()
 {
 	if (!camera_helper_ptr || !camera_ptr)
@@ -784,7 +811,10 @@ void s_update_camera_command::execute()
 
 }
 
-
+/// <summary>
+/// Modify mesh type
+/// 修改模型类型
+/// </summary>
 void s_change_mesh_type_command::execute()
 {
 	if (current_component_ptr->comp_type != COMPONENT_TYPE_MESH)
@@ -827,7 +857,10 @@ void s_change_mesh_type_command::execute()
 	s_switch_property_widget_command().execute();
 }
 
-//默认已经存在GPU内存
+/// <summary>
+/// update mesh data
+/// 刷新GPU模型数据 
+/// </summary>
 void s_update_mesh_data_command::execute()
 {
 	if (!mesh_ptr|| !mesh_ptr->mesh_instance)
@@ -855,7 +888,10 @@ void s_update_mesh_data_command::execute()
 		view_port_widget_ptr->repaint();
 }
 
-//默认已经存在GPU内存
+/// <summary>
+/// update mesh data
+/// 刷新GPU灯光数据 
+/// </summary>
 void s_update_light_command::execute()
 {
 	if(!light_ptr)
@@ -871,9 +907,11 @@ void s_update_light_command::execute()
 }
 
 /// <summary>
+/// Which component is selected
+/// Traversing properties and reflecting values to property window
 /// 选中了哪个组件
 /// 遍历属性 反射值到属性窗口
-/// /// </summary>
+/// </summary>
 void s_switch_property_widget_command::execute()
 {
 	s_update_gpu_command local_update_request;
@@ -1064,6 +1102,10 @@ void s_switch_property_widget_command::execute()
 	}
 }
 
+/// <summary>
+/// Refresh gpu textures
+/// 刷新 gpu 贴图 
+/// </summary>
 void s_update_texture_gpu_command::execute()
 {
 	if (!texture_update_ptr)
@@ -1079,6 +1121,10 @@ void s_update_texture_gpu_command::execute()
 
 }
 
+/// <summary>
+/// package texture as table
+/// 合成贴图为表
+/// </summary>
 void s_package_texture_command::execute()
 {
 	if (!texture_component_package_texture_ptr)
@@ -1107,7 +1153,10 @@ void s_package_texture_command::execute()
 ************************************************************
 */
 
-//删除连接资源
+/// <summary>
+/// delete connected resource
+/// 删除连接资源
+/// </summary>
 void s_disconnect_resource_command::execute()
 {
 	disconnect_success = false;
@@ -1381,6 +1430,7 @@ void s_disconnect_resource_command::execute()
 }
 
 /// <summary>
+/// Remove all resources connected by disconnect_port
 /// 移除所有disconnect_port连接的资源
 /// </summary>
 void s_disconnect_all_resource_command::execute()
@@ -1419,6 +1469,7 @@ void s_disconnect_all_resource_command::execute()
 }
 
 /// <summary>
+/// Remove a texture from a texture group
 /// 在贴图组中移除贴图
 /// </summary>
 void s_remove_texture_command::execute()
@@ -1434,6 +1485,9 @@ void s_remove_texture_command::execute()
 }
 
 /// <summary>
+/// Delete the connected interface
+/// Delete the pointer in the table
+/// Delete component
 /// 删除连接的接口
 /// 删除表中指针
 /// 删除组件
@@ -1496,6 +1550,9 @@ void s_remove_texture_group_command::execute()
 }
 
 /// <summary>
+/// Delete the connected interface
+/// Delete the pointer in the table
+/// Delete component
 /// 删除连接的接口
 /// 删除表中指针
 /// 删除组件
@@ -1526,6 +1583,9 @@ void s_remove_mesh_command::execute()
 }
 
 /// <summary>
+/// Delete the connected interface
+/// Delete the pointer in the table
+/// Delete component
 /// 删除连接的接口
 /// 删除表中指针
 /// 删除组件
@@ -1559,6 +1619,9 @@ void s_remove_shader_command::execute()
 }
 
 /// <summary>
+/// Delete the connected interface
+/// Delete the pointer in the table
+/// Delete component
 /// 删除连接的接口
 /// 删除表中指针
 /// 删除组件
@@ -1634,6 +1697,14 @@ void s_remove_pass_command::execute()
 	pass_component_delete_ptr = nullptr;
 }
 
+/// <summary>
+/// Delete the connected interface
+/// Delete the pointer in the table
+/// Delete component
+/// 删除连接的接口
+/// 删除表中指针
+/// 删除组件
+/// </summary>
 void s_remove_camera_command::execute()
 {
 	if (!camera_component_delete_ptr)
@@ -1670,6 +1741,14 @@ void s_remove_camera_command::execute()
 
 }
 
+/// <summary>
+/// Delete the connected interface
+/// Delete the pointer in the table
+/// Delete component
+/// 删除连接的接口
+/// 删除表中指针
+/// 删除组件
+/// </summary>
 void s_remove_light_command::execute()
 {
 	if (!light_component_delete_ptr)

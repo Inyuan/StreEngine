@@ -204,6 +204,10 @@ bool directx_render::create_pso(
 
 		if (in_shader_layout.shader_vaild[SHADER_TYPE::VS])
 		{
+			if (!pass->shader_group[std::string(pass->uid.name) + "VS"])
+			{
+				return false;
+			}
 			PsoDesc.VS =
 			{
 				reinterpret_cast<BYTE*>(
@@ -213,6 +217,10 @@ bool directx_render::create_pso(
 		}
 		if (in_shader_layout.shader_vaild[SHADER_TYPE::DS])
 		{
+			if (!pass->shader_group[std::string(pass->uid.name) + "DS"])
+			{
+				return false;
+			}
 			PsoDesc.DS =
 			{
 				reinterpret_cast<BYTE*>(
@@ -222,6 +230,10 @@ bool directx_render::create_pso(
 		}
 		if (in_shader_layout.shader_vaild[SHADER_TYPE::HS])
 		{
+			if (!pass->shader_group[std::string(pass->uid.name) + "HS"])
+			{
+				return false;
+			}
 			PsoDesc.HS =
 			{
 				reinterpret_cast<BYTE*>(
@@ -231,6 +243,10 @@ bool directx_render::create_pso(
 		}
 		if (in_shader_layout.shader_vaild[SHADER_TYPE::GS])
 		{
+			if (!pass->shader_group[std::string(pass->uid.name) + "GS"])
+			{
+				return false;
+			}
 			PsoDesc.GS =
 			{
 				reinterpret_cast<BYTE*>(
@@ -240,6 +256,10 @@ bool directx_render::create_pso(
 		}
 		if (in_shader_layout.shader_vaild[SHADER_TYPE::PS])
 		{
+			if (!pass->shader_group[std::string(pass->uid.name) + "PS"])
+			{
+				return false;
+			}
 			PsoDesc.PS =
 			{
 				reinterpret_cast<BYTE*>(
@@ -1589,11 +1609,11 @@ ID3DBlob* directx_render::complie_shader(
 	HRESULT hr = S_OK;
 
 	ID3DBlob* byteCode = nullptr;
-	ID3DBlob* errors;
+	ID3DBlob* errors = nullptr;
 	hr = D3DCompileFromFile(file_name.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		entry_point.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
 
-	if (errors != nullptr)
+	if (errors)
 	{
 		OutputDebugStringA((char*)errors->GetBufferPointer());
 		out_successed = false;
@@ -1609,7 +1629,14 @@ void directx_render::reflect_shader(
 	ComPtr<ID3DBlob>& in_shader_data, 
 	std::map<std::string,gpu_pass::pass_resource>& out_res_group)
 {
+
 	typedef gpu_shader_resource::SHADER_RESOURCE_TYPE SHADER_RES_TYPE;
+	
+	if(!in_shader_data)
+	{
+		return;
+	}
+	
 	//反射生成对应接口
 	ComPtr<ID3D12ShaderReflection> shader_reflector;
 	ThrowIfFailed(

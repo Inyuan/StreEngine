@@ -4,7 +4,7 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
-//Window的API更快
+//Window的API
 class RCamera
 {
 public:
@@ -97,7 +97,7 @@ public:
 
 };
 
-//Window的API更快
+//Window的API
 class RObject
 {
 public:
@@ -116,13 +116,13 @@ public:
 		0.0f, 0.0f, 0.0f, 1.0f);
 };
 
-//自己写一个 但利用window的APi计算应该更快
+//自己写一遍但利用window的APi计算应该更快
 //class simple_camera
 //{
 //public:
 //
 //	/// <summary>
-//	/// 构建左手透视投影矩阵 ???
+//	/// 构建左手透视投影矩諄E???
 //	/// </summary>
 //	/// <param name="in_fov"></param>
 //	/// <param name="in_aspect"></param>
@@ -178,15 +178,15 @@ public:
 //	/// </summary>
 //	/// <param name="fovY">弧度单位的视野角</param>
 //	/// <param name="aspect">纵横比</param>
-//	/// <param name="zn">近裁距离</param>
-//	/// <param name="zf">远裁距离</param>
+//	/// <param name="zn">絹E镁嗬丒/param>
+//	/// <param name="zf">远裁距纴E/param>
 //	void set_lens(float in_fov, float in_aspect, float in_near, float in_far)
 //	{
 //		// cache properties
 //		fov_y = in_fov; // 弧度单位的视野角
 //		aspect = in_aspect;//纵横比
-//		near_z = in_near;//近裁距离
-//		far_z = in_far;//远裁距离
+//		near_z = in_near;//絹E镁嗬丒
+//		far_z = in_far;//远裁距纴E
 //
 //		near_window_height = 2.0f * near_z * tanf(0.5f * fov_y);
 //		far_window_height = 2.0f * far_z * tanf(0.5f * fov_y);
@@ -196,7 +196,7 @@ public:
 //	}
 //
 //	/// <summary>
-//	/// 转换到相机坐标系的矩阵
+//	/// 转换到相机坐眮E档木卣丒
 //	/// </summary>
 //	void update_view()
 //	{
@@ -208,9 +208,9 @@ public:
 //		normalize(nom_u);
 //		s_float3 nom_r = cross(nom_u, nom_l);
 //
-//		//变换（旋转）后的坐标系和世界坐标系不一样，
-//		//要把相机的世界位置映射到变换（旋转）后的坐标系中，
-//		//才能放进摄像机局部变换矩阵
+//		//变换（旋转）后的坐眮E岛褪澜缱丒挡灰谎?
+//		//要把相机的世界位置映射到变换（旋转）后的坐眮E抵校?
+//		//才能放进摄像机局部变换矩諄E
 //		float x = -dot(world_position, nom_r);
 //		float y = -dot(world_position, nom_u);
 //		float z = -dot(world_position, nom_l);

@@ -158,11 +158,11 @@ class pass_property_widget : public QWidget
 public:
 	pass_property_widget(QTabWidget* in_parent_tab_widget);
 
+	QLabel* pass_level_label = nullptr;
+	QComboBox* pass_level_comcobox = nullptr;
+
 	QCheckBox* is_output_check_box = nullptr;
 	QCheckBox * is_depth_check_box = nullptr;
 	QCheckBox* is_translate_check_box = nullptr;
-	
-	QComboBox* pass_level_comcobox = nullptr;
 
-	//QCheckBox* is_start_check_box = nullptr;
 };

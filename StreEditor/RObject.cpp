@@ -46,19 +46,19 @@ void RCamera::convert_to_camera_data(void * out_s_camera)
 
 	
 	//???强制转换？ 
-	//摄像机局部坐标系 
+	//摄像机局部坐标E?
 	XMMATRIX view = GetView();
 	//投影变换
 	XMMATRIX proj = GetProj();
 
-	//投影变换矩阵 世界到屏幕空间
+	//投影变换矩阵世界到屏幕空间E
 	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
 
 	//
 	XMVECTOR matrixview = XMMatrixDeterminant(view);
 	XMVECTOR matrixproj = XMMatrixDeterminant(proj);
 	XMVECTOR matrixviewproj = XMMatrixDeterminant(viewProj);
-	//逆矩阵
+	//逆矩阵E
 	XMMATRIX invView = XMMatrixInverse(&matrixview, view);
 	XMMATRIX invProj = XMMatrixInverse(&matrixproj, proj);
 	XMMATRIX invViewProj = XMMatrixInverse(&matrixviewproj, viewProj);
@@ -87,7 +87,6 @@ void RCamera::convert_to_camera_data(void * out_s_camera)
 	//should be fixed in lightPass
 	direct_camera_data.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
 
-	//检查一下大小
 	memcpy(out_s_camera, &direct_camera_data,sizeof(direct_camera_data));
 }
 
@@ -365,9 +364,9 @@ void RObject::UpdateWorldMatrix()
 }
 
 /// <summary>
-/// 只粘贴世界矩阵 
+/// 只粘贴世界矩阵E
 /// </summary>
-/// <param name="out_s_object_contants">世界矩阵指针</param>
+/// <param name="out_s_object_contants">世界矩阵E/param>
 void RObject::convert_to_object_contants_data(void* out_s_object_contants)
 {
 	memcpy(out_s_object_contants, &WorldMatrix, sizeof(WorldMatrix));
