@@ -19,6 +19,8 @@ public:
 private:
     Ui::stre_editorClass ui;
 
+    QWidget* view_window_widget_instance = nullptr;
+
     view_port_invoker* view_port_instance = nullptr;
 
     pipeline_window_invoker* pipeline_window_instance = nullptr;

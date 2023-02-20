@@ -1568,13 +1568,32 @@ void s_remove_mesh_command::execute()
 	s_disconnect_all_resource_command disconnect_resource_cmd;
 	disconnect_resource_cmd.disconnect_port = mesh_component_delete_ptr->output_port;
 	disconnect_resource_cmd.execute();
-	//断不了就不许删
+	//断不了就...
+	if (!disconnect_resource_cmd.disconnect_success)
+	{
+		return;
+	}
+
+	disconnect_resource_cmd.disconnect_port = mesh_component_delete_ptr->constants_output_port;
+	disconnect_resource_cmd.execute();
+
+	if (!disconnect_resource_cmd.disconnect_success)
+	{
+		return;
+	}
+
+	disconnect_resource_cmd.disconnect_port = mesh_component_delete_ptr->material_output_port;
+	disconnect_resource_cmd.execute();
+
 	if (!disconnect_resource_cmd.disconnect_success)
 	{
 		return;
 	}
 
 	disconnect_resource_cmd.disconnect_port = nullptr;
+
+
+
 
 	//删除表中的指针
 	pipeline_window_widget_ptr->mesh_comp_group.erase(mesh_component_delete_ptr->mesh_instance->uid.name);

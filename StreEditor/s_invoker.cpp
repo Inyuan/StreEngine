@@ -21,7 +21,6 @@ view_port_invoker* view_port_widget_ptr = nullptr;
 
 pipeline_window_invoker::pipeline_window_invoker(
 	QWidget* in_parent): QWidget(in_parent)
-
 {
 	create_pass_cmd = new s_create_pass_command();
 	create_texture_group_cmd = new s_create_texture_group_command();
@@ -978,7 +977,8 @@ view_port_invoker::view_port_invoker(QWidget* in_parent):QWidget(in_parent)
 	draw_cmd = new s_draw_command();
 
 	setObjectName("rendering_view_widget");
-	setGeometry(QRect(1100, 10, 311, 241));
+	setGeometry(QRect(0,0, 1920, 1080));
+	//setGeometry(QRect(1100, 10, 311, 241));
 }
 
 
@@ -990,7 +990,7 @@ void view_port_invoker::mousePressEvent(QMouseEvent* in_event)
 
 void view_port_invoker::mouseMoveEvent(QMouseEvent* in_event)
 {
-	if (current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
+	if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
 	{
 		auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
 		camera_comp_ptr->camera_cal_helper.Pitch((in_event->y() - mouse_point.y())*0.1);
@@ -1027,6 +1027,6 @@ debug_text_invoker::debug_text_invoker(QWidget* in_parent) : QTextEdit(in_parent
 {
 	debug_text_ptr = this;
 	setObjectName("debug_text_edit");
-	setGeometry(QRect(540, 520, 551, 231));
+	setGeometry(QRect(1,849, 1279,50));
 }
 
