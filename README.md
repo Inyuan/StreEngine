@@ -38,7 +38,11 @@ to practice rendering API and design patterns,I create a simple visual system th
 - 策略模式封装资源和资源控制器  Strategy pattern encapsulates resources and resource controllers
 - 命令队列执行批量更新操作  command queue to perform batch update operations
 
+- deferring rendering
 ![image](https://user-images.githubusercontent.com/55373014/207652778-12195125-259a-4495-9bba-f59bcea188c4.png)
 
+- shadow map
+![601cd65a1f0ab79ef0ece50ad336548](https://user-images.githubusercontent.com/55373014/220613364-3df4e406-1c9d-4ecb-ae60-055e5950669c.png)
+![ba31a292fda3e77c1734241f3a9d7ec](https://user-images.githubusercontent.com/55373014/220613386-e359797e-2259-4884-92d4-058d07acbc20.png)
 
 
