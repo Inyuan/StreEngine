@@ -385,6 +385,13 @@ void s_connect_resource_command::execute()
 					}
 				}
 			}
+
+
+			//重连 保证pass重新编译
+			s_reconnect_resource_command reconnect_cmd;
+			reconnect_cmd.reconnect_port = p_ptr->shader_port;
+			reconnect_cmd.execute();
+			reconnect_cmd.reconnect_port = nullptr;
 		}
 
 		break;

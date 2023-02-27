@@ -356,7 +356,7 @@ pass_component_invoker::pass_component_invoker(
 	comp_type = COMPONENT_TYPE_PASS;
 	//构建组件
 	setObjectName("pass_component");
-	setGeometry(QRect(pipeline_w_mouse_position_x, pipeline_w_mouse_position_y, 211, 131));
+	setGeometry(QRect(pipeline_w_mouse_position_x, pipeline_w_mouse_position_y, 211, 201));
 	setAlignment(Qt::AlignCenter);
 
 	
@@ -372,7 +372,7 @@ pass_component_invoker::pass_component_invoker(
 		connect_port::PASS_MESH_INPUT,
 			this);
 	mesh_port->setObjectName("pass_mesh_port");
-	mesh_port->setGeometry(QRect(10, 80, 95, 20));
+	mesh_port->setGeometry(QRect(10, 150, 95, 20));
 	mesh_port->setAutoExclusive(false);
 
 	shader_port = new connect_port(
@@ -380,7 +380,7 @@ pass_component_invoker::pass_component_invoker(
 		connect_port::PASS_SHADER_INPUT,
 			this);
 	shader_port->setObjectName("pass_shade_port");
-	shader_port->setGeometry(QRect(10, 100, 95, 20));
+	shader_port->setGeometry(QRect(10, 170, 95, 20));
 	shader_port->setAutoExclusive(false);
 
 	output_port = new connect_port(
@@ -388,7 +388,7 @@ pass_component_invoker::pass_component_invoker(
 		connect_port::PASS_OUTPUT,
 			this);
 	output_port->setObjectName("pass_output_port");
-	output_port->setGeometry(QRect(144, 100, 61, 20));
+	output_port->setGeometry(QRect(144, 170, 61, 20));
 	output_port->setLayoutDirection(Qt::RightToLeft);
 	output_port->setAutoExclusive(false);
 

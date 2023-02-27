@@ -112,7 +112,9 @@ camera_property_widget::camera_property_widget(QTabWidget* in_parent_tab_widget)
             if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
             {
                 auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
-                camera_comp_ptr->camera_cal_helper.mPosition.x = position_x_spinbox->value();
+                auto position = camera_comp_ptr->camera_cal_helper.GetPosition3f();
+                position.x = position_x_spinbox->value();
+                camera_comp_ptr->camera_cal_helper.SetPosition(position);
                 update_camera();
             }
             
@@ -123,7 +125,10 @@ camera_property_widget::camera_property_widget(QTabWidget* in_parent_tab_widget)
             if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
             {
                 auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
-                camera_comp_ptr->camera_cal_helper.mPosition.y = position_y_spinbox->value();
+                auto position = camera_comp_ptr->camera_cal_helper.GetPosition3f();
+                position.y = position_y_spinbox->value();
+                camera_comp_ptr->camera_cal_helper.SetPosition(position);
+
                 update_camera();
             }
             
@@ -134,24 +139,71 @@ camera_property_widget::camera_property_widget(QTabWidget* in_parent_tab_widget)
             if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
             {
                 auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
-                camera_comp_ptr->camera_cal_helper.mPosition.z = position_z_spinbox->value();
+                auto position = camera_comp_ptr->camera_cal_helper.GetPosition3f();
+                position.z = position_z_spinbox->value();
+                camera_comp_ptr->camera_cal_helper.SetPosition(position);
+
                 update_camera();
             }
             
         });
+
+    connect(look_at_x_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
+            {
+                auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
+                auto look_at = camera_comp_ptr->camera_cal_helper.GetLook3f();
+                auto position = camera_comp_ptr->camera_cal_helper.GetPosition3f();
+                look_at.x = look_at_x_spinbox->value();
+                camera_comp_ptr->camera_cal_helper.LookAt(position, look_at, {0,1,0});
+                update_camera();
+            }
+
+        });
+    connect(look_at_y_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
+            {
+                auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
+                auto look_at = camera_comp_ptr->camera_cal_helper.GetLook3f();
+                auto position = camera_comp_ptr->camera_cal_helper.GetPosition3f();
+                look_at.y = look_at_y_spinbox->value();
+                camera_comp_ptr->camera_cal_helper.LookAt(position, look_at, { 0,1,0 });
+                update_camera();
+            }
+
+        });
+    connect(look_at_z_spinbox, &QDoubleSpinBox::valueChanged, this,
+        [&]()
+        {
+            if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
+            {
+                auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
+                auto look_at = camera_comp_ptr->camera_cal_helper.GetLook3f();
+                auto position = camera_comp_ptr->camera_cal_helper.GetPosition3f();
+                look_at.z = look_at_z_spinbox->value();
+                camera_comp_ptr->camera_cal_helper.LookAt(position, look_at, { 0,1,0 });
+                update_camera();
+            }
+
+        });
+
 }
 
 void camera_property_widget::update_camera()
 {
-    if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_LIGHT)
+    if (current_component_ptr && current_component_ptr->comp_type == COMPONENT_TYPE_CAMERA)
     {
         auto camera_comp_ptr = static_cast<camera_component_invoker*>(current_component_ptr);
-        s_update_camera_command update_light_data_cmd;
-        update_light_data_cmd.camera_ptr = camera_comp_ptr->camera_instance;
-        update_light_data_cmd.camera_helper_ptr = &camera_comp_ptr->camera_cal_helper;
-        update_light_data_cmd.execute();
-        update_light_data_cmd.camera_ptr = nullptr;
-        update_light_data_cmd.camera_helper_ptr = nullptr;
+        s_update_camera_command update_camera_data_cmd;
+        update_camera_data_cmd.camera_ptr = camera_comp_ptr->camera_instance;
+        update_camera_data_cmd.camera_helper_ptr = &camera_comp_ptr->camera_cal_helper;
+        update_camera_data_cmd.execute();
+        update_camera_data_cmd.camera_ptr = nullptr;
+        update_camera_data_cmd.camera_helper_ptr = nullptr;
     }
 }
 

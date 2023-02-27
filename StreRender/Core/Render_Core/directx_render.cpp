@@ -105,7 +105,7 @@ bool directx_render::create_rootsignature(gpu_pass* in_gpu_pass)
 	UINT input_cb_number = 0;
 	UINT input_texture_number = 0;
 	std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameter;
-
+	std::vector<CD3DX12_DESCRIPTOR_RANGE*> texture_table_group;
 	//用反射得到的数据自动构建根签名
 	for (auto it : in_gpu_pass->pass_res_group)
 	{
@@ -129,10 +129,12 @@ bool directx_render::create_rootsignature(gpu_pass* in_gpu_pass)
 		case gpu_shader_resource::SHADER_RESOURCE_TYPE_TEXTURE_GROUP:
 		{
 			//局部状态下在根签名构造完成前不能被销毁
-			CD3DX12_DESCRIPTOR_RANGE texTable;
-			texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, it.second.bind_count, it.second.bind_point, it.second.register_space);
+			CD3DX12_DESCRIPTOR_RANGE* texTable = new CD3DX12_DESCRIPTOR_RANGE();
+			texture_table_group.push_back(texTable);
+			texTable->Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, it.second.bind_count, it.second.bind_point, it.second.register_space);
 			CD3DX12_ROOT_PARAMETER texture_rp;
-			texture_rp.InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_ALL);
+			//table的初始化要求参数一直存在，不能被提前释放 所以要用堆指针存储
+			texture_rp.InitAsDescriptorTable(1, texTable, D3D12_SHADER_VISIBILITY_ALL);
 			slotRootParameter.push_back(texture_rp);
 		}
 		break;
@@ -155,6 +157,11 @@ bool directx_render::create_rootsignature(gpu_pass* in_gpu_pass)
 	create_rootsignature(
 		rootsig_desc,
 		root_ptr->rootsignature);
+
+	for (auto it : texture_table_group)
+	{
+		delete(it);
+	}
 
 	return true;
 }
@@ -1585,7 +1592,7 @@ void directx_render::create_rootsignature(
 	{
 		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
 	}
-	ThrowIfFailed(hr);
+  	ThrowIfFailed(hr);
 
 	ThrowIfFailed(dx_device->CreateRootSignature(
 		0,
@@ -1668,25 +1675,31 @@ void directx_render::reflect_shader(
 		case D3D_SIT_CBUFFER:
 		case D3D_SIT_TBUFFER:
 			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER;
+			out_res_group[pass_res.name] = pass_res;
 			break;
 		case D3D_SIT_STRUCTURED:
 			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_CUSTOM_BUFFER_GROUP;
+			out_res_group[pass_res.name] = pass_res;
 			break;
 		case D3D_SIT_TEXTURE:
 			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_TEXTURE_GROUP;
+			out_res_group[pass_res.name] = pass_res;
 			break;
 		case D3D_SIT_SAMPLER:
+			//???
+			//暂时全部采样都用上
 			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_SAMPLER;
 			break;
 		case D3D_SIT_UAV_RWTYPED:
 		case D3D_SIT_UAV_RWSTRUCTURED:
 			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_UNORDERED_BUFFER;
+			out_res_group[pass_res.name] = pass_res;
 			break;
 		default:
 			pass_res.type = SHADER_RES_TYPE::SHADER_RESOURCE_TYPE_NONE;
 			break;
 		}
-		out_res_group[pass_res.name] = pass_res;
+		
 	}
 }
 
