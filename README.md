@@ -41,8 +41,8 @@ to practice rendering API and design patterns,I create a simple visual system th
 - deferring rendering
 ![image](https://user-images.githubusercontent.com/55373014/207652778-12195125-259a-4495-9bba-f59bcea188c4.png)
 
-- shadow map
+- PCSS
 ![601cd65a1f0ab79ef0ece50ad336548](https://user-images.githubusercontent.com/55373014/220613364-3df4e406-1c9d-4ecb-ae60-055e5950669c.png)
-![ba31a292fda3e77c1734241f3a9d7ec](https://user-images.githubusercontent.com/55373014/220613386-e359797e-2259-4884-92d4-058d07acbc20.png)
+![1677493712684](https://user-images.githubusercontent.com/55373014/221539707-b6e1aa2f-fbb2-4694-add7-9c71cb57fe19.png)
 
 
