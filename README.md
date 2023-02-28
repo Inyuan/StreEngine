@@ -45,4 +45,8 @@ to practice rendering API and design patterns,I create a simple visual system th
 ![601cd65a1f0ab79ef0ece50ad336548](https://user-images.githubusercontent.com/55373014/220613364-3df4e406-1c9d-4ecb-ae60-055e5950669c.png)
 ![1677493712684](https://user-images.githubusercontent.com/55373014/221539707-b6e1aa2f-fbb2-4694-add7-9c71cb57fe19.png)
 
+- SSR
+![1514580aaf5bc3a54feb74c242b6b88](https://user-images.githubusercontent.com/55373014/221803625-67ae6bd5-065b-4452-b263-bb3ba2033f66.png)
+![0eddc1b53d1ccf12ad549df4adf3bfc](https://user-images.githubusercontent.com/55373014/221803613-2267f189-5970-4464-bb05-9deb4a94b0b4.png)
+
 
