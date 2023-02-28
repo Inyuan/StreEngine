@@ -38,7 +38,9 @@ to practice rendering API and design patterns,I create a simple visual system th
 - 策略模式封装资源和资源控制器  Strategy pattern encapsulates resources and resource controllers
 - 命令队列执行批量更新操作  command queue to perform batch update operations
 
-- deferred rendering
+**Demo：**
+
+- Deferred Rendering
 ![image](https://user-images.githubusercontent.com/55373014/207652778-12195125-259a-4495-9bba-f59bcea188c4.png)
 
 - PCSS
