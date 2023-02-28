@@ -57,6 +57,7 @@ struct vs_out
 	float3 world_normal   : NORMAL;
 	float3 world_tangent  : TANGENT;
 	float2 texcoord		  : TEXCOORD;
+	float4 depth : TEXCOORD1;
 };
 
 struct ps_output
@@ -83,7 +84,7 @@ vs_out VS(vs_in vin)
 
 	// Transform to homogeneous clip space.
 	vout.h_position = mul(world_position, camera_buffer[0].view_project);
-
+	vout.depth = vout.h_position;
 	// Output vertex attributes for interpolation across triangle.
 	//float4 tex_c = mul(float4(vin.texcoord, 0.0f, 1.0f), tex_transform);
 	//vout.TexC = mul(texC, matData.MatTransform).xy;
@@ -103,6 +104,10 @@ ps_output PS(vs_out pin)
 	//float4 BaseColor = gTextureMaps[textureMapIndex].Sample(gsamPointWrap, pin.TexC);//baseColor
 	//float4 BaseColor = float4(matData.LightColor.r, matData.LightColor.g, matData.LightColor.b, 1);
 	float4 base_color = float4(0.7,0.7,0.7,1.0);
+	if (obj_buffer[0].material_index > 1)
+	{
+		base_color = float4(1, 0, 0, 1.0);
+	}
 	//Normal
 	pin.world_normal = normalize(pin.world_normal);
 	//float4 normalMapSample = gTextureMaps[normalMapIndex].Sample(gsamPointWrap, pin.TexC);//normal
@@ -115,10 +120,13 @@ ps_output PS(vs_out pin)
 	//WorldPosition
 	float3 world_position = pin.world_position;
 
+	//depth
+	float depth = pin.depth.z / pin.depth.w;
+
 	//float Mat_id_store = gMaterialIndex & 0xff;
 	OUT.GBufferA = base_color;
 	OUT.GBufferB = float4(world_position, obj_buffer[0].material_index);
-	OUT.GBufferC = float4(world_normal, 1.0f);
+	OUT.GBufferC = float4(world_normal, depth);
 	//OUT.GBufferD = float4(shadowFactor, 1.0f);
 	//OUT.GBufferE = float4(1.0f, 1.0f, 1.0f, 1.0f);
 
